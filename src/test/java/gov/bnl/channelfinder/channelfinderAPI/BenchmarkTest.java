@@ -90,7 +90,7 @@ public class BenchmarkTest {
 		}
 	}
 
-//	@Test
+	@Test
 	public void query10Channels() {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName(
@@ -99,7 +99,7 @@ public class BenchmarkTest {
 		System.out.println("duration : " + (System.currentTimeMillis() - time));
 	}
 
-//	@Test
+	@Test
 	public void query100Channels() {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName(
@@ -108,7 +108,7 @@ public class BenchmarkTest {
 		System.out.println("duration : " + (System.currentTimeMillis() - time));
 	}
 
-//	@Test
+	@Test
 	public void query500Channels() {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance()
@@ -117,7 +117,7 @@ public class BenchmarkTest {
 		System.out.println("duration : " + (System.currentTimeMillis() - time));
 	}
 
-//	@Test
+	@Test
 	public void query1000Channels() {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName("2000second:*");
@@ -125,7 +125,7 @@ public class BenchmarkTest {
 		System.out.println("duration : " + (System.currentTimeMillis() - time));
 	}
 
-//	@Test
+	@Test
 	public synchronized void query2000Channels() {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance()

@@ -29,6 +29,17 @@ public class ChannelFinderException extends ProtocolException {
 		super(message);
 		this.setStatus(status);
 	}
+	
+	/**
+	 * 
+	 * @param status - the http error status code
+	 * @param cause - the original UniformInterfaceException 
+	 * @param message - additional error information
+	 */
+	public ChannelFinderException(Status status, Throwable cause ,String message) {
+		super(message, cause);
+		this.setStatus(status); 
+	}
 
 	/**
 	 * @param status the status to set

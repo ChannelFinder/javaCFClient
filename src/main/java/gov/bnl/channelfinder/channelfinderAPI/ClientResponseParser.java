@@ -28,7 +28,6 @@ public class ClientResponseParser extends ParserCallback {
 	}
 	
 	public void handleText(char[] data, int pos) {
-		System.out.println(data);
 		switch (i) {
 		case 3:
 			if (enable)
@@ -42,7 +41,6 @@ public class ClientResponseParser extends ParserCallback {
 	}
 
 	public void handleStartTag(Tag t, MutableAttributeSet a, int p) {
-		System.out.println("Tag name......" + t);
 		if (t == HTML.Tag.B)
 			i++;
 		else if (t == HTML.Tag.H3)

@@ -21,17 +21,19 @@ import javax.net.ssl.TrustManager;
 import javax.swing.text.html.parser.ParserDelegator;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
+import javax.xml.ws.http.HTTPException;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-
 
 public class ChannelFinderClient {
 	private static ChannelFinderClient instance = new ChannelFinderClient();
@@ -78,7 +80,7 @@ public class ChannelFinderClient {
 		// Authentication and Authorization configuration
 		TrustManager mytm[] = null;
 		SSLContext ctx = null;
-		
+
 		try {
 			mytm = new TrustManager[] { new MyX509TrustManager(properties
 					.getProperty("trustStore"), properties.getProperty(
@@ -86,7 +88,7 @@ public class ChannelFinderClient {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		
+
 		try {
 			ctx = SSLContext.getInstance("SSL");
 			ctx.init(null, mytm, null);
@@ -97,14 +99,14 @@ public class ChannelFinderClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		ClientConfig config = new DefaultClientConfig();
 		config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
 				new HTTPSProperties(null, ctx));
 		Client client = Client.create(config);
 		client.addFilter(new HTTPBasicAuthFilter(properties
 				.getProperty("username"), properties.getProperty("password")));
-		
+
 		// Logging filter - raw request and response printed to sys.o
 		if (properties.getProperty("logging").equals("on")) {
 			client.addFilter(new LoggingFilter());
@@ -174,7 +176,7 @@ public class ChannelFinderClient {
 					xmlChannels);
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
+		}		
 	}
 
 	/**
@@ -240,11 +242,11 @@ public class ChannelFinderClient {
 	 * @param channel
 	 */
 	public void updateChannel(XmlChannel channel) {
-		if (queryChannelsName(channel.getName()) != null) {
+		try {
 			service.path("channel").path(channel.getName()).type(
 					MediaType.APPLICATION_XML).post(channel);
-		} else {
-			// channel does not exist.
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null); // no return expected.
 		}
 	}
 
@@ -303,10 +305,13 @@ public class ChannelFinderClient {
 	public void removeChannelTag(String channelName, String tagName) {
 		service.path("tags").path(tagName).path(channelName).accept(
 				MediaType.APPLICATION_XML).delete();
-	}	
+	}
 
+	// determines the existence of an error and throws ChannelFinderException.
 	private <T> T checkResponse(ClientResponse clientResponse,
 			Class<T> returnClass) {
+		@SuppressWarnings("unused")
+		Status returnStatus = clientResponse.getClientResponseStatus();
 		int statusCode = clientResponse.getStatus();
 		if (statusCode >= 200 && statusCode < 300) {
 			// OK
@@ -314,27 +319,29 @@ public class ChannelFinderClient {
 		} else if (statusCode >= 300 && statusCode < 400) {
 			// Redirect
 			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), parseErrorMsg(clientResponse
+					.getClientResponseStatus(), new UniformInterfaceException(
+					clientResponse), parseErrorMsg(clientResponse
 					.getEntity(String.class)));
 		} else if (statusCode >= 400 && statusCode < 500) {
 			// Client Error
 			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), parseErrorMsg(clientResponse
+					.getClientResponseStatus(), new UniformInterfaceException(
+					clientResponse), parseErrorMsg(clientResponse
 					.getEntity(String.class)));
-			// throw new HTTPException(statusCode);
 		} else if (statusCode >= 500) {
 			// Server Error
 			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), parseErrorMsg(clientResponse
+					.getClientResponseStatus(), new UniformInterfaceException(
+					clientResponse), parseErrorMsg(clientResponse
 					.getEntity(String.class)));
 		} else {
 			return null;
-		}		
+		}
 	}
 
 	private String parseErrorMsg(String entity) {
 		try {
-			ClientResponseParser callback  = new ClientResponseParser();
+			ClientResponseParser callback = new ClientResponseParser();
 			Reader reader = new StringReader(entity);
 			new ParserDelegator().parse(reader, callback, false);
 			return callback.getMessage();

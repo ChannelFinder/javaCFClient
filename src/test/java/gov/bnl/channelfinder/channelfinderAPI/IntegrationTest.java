@@ -125,17 +125,7 @@ public class IntegrationTest {
 				.getXmlTags().size() == 1);
 		ChannelFinderClient.getInstance().removeChannel(channel.getName());
 	}
-
-	/**
-	 * Test detection of error condition - attempting to update a channel that
-	 * does not exist
-	 */
-//	@Test
-	public void updateEmptyChannel() {
-		XmlChannel channel = new XmlChannel("new", "owner");
-		ChannelFinderClient.getInstance().updateChannel(channel);
-	}
-
+	
 	/**
 	 * Test destructive update - existing channel is completely replaced
 	 * 
