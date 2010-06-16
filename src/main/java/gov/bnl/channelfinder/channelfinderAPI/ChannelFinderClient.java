@@ -328,9 +328,8 @@ public class ChannelFinderClient {
 					.getClientResponseStatus(), parseErrorMsg(clientResponse
 					.getEntity(String.class)));
 		} else {
-
-		}
-		return null;
+			return null;
+		}		
 	}
 
 	private String parseErrorMsg(String entity) {
