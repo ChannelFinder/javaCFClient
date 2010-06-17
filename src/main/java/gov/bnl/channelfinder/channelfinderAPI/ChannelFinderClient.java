@@ -21,7 +21,6 @@ import javax.net.ssl.TrustManager;
 import javax.swing.text.html.parser.ParserDelegator;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
-import javax.xml.ws.http.HTTPException;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -138,7 +137,7 @@ public class ChannelFinderClient {
 	 * @param name
 	 * @return the channel which matches the queried name
 	 */
-	public XmlChannel getChannel(String name) {
+	public XmlChannel getChannel(String name) throws ChannelFinderException{
 		return service.path("channel").path(name).accept(
 				MediaType.APPLICATION_XML).get(XmlChannel.class);
 	}
@@ -160,9 +159,13 @@ public class ChannelFinderClient {
 	 * 
 	 * @param xmlChannel
 	 */
-	public void addChannel(XmlChannel xmlChannel) {
-		service.path("channel").path(xmlChannel.getName()).type(
-				MediaType.APPLICATION_XML).put(xmlChannel);
+	public void addChannel(XmlChannel xmlChannel) throws ChannelFinderException {
+		try {
+			service.path("channel").path(xmlChannel.getName()).type(
+					MediaType.APPLICATION_XML).put(xmlChannel);
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
 	}
 
 	/**
@@ -170,13 +173,13 @@ public class ChannelFinderClient {
 	 * 
 	 * @param xmlChannels
 	 */
-	public void addChannels(XmlChannels xmlChannels) {
+	public void addChannels(XmlChannels xmlChannels) throws ChannelFinderException {
 		try {
 			service.path("channels").type(MediaType.APPLICATION_XML).post(
 					xmlChannels);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}		
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
 	}
 
 	/**
@@ -184,8 +187,12 @@ public class ChannelFinderClient {
 	 * 
 	 * @param name
 	 */
-	public void removeChannel(String name) {
-		service.path("channel").path(name).delete();
+	public void removeChannel(String name) throws ChannelFinderException {
+		try {
+			service.path("channel").path(name).delete();
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
 	}
 
 	/**
@@ -241,12 +248,13 @@ public class ChannelFinderClient {
 	 * 
 	 * @param channel
 	 */
-	public void updateChannel(XmlChannel channel) {
+	public void updateChannel(XmlChannel channel) throws ChannelFinderException {
 		try {
 			service.path("channel").path(channel.getName()).type(
 					MediaType.APPLICATION_XML).post(channel);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null); // no return expected.
+			// check for errors while trying an update
+			checkResponse(e.getResponse(), null);
 		}
 	}
 
@@ -289,11 +297,15 @@ public class ChannelFinderClient {
 	 * @param channelName
 	 * @param tagName
 	 */
-	public void setChannelTag(String channelName, String tagName) {
-		XmlChannel ch = service.path("channel").path(channelName).accept(
-				MediaType.APPLICATION_XML).get(XmlChannel.class);
-		service.path("tags").path(tagName).path(channelName).accept(
-				MediaType.APPLICATION_XML).put(ch);
+	public void setChannelTag(String channelName, String tagName) throws ChannelFinderException {
+		try {
+			XmlChannel ch = service.path("channel").path(channelName).accept(
+					MediaType.APPLICATION_XML).get(XmlChannel.class);
+			service.path("tags").path(tagName).path(channelName).accept(
+					MediaType.APPLICATION_XML).put(ch);
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
 	}
 
 	/**
@@ -310,8 +322,6 @@ public class ChannelFinderClient {
 	// determines the existence of an error and throws ChannelFinderException.
 	private <T> T checkResponse(ClientResponse clientResponse,
 			Class<T> returnClass) {
-		@SuppressWarnings("unused")
-		Status returnStatus = clientResponse.getClientResponseStatus();
 		int statusCode = clientResponse.getStatus();
 		if (statusCode >= 200 && statusCode < 300) {
 			// OK
@@ -346,7 +356,6 @@ public class ChannelFinderClient {
 			new ParserDelegator().parse(reader, callback, false);
 			return callback.getMessage();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;

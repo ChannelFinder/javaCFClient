@@ -85,7 +85,6 @@ public class BenchmarkTest {
 		assertTrue(ch.getName().equals("2000first:a<000>:0:0"));
 		System.out.println("duration : " + (System.currentTimeMillis() - time));
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
