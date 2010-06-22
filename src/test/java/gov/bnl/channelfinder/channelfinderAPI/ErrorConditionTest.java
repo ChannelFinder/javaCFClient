@@ -23,17 +23,11 @@ public class ErrorConditionTest {
 
 	}
 	
-	@Test
+	@Test (expected=ChannelFinderException.class)
 	public void addOrphanChannel(){
-		try {
-			XmlChannel xmlChannel = new XmlChannel();
-			xmlChannel.setName("onlyName");
-			ChannelFinderClient.getInstance().addChannel(xmlChannel );
-			assertTrue(false);
-		} catch (ChannelFinderException e) {
-//			e.printStackTrace();
-			assertTrue(true);
-		}
+		XmlChannel xmlChannel = new XmlChannel();
+		xmlChannel.setName("onlyName");
+		ChannelFinderClient.getInstance().addChannel(xmlChannel );
 	}
 	
 	/**

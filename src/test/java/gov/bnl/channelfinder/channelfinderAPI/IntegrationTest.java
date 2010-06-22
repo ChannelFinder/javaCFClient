@@ -2,6 +2,8 @@ package gov.bnl.channelfinder.channelfinderAPI;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.prefs.Preferences;
+
 import gov.bnl.channelfinder.channelfinderAPI.ChannelFinderClient;
 import gov.bnl.channelfinder.channelfinderAPI.exceptions.ChannelFinderException;
 import gov.bnl.channelfinder.model.XmlChannel;
@@ -24,7 +26,14 @@ public class IntegrationTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
-
+		// set up the preferences
+		Preferences preferences = Preferences
+				.userNodeForPackage(ChannelFinderClient.class);
+		preferences
+				.put("channel_finder_url",
+						"https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder/resources");
+		preferences.put("username", "boss");
+		preferences.put("password", "1234");
 	}
 
 	/**
@@ -45,11 +54,12 @@ public class IntegrationTest {
 			assertTrue(chs.getChannels().size() >= 0);
 		} catch (ChannelFinderException e) {
 			// TODO Auto-generated catch block
-			System.out.println(e.getStatus().getStatusCode() + " " + e.getStatus()+ "\n" +e.getMessage());
-//			e.printStackTrace();
+			System.out.println(e.getStatus().getStatusCode() + " "
+					+ e.getStatus() + "\n" + e.getMessage());
+			// e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Add single channel pvk01
 	 */
@@ -100,7 +110,7 @@ public class IntegrationTest {
 	/**
 	 * 
 	 */
-	
+
 	/**
 	 * update an existing channel with a new property and new tag
 	 * 
@@ -119,13 +129,13 @@ public class IntegrationTest {
 		channel.addTag(new XmlTag("tag1", "shroffk"));
 		// uses the POST method
 		ChannelFinderClient.getInstance().updateChannel(channel);
-		assertTrue(ChannelFinderClient.getInstance().getChannel(channel.getName())
-				.getXmlProperties().size() == 1);
-		assertTrue(ChannelFinderClient.getInstance().getChannel(channel.getName())
-				.getXmlTags().size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().getChannel(
+				channel.getName()).getXmlProperties().size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().getChannel(
+				channel.getName()).getXmlTags().size() == 1);
 		ChannelFinderClient.getInstance().removeChannel(channel.getName());
 	}
-	
+
 	/**
 	 * Test destructive update - existing channel is completely replaced
 	 * 
@@ -135,15 +145,15 @@ public class IntegrationTest {
 		XmlChannel oldChannel = new XmlChannel("old", "shroffk");
 		oldChannel.addTag(new XmlTag("old", "shroffk"));
 		ChannelFinderClient.getInstance().addChannel(oldChannel);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("old").getChannels()
-				.size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("old")
+				.getChannels().size() == 1);
 		XmlChannel newChannel = new XmlChannel("old", "shroffk");
 		newChannel.addTag(new XmlTag("new", "shroffk"));
 		ChannelFinderClient.getInstance().addChannel(newChannel);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("old").getChannels()
-				.size() == 0);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("new").getChannels()
-				.size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("old")
+				.getChannels().size() == 0);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("new")
+				.getChannels().size() == 1);
 		ChannelFinderClient.getInstance().removeChannel(newChannel.getName());
 	}
 
@@ -161,11 +171,11 @@ public class IntegrationTest {
 		chs.addChannel(new XmlChannel("pvk02", "boss"));
 		chs.addChannel(new XmlChannel("pvk03", "boss"));
 		ChannelFinderClient.getInstance().addChannels(chs);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(tag.getName())
-				.getChannels().size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName()).getChannels().size() == 1);
 		ChannelFinderClient.getInstance().setTag(chs, tag.getName());
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag("tagName")
-				.getChannels().size() == 3);
+		assertTrue(ChannelFinderClient.getInstance()
+				.queryChannelsTag("tagName").getChannels().size() == 3);
 		ChannelFinderClient.getInstance().removeChannels(chs);
 	}
 
@@ -184,11 +194,11 @@ public class IntegrationTest {
 
 		XmlTag tag = new XmlTag("tagName", "shroffk");
 		chs.getChannels().toArray(new XmlChannel[0])[0].addTag(tag);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(tag.getName())
-				.getChannels().size() == 0);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName()).getChannels().size() == 0);
 		ChannelFinderClient.getInstance().setTag(chs, tag.getName());
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(tag.getName())
-				.getChannels().size() == 3);
+		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName()).getChannels().size() == 3);
 		ChannelFinderClient.getInstance().removeChannels(chs);
 
 	}

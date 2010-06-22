@@ -4,7 +4,6 @@
 package gov.bnl.channelfinder.channelfinderAPI;
 
 import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTML.Tag;
 import javax.swing.text.html.HTMLEditorKit.ParserCallback;
 
