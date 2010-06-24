@@ -1,6 +1,5 @@
 package gov.bnl.channelfinder.channelfinderAPI;
 
-
 import static org.junit.Assert.assertTrue;
 
 import gov.bnl.channelfinder.model.XmlChannel;
@@ -83,7 +82,7 @@ public class BenchmarkTest {
 		try {
 		XmlChannel ch = ChannelFinderClient.getInstance().getChannel("2000first:a<000>:0:0");
 		assertTrue(ch.getName().equals("2000first:a<000>:0:0"));
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query1Channel duration : " + (System.currentTimeMillis() - time));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -95,7 +94,7 @@ public class BenchmarkTest {
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName(
 				"2000first:a<400>:0*");
 		assertTrue(chs.getChannels().size() == 10);
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query10Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
@@ -104,7 +103,7 @@ public class BenchmarkTest {
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName(
 				"2000first:a<400>:*");
 		assertTrue(chs.getChannels().size() == 100);
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query100Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
@@ -113,7 +112,7 @@ public class BenchmarkTest {
 		XmlChannels chs = ChannelFinderClient.getInstance()
 				.queryChannelsName("2000first:b*");
 		assertTrue(chs.getChannels().size() == 500);
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query500Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
@@ -121,7 +120,7 @@ public class BenchmarkTest {
 		time = System.currentTimeMillis();
 		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsName("2000second:*");
 		assertTrue(chs.getChannels().size() == 1000);
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query1000Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
@@ -130,7 +129,7 @@ public class BenchmarkTest {
 		XmlChannels chs = ChannelFinderClient.getInstance()
 				.queryChannelsName("2000*");
 		assertTrue(chs.getChannels().size() == 2000);
-		System.out.println("duration : " + (System.currentTimeMillis() - time));
+		System.out.println("query2000Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 }

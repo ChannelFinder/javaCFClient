@@ -4,9 +4,11 @@ import gov.bnl.channelfinder.channelfinderAPI.exceptions.ChannelFinderException;
 import gov.bnl.channelfinder.model.XmlChannel;
 import gov.bnl.channelfinder.model.XmlChannels;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
@@ -62,17 +64,19 @@ public class ChannelFinderClient {
 		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
 		// Use the properties file for defaults
 		properties = new Properties();
-		FileInputStream in;
+//		FileInputStream in;
+		InputStream is;
 		try {
 			String propertyFile = System
 					.getProperty("channelfinder.properties");
-			if (propertyFile != null)
-				in = new FileInputStream(propertyFile);
-			else {
-				in = new FileInputStream("channelfinder.properties");
+			if (propertyFile != null) {
+				is = new FileInputStream(propertyFile);
+			} else {
+				is = this.getClass().getResourceAsStream(
+						"/channelfinder.properties");
 			}
-			properties.load(in);
-			in.close();
+			properties.load(is);
+			is.close();
 		} catch (FileNotFoundException e1) {
 			e1.printStackTrace();
 		} catch (IOException e1) {
@@ -83,6 +87,7 @@ public class ChannelFinderClient {
 		TrustManager mytm[] = null;
 		SSLContext ctx = null;
 
+		// trail
 		try {
 			mytm = new TrustManager[] { new MyX509TrustManager(
 					preferences.get(
@@ -90,6 +95,8 @@ public class ChannelFinderClient {
 					preferences
 							.get(
 									"trustPass", properties.getProperty("trustPass")).toCharArray()) }; //$NON-NLS-1$
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -115,8 +122,9 @@ public class ChannelFinderClient {
 				"password", properties.getProperty("password")))); //$NON-NLS-1$ //$NON-NLS-2$
 
 		// Logging filter - raw request and response printed to sys.o
-		if (preferences.get(
-				"raw_html_logging", properties.getProperty("raw_html_logging")).equals("on")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if (preferences
+				.get(
+						"raw_html_logging", properties.getProperty("raw_html_logging")).equals("on")) { //$NON-NLS-1$ //$NON-NLS-2$
 			client.addFilter(new LoggingFilter());
 		}
 		service = client.resource(getBaseURI());
@@ -132,14 +140,20 @@ public class ChannelFinderClient {
 	}
 
 	private static URI getBaseURI() {
-		return UriBuilder.fromUri(preferences.get(
-				"channel_finder_url", properties.getProperty("channel_finder_url"))).build(); //$NON-NLS-1$
+		return UriBuilder
+				.fromUri(
+						preferences
+								.get(
+										"channel_finder_url", properties.getProperty("channel_finder_url"))).build(); //$NON-NLS-1$
 	}
 
-	public void changeURI(String path) {
-		ClientConfig config = new DefaultClientConfig();
-		Client client = Client.create(config);
-		service = client.resource(UriBuilder.fromUri(path).build());
+	public void resetPreferences() {
+		try {
+			Preferences.userNodeForPackage(this.getClass()).clear();
+		} catch (BackingStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
