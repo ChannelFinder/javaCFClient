@@ -306,12 +306,11 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove {tag} from Xmlchannel list {channels}
+	 * Remove {tag} from all channels
 	 * 
-	 * @param channels
 	 * @param tag
 	 */
-	public void removeTag(XmlChannels channels, String tag) {
+	public void removeTag(String tag) {
 		service.path("tags").path(tag).accept(MediaType.APPLICATION_XML) //$NON-NLS-1$
 				.delete();
 	}

@@ -86,22 +86,22 @@ public class IntegrationTest {
 	@Test
 	public void addremoveChannels() {
 		XmlChannels chs = new XmlChannels();
-		chs.addChannel(new XmlChannel("pvk01", "shroffk"));
-		chs.addChannel(new XmlChannel("pvk02", "shroffk"));
-		chs.addChannel(new XmlChannel("pvk03", "shroffk"));
+		for (int i = 1; i <= 3; i++) {
+			chs.addChannel(new XmlChannel("pvk0" + i, "shroffk"));
+		}
 		// add
 		ChannelFinderClient.getInstance().addChannels(chs);
 		XmlChannels rchs = ChannelFinderClient.getInstance().getChannels();
 		int count = rchs.getChannels().size();
-		assertTrue(rchs.containsKey("pvk01"));
-		assertTrue(rchs.containsKey("pvk02"));
-		assertTrue(rchs.containsKey("pvk03"));
+		for (int i = 1; i <= 3; i++) {
+			assertTrue(rchs.containsKey("pvk0" + i));
+		}
 		// remove
 		ChannelFinderClient.getInstance().removeChannels(chs);
 		rchs = ChannelFinderClient.getInstance().getChannels();
-		assertTrue(!rchs.containsKey("pvk01"));
-		assertTrue(!rchs.containsKey("pvk02"));
-		assertTrue(!rchs.containsKey("pvk03"));
+		for (int i = 1; i <= 3; i++) {
+			assertTrue(!rchs.containsKey("pvk0" + i));
+		}
 		// check 3 channels were removed
 		assertTrue((count - rchs.getChannels().size()) == 3);
 		// assertTrue(rchs.getChannels().size() == 0);
@@ -186,13 +186,13 @@ public class IntegrationTest {
 	@Test
 	public void setTag2() {
 		XmlChannels chs = new XmlChannels();
-
-		chs.addChannel(new XmlChannel("pvk01", "boss"));
-		chs.addChannel(new XmlChannel("pvk02", "boss"));
-		chs.addChannel(new XmlChannel("pvk03", "boss"));
+		for (int i = 1; i <= 3; i++) {
+			chs.addChannel(new XmlChannel("pvk0" + i, "boss"));
+		}
 		ChannelFinderClient.getInstance().addChannels(chs);
 
 		XmlTag tag = new XmlTag("tagName", "shroffk");
+		// adding owner to the payload.
 		chs.getChannels().toArray(new XmlChannel[0])[0].addTag(tag);
 		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
 				tag.getName()).getChannels().size() == 0);
@@ -201,5 +201,84 @@ public class IntegrationTest {
 				tag.getName()).getChannels().size() == 3);
 		ChannelFinderClient.getInstance().removeChannels(chs);
 
+	}
+
+	/**
+	 * test the correct operation of both methods to add tags. addTag() - non
+	 * destructive - POST. setTag() - destructive - PUT. The tag ownership
+	 * details are already present in the database
+	 */
+	@Test
+	public void addTag() {
+		XmlChannels chs = new XmlChannels();
+		XmlChannels results;
+		XmlChannel ch = new XmlChannel("pvk01", "boss");
+		XmlTag tag = new XmlTag("tagName", "boss");
+		ch.addTag(tag);
+		chs.addChannel(ch);
+		for (int i = 2; i <= 4; i++) {
+			chs.addChannel(new XmlChannel("pvk0" + i, "boss"));
+		}
+		ChannelFinderClient.getInstance().addChannels(chs);
+
+		// Add a tag to channels using post - this should leave other tags
+		// intact
+		// tagged channels include pvk01
+		results = ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName());
+		assertTrue(results.getChannels().size() == 1);
+
+		chs = new XmlChannels();
+		chs.addChannel(new XmlChannel("pvk02", "boss"));
+		ChannelFinderClient.getInstance().addTag(chs, tag.getName());
+
+		// tagged channels include pvk01, pvk02
+		results = ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName());
+		assertTrue(results.getChannels().size() == 2);
+		for (XmlChannel channel : results.getChannels()) {
+			assertTrue(channel.getName().equals("pvk01")
+					|| channel.getName().equals("pvk02"));
+		}
+
+		chs = new XmlChannels();
+		chs.addChannel(new XmlChannel("pvk03", "boss"));
+		chs.addChannel(new XmlChannel("pvk04", "boss"));
+		ChannelFinderClient.getInstance().setTag(chs, tag.getName());
+
+		// tagged channels include pvk03 and 04 - tag removed from pvk01 and 02
+		results = ChannelFinderClient.getInstance().queryChannelsTag(
+				tag.getName());
+		assertTrue(results.getChannels().size() == 2);
+		for (XmlChannel channel : results.getChannels()) {
+			assertTrue(channel.getName().equals("pvk03")
+					|| channel.getName().equals("pvk04"));
+		}
+		for (int i = 1; i <= 4; i++) {
+			ChannelFinderClient.getInstance().removeChannel("pvk0" + i);
+		}
+	}
+
+	/**
+	 * Remove tag from all channels
+	 */
+	@Test
+	public void removeTag(){
+		ChannelFinderClient client = ChannelFinderClient.getInstance();
+		XmlChannel ch;
+		XmlTag tag = new XmlTag("tagName", "boss");
+		for (int i = 1; i <= 3; i++) {
+			ch = new XmlChannel("pvk0"+i, "boss");
+			ch.addTag(tag);
+			client.addChannel(ch);
+		}
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 3);
+		client.removeTag(tag.getName());
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
+		//cleanup
+		for (int i = 1; i <= 3; i++) {
+			ChannelFinderClient.getInstance().removeChannel("pvk0" + i);
+		}
+		
 	}
 }
