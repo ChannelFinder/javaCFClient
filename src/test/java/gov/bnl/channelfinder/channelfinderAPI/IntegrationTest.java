@@ -300,10 +300,5 @@ public class IntegrationTest {
 		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
 		//cleanup 
 		client.removeChannel(channel.getName());
-	}
-	
-	@Test
-	public void cleanup(){
-		ChannelFinderClient.getInstance().removeChannel("pvk01");
-	}
+	}	
 }
