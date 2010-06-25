@@ -3,8 +3,8 @@ package gov.bnl.channelfinder.channelfinderAPI;
 import gov.bnl.channelfinder.channelfinderAPI.exceptions.ChannelFinderException;
 import gov.bnl.channelfinder.model.XmlChannel;
 import gov.bnl.channelfinder.model.XmlChannels;
+import gov.bnl.channelfinder.model.XmlTag;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -64,7 +64,7 @@ public class ChannelFinderClient {
 		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
 		// Use the properties file for defaults
 		properties = new Properties();
-//		FileInputStream in;
+		// FileInputStream in;
 		InputStream is;
 		try {
 			String propertyFile = System
@@ -301,7 +301,7 @@ public class ChannelFinderClient {
 	 * @param tag
 	 */
 	public void addTag(XmlChannels channels, String tag) {
-		service.path("tags").path(tag).accept(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
+		service.path("tags").path(tag).type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
 				channels);
 	}
 
@@ -321,15 +321,15 @@ public class ChannelFinderClient {
 	 * @param channelName
 	 * @param tagName
 	 */
-	public void setChannelTag(String channelName, String tagName)
+	public void setChannelTag(String channelName, XmlTag tag)
 			throws ChannelFinderException {
 		try {
-			XmlChannel ch = service.path("channel").path(channelName).accept( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).get(XmlChannel.class);
-			service.path("tags").path(tagName).path(channelName).accept( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).put(ch);
+			service.path("tags").path(tag.getName()).path(channelName).type(
+					MediaType.APPLICATION_XML).put(tag);
 		} catch (UniformInterfaceException e) {
 			checkResponse(e.getResponse(), null);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 

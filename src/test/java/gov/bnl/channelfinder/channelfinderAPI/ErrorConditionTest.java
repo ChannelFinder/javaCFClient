@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import gov.bnl.channelfinder.channelfinderAPI.exceptions.*;
 import gov.bnl.channelfinder.model.XmlChannel;
 import gov.bnl.channelfinder.model.XmlChannels;
+import gov.bnl.channelfinder.model.XmlTag;
 
 import org.junit.Test;
 
@@ -100,7 +101,8 @@ public class ErrorConditionTest {
 	@Test
 	public void addTag2NonExistentChannel() {
 		try {
-			ChannelFinderClient.getInstance().setChannelTag("someChannel", "someTag");
+			XmlTag tag = new XmlTag("sometag", "boss");
+			ChannelFinderClient.getInstance().setChannelTag("someChannel", tag);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 //			e.printStackTrace();

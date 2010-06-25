@@ -281,4 +281,29 @@ public class IntegrationTest {
 		}
 		
 	}
+	
+	/**
+	 * Test adding and removing a tag on a single channel
+	 */
+	@Test
+	public void addRemoveChannelTag(){
+		ChannelFinderClient client = ChannelFinderClient.getInstance();
+		XmlChannel channel = new XmlChannel("pvk01", "boss");
+		client.addChannel(channel);
+		
+		// Add tag
+		XmlTag tag = new XmlTag("tagName", "boss");
+		client.setChannelTag(channel.getName(), tag);
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 1);
+		// Remove tag
+		client.removeChannelTag(channel.getName(), tag.getName());
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
+		//cleanup 
+		client.removeChannel(channel.getName());
+	}
+	
+	@Test
+	public void cleanup(){
+		ChannelFinderClient.getInstance().removeChannel("pvk01");
+	}
 }
