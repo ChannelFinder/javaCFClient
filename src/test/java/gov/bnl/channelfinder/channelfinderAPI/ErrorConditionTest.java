@@ -102,7 +102,7 @@ public class ErrorConditionTest {
 	public void addTag2NonExistentChannel() {
 		try {
 			XmlTag tag = new XmlTag("sometag", "boss");
-			ChannelFinderClient.getInstance().setChannelTag("someChannel", tag);
+			ChannelFinderClient.getInstance().setTag("someChannel", tag);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 //			e.printStackTrace();

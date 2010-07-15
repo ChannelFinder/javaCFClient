@@ -15,6 +15,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.sun.jersey.core.util.MultivaluedMapImpl;
+//multivalue map
+
+
 public class QueryTest {
 
 	private static XmlChannels chs;
@@ -82,7 +86,7 @@ public class QueryTest {
 		assertTrue(channels.getChannels().size() == 2);
 		
 		map.put("prop", "1");
-		map.put("prop", "2");
+		map.put("prop2", "2");
 		channels = ChannelFinderClient.getInstance().queryChannels(
 				map);
 		assertTrue(channels.getChannels().size() == 1);
@@ -93,6 +97,14 @@ public class QueryTest {
 				map);		
 	}
 	
+	@Test
+	public void testMultipleParameters(){
+		MultivaluedMapImpl map = new MultivaluedMapImpl();
+		map.add("prop", "1");
+		map.add("prop", "2");
+		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(map);
+		assertTrue(channels.getChannels().size() == 3);		
+	}
 
 	@AfterClass
 	public static void cleanup() {

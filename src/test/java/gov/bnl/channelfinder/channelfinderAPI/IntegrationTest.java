@@ -186,20 +186,19 @@ public class IntegrationTest {
 	@Test
 	public void setTag2() {
 		XmlChannels chs = new XmlChannels();
+		ChannelFinderClient client = ChannelFinderClient.getInstance();
 		for (int i = 1; i <= 3; i++) {
 			chs.addChannel(new XmlChannel("pvk0" + i, "boss"));
 		}
-		ChannelFinderClient.getInstance().addChannels(chs);
+		client.addChannels(chs);
 
 		XmlTag tag = new XmlTag("tagName", "shroffk");
 		// adding owner to the payload.
 		chs.getChannels().toArray(new XmlChannel[0])[0].addTag(tag);
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
-				tag.getName()).getChannels().size() == 0);
-		ChannelFinderClient.getInstance().setTag(chs, tag.getName());
-		assertTrue(ChannelFinderClient.getInstance().queryChannelsTag(
-				tag.getName()).getChannels().size() == 3);
-		ChannelFinderClient.getInstance().removeChannels(chs);
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
+		client.setTag(chs, tag.getName());
+		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 3);
+		client.removeChannels(chs);
 
 	}
 
@@ -263,42 +262,85 @@ public class IntegrationTest {
 	 * Remove tag from all channels
 	 */
 	@Test
-	public void removeTag(){
+	public void removeTag() {
 		ChannelFinderClient client = ChannelFinderClient.getInstance();
 		XmlChannel ch;
 		XmlTag tag = new XmlTag("tagName", "boss");
 		for (int i = 1; i <= 3; i++) {
-			ch = new XmlChannel("pvk0"+i, "boss");
+			ch = new XmlChannel("pvk0" + i, "boss");
 			ch.addTag(tag);
 			client.addChannel(ch);
 		}
 		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 3);
 		client.removeTag(tag.getName());
 		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
-		//cleanup
+		// cleanup
 		for (int i = 1; i <= 3; i++) {
 			ChannelFinderClient.getInstance().removeChannel("pvk0" + i);
 		}
-		
+
 	}
-	
+
 	/**
 	 * Test adding and removing a tag on a single channel
 	 */
 	@Test
-	public void addRemoveChannelTag(){
+	public void addRemoveChannelTag() {
 		ChannelFinderClient client = ChannelFinderClient.getInstance();
 		XmlChannel channel = new XmlChannel("pvk01", "boss");
 		client.addChannel(channel);
-		
+
 		// Add tag
 		XmlTag tag = new XmlTag("tagName", "boss");
-		client.setChannelTag(channel.getName(), tag);
+		client.setTag(channel.getName(), tag);
 		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 1);
 		// Remove tag
-		client.removeChannelTag(channel.getName(), tag.getName());
+		client.removeTag(channel.getName(), tag.getName());
 		assertTrue(client.queryChannelsTag(tag.getName()).getChannels().size() == 0);
-		//cleanup 
+		// cleanup
 		client.removeChannel(channel.getName());
-	}	
+	}
+
+	/**
+	 * Test adding and removing properties
+	 * 
+	 */
+	@Test
+	public void addRemoveProps() {
+		ChannelFinderClient client = ChannelFinderClient.getInstance();
+		XmlProperty prop1 = new XmlProperty("prop1", "boss", "1");
+		XmlChannel channel = new XmlChannel("pvk01", "boss");
+		int matches = client.queryChannelsProp(prop1.getName()).getChannels().size(); 
+		
+		// add a property to single channels
+		client.addChannel(channel);
+		client.addProperty(channel.getName(), prop1);
+		assertTrue(client.queryChannelsProp(prop1.getName()).getChannels().size() == (matches+1));
+		
+		// add a property to a set of channels
+		XmlChannels channels = new XmlChannels();
+		channels.addChannel(new XmlChannel("pvk02", "boss"));
+		channels.addChannel(new XmlChannel("pvk03", "boss"));
+		client.addChannels(channels);
+		client.addProperty(channels, prop1);
+		assertTrue(client.queryChannelsProp(prop1.getName()).getChannels().size() == (matches+3));
+		
+		// remove a property wherever it might appear
+		XmlProperty prop2 = new XmlProperty("prop2", "boss", "2");
+		client.addProperty(channels, prop2);
+		assertTrue(client.queryChannelsProp("prop2").getChannels().size() == 2);
+		client.removeProperty("prop2");
+		assertTrue(client.queryChannelsProp("prop2").getChannels().size() == 0);
+		
+		// remove a property from a single channel
+		client.removeProperty(channel.getName(), prop1.getName());
+		assertTrue(client.queryChannelsProp(prop1.getName()).getChannels().size() == (matches+2));
+		
+		// remove a property from a set of channels
+		client.removeProperty(channels, prop1.getName());
+		assertTrue(client.queryChannelsProp(prop1.getName()).getChannels().size() == (matches));
+
+		client.removeChannel(channel.getName());
+		client.removeChannels(channels);
+	}
 }
