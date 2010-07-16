@@ -13,6 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlElement;
 
 /**
+ *  TODO: either add/remove on this class or on the collection
  *
  * @author rlange
  */

@@ -1,11 +1,12 @@
 package gov.bnl.channelfinder.channelfinderAPI;
 
+import gov.bnl.channelfinder.api.ChannelFinderClient;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Hashtable;
 import java.util.Map;
 
-import gov.bnl.channelfinder.channelfinderAPI.exceptions.ChannelFinderException;
+import gov.bnl.channelfinder.api.ChannelFinderException;
 import gov.bnl.channelfinder.model.XmlChannel;
 import gov.bnl.channelfinder.model.XmlChannels;
 import gov.bnl.channelfinder.model.XmlProperty;
@@ -46,7 +47,7 @@ public class QueryTest {
 		chs.addChannel(ch2);
 		chs.addChannel(ch3);
 		try {
-			channelcount = ChannelFinderClient.getInstance().getChannels()
+			channelcount = ChannelFinderClient.getInstance().retrieveChannels()
 					.getChannels().size();
 			ChannelFinderClient.getInstance().addChannels(chs);
 		} catch (ChannelFinderException e) {
@@ -64,7 +65,7 @@ public class QueryTest {
 		map.put("~name", "*");
 		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
 				map);
-		assertTrue(ChannelFinderClient.getInstance().getChannels()
+		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
 				.getChannels().size() == channels.getChannels().size());
 	}
 	
@@ -109,7 +110,7 @@ public class QueryTest {
 	@AfterClass
 	public static void cleanup() {
 		ChannelFinderClient.getInstance().removeChannels(chs);
-		assertTrue(ChannelFinderClient.getInstance().getChannels()
+		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
 				.getChannels().size() == channelcount);
 	}
 }

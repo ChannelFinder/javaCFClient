@@ -14,6 +14,9 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 
 /**
  *
+ * TODO: move mode in the same package
+ *  TODO: either add/remove on this class or on the collection
+ *
  * @author rlange
  */
 

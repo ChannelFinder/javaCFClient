@@ -1,6 +1,5 @@
-package gov.bnl.channelfinder.channelfinderAPI;
+package gov.bnl.channelfinder.api;
 
-import gov.bnl.channelfinder.channelfinderAPI.exceptions.ChannelFinderException;
 import gov.bnl.channelfinder.model.XmlChannel;
 import gov.bnl.channelfinder.model.XmlChannels;
 import gov.bnl.channelfinder.model.XmlProperty;
@@ -35,9 +34,14 @@ import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import java.util.Arrays;
 
 import java.util.prefs.*;
 
+/**
+ * TODO: make this not a singleton. Add a constructor to programmatically pass
+ * the configuration.
+ */
 public class ChannelFinderClient {
 	private static ChannelFinderClient instance = new ChannelFinderClient();
 	private WebResource service;
@@ -45,9 +49,6 @@ public class ChannelFinderClient {
 	private static Properties properties;
 
 	/*
-	 * TODO Error handling a. simply throw the http error returned by
-	 * channelFinder webservice ? b. catch/handle the http errors and then throw
-	 * our own ?
 	 * 
 	 * Input checking parse the inputs - check for existance of a owner for a
 	 * tag before performing the tag operations.
@@ -148,7 +149,7 @@ public class ChannelFinderClient {
 										"channel_finder_url", properties.getProperty("channel_finder_url"))).build(); //$NON-NLS-1$
 	}
 
-	public void resetPreferences() {
+	@Deprecated public void resetPreferences() {
 		try {
 			Preferences.userNodeForPackage(this.getClass()).clear();
 		} catch (BackingStoreException e) {
@@ -162,7 +163,7 @@ public class ChannelFinderClient {
 	 * @param name
 	 * @return the channel which matches the queried name
 	 */
-	public XmlChannel getChannel(String name) throws ChannelFinderException {
+	public XmlChannel retreiveChannel(String name) throws ChannelFinderException {
 		try {
 			return service.path("channel").path(name).accept( //$NON-NLS-1$
 					MediaType.APPLICATION_XML).get(XmlChannel.class);
@@ -177,7 +178,7 @@ public class ChannelFinderClient {
 	 * 
 	 * @return all the channels present in the database.
 	 */
-	public XmlChannels getChannels() {
+	public XmlChannels retrieveChannels() {
 		// will be replaced by the XmlChannels structure.
 		return checkResponse(service.path("channels").accept( //$NON-NLS-1$
 				MediaType.APPLICATION_XML).get(ClientResponse.class),
@@ -228,6 +229,8 @@ public class ChannelFinderClient {
 
 	/**
 	 * Remove a group of channels
+         * <p>
+         * TODO: replace with a list of names
 	 * 
 	 * @param channels
 	 */
@@ -243,7 +246,7 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public XmlChannels queryChannelsName(String pattern)
+	public XmlChannels queryChannelsByName(String pattern)
 			throws ChannelFinderException {
 		try {
 			return service
@@ -261,7 +264,7 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public XmlChannels queryChannelsTag(String pattern)
+	public XmlChannels queryChannelsByTag(String pattern)
 			throws ChannelFinderException {
 		try {
 			return service.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
@@ -275,12 +278,14 @@ public class ChannelFinderClient {
 
 	/**
 	 * This function is a subset of queryChannels - should it be removed??
+         * <p>
+         * TODO: add the usage of patterns and implement on top of the general query using the map
 	 * 
 	 * @param property
 	 * @return
 	 * @throws ChannelFinderException
 	 */
-	public XmlChannels queryChannelsProp(String property)
+	public XmlChannels queryChannelsByProp(String property, String... patterns)
 			throws ChannelFinderException {
 		try {
 			return service.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
@@ -294,6 +299,8 @@ public class ChannelFinderClient {
 
 	/**
 	 * Query for channels based on the criteria specified in the map
+         * <p>
+         * TODO: document that it takes a comma separated list
 	 * 
 	 * @param map
 	 * @return
@@ -303,7 +310,7 @@ public class ChannelFinderClient {
 		Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<String, String> entry = itr.next();
-			mMap.add(entry.getKey(), entry.getValue());
+			mMap.put(entry.getKey(), Arrays.asList(entry.getValue().split(",")));
 		}
 		return queryChannels(mMap);
 	}
@@ -339,11 +346,13 @@ public class ChannelFinderClient {
 
 	/**
 	 * Set {tag} on the set of channels {channels} and remove it from all others
+         * <p>
+         * TODO: XmlChannels -> Collections<String>
 	 * 
 	 * @param channels
 	 * @param tag
 	 */
-	public void setTag(XmlChannels channels, String tag) {
+	public void resetTag(XmlChannels channels, String tag) {
 		try {
 			service
 					.path("tags").path(tag).accept(MediaType.APPLICATION_XML).put( //$NON-NLS-1$
@@ -355,6 +364,9 @@ public class ChannelFinderClient {
 
 	/**
 	 * Add {tag} on the set of channels {channels}
+         * <p>
+         * TODO: XmlChannels -> Collection<String>
+         * TODO: addTag for a single channel
 	 * 
 	 * @param channels
 	 * @param tag
@@ -389,7 +401,7 @@ public class ChannelFinderClient {
 	 * @param channelName
 	 * @param tagName
 	 */
-	public void setTag(String channelName, XmlTag tag)
+	public void resetTag(String channelName, XmlTag tag)
 			throws ChannelFinderException {
 		try {
 			service.path("tags").path(tag.getName()).path(channelName).type(
@@ -401,6 +413,7 @@ public class ChannelFinderClient {
 
 	/**
 	 * Remove Tag {tagName} from channel {channelName}
+         * TODO: remove tag for list of channels
 	 * 
 	 * @param channelName
 	 * @param tagName
@@ -418,7 +431,7 @@ public class ChannelFinderClient {
 	 */
 	public void addProperty(String channelName, XmlProperty property)
 			throws ChannelFinderException {
-		XmlChannel channel = getChannel(channelName);
+		XmlChannel channel = retreiveChannel(channelName);
 		if (channel != null) {
 			channel.addProperty(property);
 			updateChannel(channel);
@@ -426,6 +439,8 @@ public class ChannelFinderClient {
 	}
 
 	/**
+         *
+         * TODO: XmlChannels -> List<String> ?
 	 * 
 	 * @param channels
 	 * @param property
@@ -468,11 +483,13 @@ public class ChannelFinderClient {
 					.accept(MediaType.APPLICATION_XML).accept(
 							MediaType.APPLICATION_JSON).delete();
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
 	/**
+         *
+         * TODO: use List<String> for channels
 	 * 
 	 * @param channels
 	 * @param propertyName

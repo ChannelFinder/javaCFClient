@@ -1,7 +1,7 @@
 /**
  * 
  */
-package gov.bnl.channelfinder.channelfinderAPI;
+package gov.bnl.channelfinder.api;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML.Tag;
@@ -11,7 +11,7 @@ import javax.swing.text.html.HTMLEditorKit.ParserCallback;
  * @author shroffk Parses the HTML pay load containing the details about the
  *         error TODO improve the parsing
  */
-public class ClientResponseParser extends ParserCallback {
+class ClientResponseParser extends ParserCallback {
 
 	private String message = "";
 	boolean messageFlag = false;

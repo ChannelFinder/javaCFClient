@@ -3,3 +3,8 @@ syntax: regexp
 ^target$
 \.project$
 \.classpath$
+\.orig\..*$
+\.orig$
+\.chg\..*$
+\.rej$
+\.conflict\~$
