@@ -8,6 +8,7 @@ package gov.bnl.channelfinder.model;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlElement;
@@ -58,6 +59,14 @@ public class XmlChannels {
 			}
 		}
 		return false;
+	}
+	
+	public Collection<String> getChannelNames(){
+		Collection<String> list = new ArrayList<String>();
+		for (XmlChannel channel : items) {
+			list.add(channel.getName());
+		}
+		return list;
 	}
 
 }

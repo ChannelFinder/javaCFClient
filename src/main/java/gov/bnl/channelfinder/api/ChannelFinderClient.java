@@ -14,6 +14,8 @@ import java.io.StringReader;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -41,6 +43,9 @@ import java.util.prefs.*;
 /**
  * TODO: make this not a singleton. Add a constructor to programmatically pass
  * the configuration.
+ * 
+ * @author shroffk
+ *
  */
 public class ChannelFinderClient {
 	private static ChannelFinderClient instance = new ChannelFinderClient();
@@ -149,7 +154,8 @@ public class ChannelFinderClient {
 										"channel_finder_url", properties.getProperty("channel_finder_url"))).build(); //$NON-NLS-1$
 	}
 
-	@Deprecated public void resetPreferences() {
+	@Deprecated
+	public void resetPreferences() {
 		try {
 			Preferences.userNodeForPackage(this.getClass()).clear();
 		} catch (BackingStoreException e) {
@@ -163,7 +169,8 @@ public class ChannelFinderClient {
 	 * @param name
 	 * @return the channel which matches the queried name
 	 */
-	public XmlChannel retreiveChannel(String name) throws ChannelFinderException {
+	public XmlChannel retreiveChannel(String name)
+			throws ChannelFinderException {
 		try {
 			return service.path("channel").path(name).accept( //$NON-NLS-1$
 					MediaType.APPLICATION_XML).get(XmlChannel.class);
@@ -229,15 +236,12 @@ public class ChannelFinderClient {
 
 	/**
 	 * Remove a group of channels
-         * <p>
-         * TODO: replace with a list of names
 	 * 
 	 * @param channels
 	 */
-	public void removeChannels(XmlChannels channels) {
-		Iterator<XmlChannel> itr = channels.getChannels().iterator();
-		while (itr.hasNext()) {
-			removeChannel(itr.next().getName());
+	public void removeChannels(Collection<String> channels) {
+		for (String channelName : channels) {
+			removeChannel(channelName);
 		}
 	}
 
@@ -278,8 +282,9 @@ public class ChannelFinderClient {
 
 	/**
 	 * This function is a subset of queryChannels - should it be removed??
-         * <p>
-         * TODO: add the usage of patterns and implement on top of the general query using the map
+	 * <p>
+	 * TODO: add the usage of patterns and implement on top of the general query
+	 * using the map
 	 * 
 	 * @param property
 	 * @return
@@ -299,8 +304,6 @@ public class ChannelFinderClient {
 
 	/**
 	 * Query for channels based on the criteria specified in the map
-         * <p>
-         * TODO: document that it takes a comma separated list
 	 * 
 	 * @param map
 	 * @return
@@ -310,7 +313,9 @@ public class ChannelFinderClient {
 		Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<String, String> entry = itr.next();
-			mMap.put(entry.getKey(), Arrays.asList(entry.getValue().split(",")));
+			mMap
+					.put(entry.getKey(), Arrays.asList(entry.getValue().split(
+							",")));
 		}
 		return queryChannels(mMap);
 	}
@@ -333,6 +338,7 @@ public class ChannelFinderClient {
 	 * Update properties and tags of existing channel "channel"
 	 * 
 	 * @param channel
+	 * @throws ChannelFinderException
 	 */
 	public void updateChannel(XmlChannel channel) throws ChannelFinderException {
 		try {
@@ -345,36 +351,33 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Set {tag} on the set of channels {channels} and remove it from all others
-         * <p>
-         * TODO: XmlChannels -> Collections<String>
 	 * 
-	 * @param channels
+	 * @param channelName
 	 * @param tag
 	 */
-	public void resetTag(XmlChannels channels, String tag) {
-		try {
-			service
-					.path("tags").path(tag).accept(MediaType.APPLICATION_XML).put( //$NON-NLS-1$
-							channels);
-		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
-		}
+	public void addTag(String channelName, XmlTag tag) {
+		Collection<String> list = new ArrayList<String>();
+		list.add(channelName);
+		addTag(list, tag);
 	}
 
 	/**
 	 * Add {tag} on the set of channels {channels}
-         * <p>
-         * TODO: XmlChannels -> Collection<String>
-         * TODO: addTag for a single channel
 	 * 
-	 * @param channels
+	 * @param channelNames
 	 * @param tag
 	 */
-	public void addTag(XmlChannels channels, String tag) {
+	public void addTag(Collection<String> channelNames, XmlTag tag) {
 		try {
+			XmlChannels channels = new XmlChannels();
+			XmlChannel channel;
+			for (String channelName : channelNames) {
+				channel = new XmlChannel(channelName, "");
+				channel.addTag(tag);
+				channels.addChannel(channel);
+			}
 			service
-					.path("tags").path(tag).type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
+					.path("tags").path(tag.getName()).type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
 							channels);
 		} catch (UniformInterfaceException e) {
 			checkResponse(e.getResponse(), null);
@@ -382,16 +385,25 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove {tag} from all channels
+	 * Remove Tag {tagName} from channel {channelName}
 	 * 
-	 * @param tag
+	 * @param channelName
+	 * @param tagName
 	 */
-	public void removeTag(String tag) {
-		try {
-			service.path("tags").path(tag).accept(MediaType.APPLICATION_XML) //$NON-NLS-1$
-					.delete();
-		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+	public void removeTag(String channelName, String tagName) {
+		service.path("tags").path(tagName).path(channelName).accept( //$NON-NLS-1$
+				MediaType.APPLICATION_XML).delete();
+	}
+
+	/**
+	 * Remove Tag {tagName} from a list of channels {channelNames}
+	 * 
+	 * @param channelName
+	 * @param tagName
+	 */
+	public void removeTag(Collection<String> channelNames, String tagName) {
+		for (String channelName : channelNames) {
+			removeTag(channelName, tagName);
 		}
 	}
 
@@ -412,15 +424,41 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove Tag {tagName} from channel {channelName}
-         * TODO: remove tag for list of channels
+	 * Set {tag} on the set of channels {channels} and remove it from all others
 	 * 
-	 * @param channelName
-	 * @param tagName
+	 * @param channels
+	 * @param tag
 	 */
-	public void removeTag(String channelName, String tagName) {
-		service.path("tags").path(tagName).path(channelName).accept( //$NON-NLS-1$
-				MediaType.APPLICATION_XML).delete();
+	public void resetTag(Collection<String> channelNames, XmlTag tag) {
+		try {
+			XmlChannels channels = new XmlChannels();
+			XmlChannel channel;
+			for (String channelName : channelNames) {
+				channel = new XmlChannel();
+				channel.setName(channelName);
+				channel.addTag(tag);
+				channels.addChannel(channel);
+			}
+			service
+					.path("tags").path(tag.getName()).accept(MediaType.APPLICATION_XML).put( //$NON-NLS-1$
+							channels);
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
+	}
+
+	/**
+	 * Remove {tag} from all channels
+	 * 
+	 * @param tag
+	 */
+	public void deleteTag(String tag) {
+		try {
+			service.path("tags").path(tag).accept(MediaType.APPLICATION_XML) //$NON-NLS-1$
+					.delete();
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
+		}
 	}
 
 	/**
@@ -439,34 +477,15 @@ public class ChannelFinderClient {
 	}
 
 	/**
-         *
-         * TODO: XmlChannels -> List<String> ?
 	 * 
 	 * @param channels
 	 * @param property
 	 * @throws ChannelFinderException
 	 */
-	public void addProperty(XmlChannels channels, XmlProperty property)
-			throws ChannelFinderException {
-		for (Iterator<XmlChannel> itr = channels.getChannels().iterator(); itr
-				.hasNext();) {
-			addProperty(itr.next().getName(), property);
-
-		}
-	}
-
-	/**
-	 * 
-	 * @param property
-	 * @throws ChannelFinderException
-	 */
-	public void removeProperty(String property) throws ChannelFinderException {
-		try {
-			service.path("properties").path(property).accept(
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).delete();
-		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+	public void addProperty(Collection<String> channelNames,
+			XmlProperty property) throws ChannelFinderException {
+		for (String channelName : channelNames) {
+			addProperty(channelName, property);
 		}
 	}
 
@@ -488,19 +507,30 @@ public class ChannelFinderClient {
 	}
 
 	/**
-         *
-         * TODO: use List<String> for channels
 	 * 
 	 * @param channels
 	 * @param propertyName
 	 * @throws ChannelFinderException
 	 */
-	public void removeProperty(XmlChannels channels, String propertyName)
-			throws ChannelFinderException {
-		for (Iterator<XmlChannel> itr = channels.getChannels().iterator(); itr
-				.hasNext();) {
-			removeProperty(itr.next().getName(), propertyName);
+	public void removeProperty(Collection<String> channelNames,
+			String propertyName) throws ChannelFinderException {
+		for (String channelName : channelNames) {
+			removeProperty(channelName, propertyName);
+		}
+	}
 
+	/**
+	 * 
+	 * @param property
+	 * @throws ChannelFinderException
+	 */
+	public void deleteProperty(String property) throws ChannelFinderException {
+		try {
+			service.path("properties").path(property).accept(
+					MediaType.APPLICATION_XML).accept(
+					MediaType.APPLICATION_JSON).delete();
+		} catch (UniformInterfaceException e) {
+			checkResponse(e.getResponse(), null);
 		}
 	}
 

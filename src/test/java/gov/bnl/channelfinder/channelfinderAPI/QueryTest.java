@@ -109,7 +109,7 @@ public class QueryTest {
 
 	@AfterClass
 	public static void cleanup() {
-		ChannelFinderClient.getInstance().removeChannels(chs);
+		ChannelFinderClient.getInstance().removeChannels(chs.getChannelNames());
 		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
 				.getChannels().size() == channelcount);
 	}

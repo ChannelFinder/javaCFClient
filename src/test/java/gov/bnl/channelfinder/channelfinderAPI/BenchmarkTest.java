@@ -49,7 +49,7 @@ public class BenchmarkTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		ChannelFinderClient.getInstance().removeChannels(channels);
+		ChannelFinderClient.getInstance().removeChannels(channels.getChannelNames());
 		System.out.println(ChannelFinderClient.getInstance().retrieveChannels().getChannels()
 				.size());
 	}
