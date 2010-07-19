@@ -45,7 +45,7 @@ import java.util.prefs.*;
  * the configuration.
  * 
  * @author shroffk
- *
+ * 
  */
 public class ChannelFinderClient {
 	private static ChannelFinderClient instance = new ChannelFinderClient();
@@ -175,9 +175,8 @@ public class ChannelFinderClient {
 			return service.path("channel").path(name).accept( //$NON-NLS-1$
 					MediaType.APPLICATION_XML).get(XmlChannel.class);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
-		return null;
 	}
 
 	/**
@@ -185,11 +184,14 @@ public class ChannelFinderClient {
 	 * 
 	 * @return all the channels present in the database.
 	 */
-	public XmlChannels retrieveChannels() {
+	public XmlChannels retrieveChannels() throws ChannelFinderException {
 		// will be replaced by the XmlChannels structure.
-		return checkResponse(service.path("channels").accept( //$NON-NLS-1$
-				MediaType.APPLICATION_XML).get(ClientResponse.class),
-				XmlChannels.class);
+		try {
+			return service.path("channels").accept( //$NON-NLS-1$
+					MediaType.APPLICATION_XML).get(XmlChannels.class);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
 	}
 
 	/**
@@ -202,7 +204,7 @@ public class ChannelFinderClient {
 			service.path("channel").path(xmlChannel.getName()).type( //$NON-NLS-1$
 					MediaType.APPLICATION_XML).put(xmlChannel);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -217,7 +219,7 @@ public class ChannelFinderClient {
 			service.path("channels").type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
 					xmlChannels);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -230,7 +232,7 @@ public class ChannelFinderClient {
 		try {
 			service.path("channel").path(name).delete(); //$NON-NLS-1$
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -258,9 +260,8 @@ public class ChannelFinderClient {
 							MediaType.APPLICATION_XML).accept(
 							MediaType.APPLICATION_JSON).get(XmlChannels.class);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
-		return null;
 	}
 
 	/**
@@ -275,9 +276,8 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_XML).accept(
 					MediaType.APPLICATION_JSON).get(XmlChannels.class);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
-		return null;
 	}
 
 	/**
@@ -297,9 +297,8 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_XML).accept(
 					MediaType.APPLICATION_JSON).get(XmlChannels.class);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
-		return null;
 	}
 
 	/**
@@ -346,7 +345,7 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_XML).post(channel);
 		} catch (UniformInterfaceException e) {
 			// check for errors while trying an update
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -380,7 +379,7 @@ public class ChannelFinderClient {
 					.path("tags").path(tag.getName()).type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
 							channels);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -419,7 +418,7 @@ public class ChannelFinderClient {
 			service.path("tags").path(tag.getName()).path(channelName).type(
 					MediaType.APPLICATION_XML).put(tag);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -443,7 +442,7 @@ public class ChannelFinderClient {
 					.path("tags").path(tag.getName()).accept(MediaType.APPLICATION_XML).put( //$NON-NLS-1$
 							channels);
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -457,7 +456,7 @@ public class ChannelFinderClient {
 			service.path("tags").path(tag).accept(MediaType.APPLICATION_XML) //$NON-NLS-1$
 					.delete();
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -530,50 +529,7 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_XML).accept(
 					MediaType.APPLICATION_JSON).delete();
 		} catch (UniformInterfaceException e) {
-			checkResponse(e.getResponse(), null);
+			throw new ChannelFinderException(e);
 		}
 	}
-
-	// determines the existence of an error and throws ChannelFinderException.
-	private <T> T checkResponse(ClientResponse clientResponse,
-			Class<T> returnClass) {
-		int statusCode = clientResponse.getStatus();
-		if (statusCode >= 200 && statusCode < 300) {
-			// OK
-			return clientResponse.getEntity(returnClass);
-		} else if (statusCode >= 300 && statusCode < 400) {
-			// Redirect
-			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), new UniformInterfaceException(
-					clientResponse), parseErrorMsg(clientResponse
-					.getEntity(String.class)));
-		} else if (statusCode >= 400 && statusCode < 500) {
-			// Client Error
-			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), new UniformInterfaceException(
-					clientResponse), parseErrorMsg(clientResponse
-					.getEntity(String.class)));
-		} else if (statusCode >= 500) {
-			// Server Error
-			throw new ChannelFinderException(clientResponse
-					.getClientResponseStatus(), new UniformInterfaceException(
-					clientResponse), parseErrorMsg(clientResponse
-					.getEntity(String.class)));
-		} else {
-			return null;
-		}
-	}
-
-	private String parseErrorMsg(String entity) {
-		try {
-			ClientResponseParser callback = new ClientResponseParser();
-			Reader reader = new StringReader(entity);
-			new ParserDelegator().parse(reader, callback, false);
-			return callback.getMessage();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
 }
