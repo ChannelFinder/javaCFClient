@@ -137,5 +137,21 @@ public class XmlChannel {
     public void addTag(XmlTag tag) {
         this.tags.add(tag);
     }
+    
+    public Collection<String> getPropertyNames(){
+    	Collection<String> list = new ArrayList<String>();
+		for (XmlProperty xmlProperty : properties) {
+			list.add(xmlProperty.getName());
+		}
+		return list;
+    }
+    
+    public Collection<String> getTagNames(){
+    	Collection<String> list = new ArrayList<String>();
+		for (XmlTag xmlTag : tags) {
+			list.add(xmlTag.getName());
+		}
+		return list;
+    }
 
 }

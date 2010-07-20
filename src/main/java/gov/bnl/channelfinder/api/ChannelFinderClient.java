@@ -44,6 +44,8 @@ import java.util.prefs.*;
  * TODO: make this not a singleton. Add a constructor to programmatically pass
  * the configuration.
  * 
+ * TODO: sanitize the input
+ *
  * @author shroffk
  * 
  */
@@ -52,17 +54,7 @@ public class ChannelFinderClient {
 	private WebResource service;
 	private static Preferences preferences;
 	private static Properties properties;
-
-	/*
-	 * 
-	 * Input checking parse the inputs - check for existance of a owner for a
-	 * tag before performing the tag operations.
-	 * 
-	 * property addition without owners predefined
-	 * 
-	 * refactor function names - query to find - (getchannel and getchannels ?)
-	 */
-
+	
 	/**
 	 * Create an instance of ChannelFinderClient
 	 */
