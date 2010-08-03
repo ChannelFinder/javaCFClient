@@ -17,8 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-//multivalue map
 
+//multivalue map
 
 public class QueryTest {
 
@@ -43,9 +43,14 @@ public class QueryTest {
 		ch3.addProperty(new XmlProperty("prop", "shroffk", "2"));
 		ch3.addTag(new XmlTag("Tagb", "shroffk"));
 		ch3.addTag(new XmlTag("Tagc", "shroffk"));
+		// Channel with special chars
+		XmlChannel ch4 = new XmlChannel("distinctName", "shroffk");
+		ch4.addProperty(new XmlProperty("prop", "shroffk", "*"));
+		ch4.addTag(new XmlTag("Tag*", "shroffk"));
 		chs.addChannel(ch1);
 		chs.addChannel(ch2);
 		chs.addChannel(ch3);
+		chs.addChannel(ch4);
 		try {
 			channelcount = ChannelFinderClient.getInstance().retrieveChannels()
 					.getChannels().size();
@@ -68,7 +73,7 @@ public class QueryTest {
 		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
 				.getChannels().size() == channels.getChannels().size());
 	}
-	
+
 	@Test
 	public void queryChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
@@ -77,34 +82,66 @@ public class QueryTest {
 				map);
 		assertTrue(channels.getChannels().size() == 3);
 	}
-	
-	@Test 
-	public void queryChannelsbyProperty(){
+
+	/**
+	 * When multiple properties are queried, the result is a logical AND of all
+	 * the query conditions
+	 */
+	@Test
+	public void queryChannelsbyProperty() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("prop", "1");
 		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
 				map);
 		assertTrue(channels.getChannels().size() == 2);
-		
+
 		map.put("prop", "1");
 		map.put("prop2", "2");
-		channels = ChannelFinderClient.getInstance().queryChannels(
-				map);
+		channels = ChannelFinderClient.getInstance().queryChannels(map);
 		assertTrue(channels.getChannels().size() == 1);
-		
+
 		map.clear();
 		map.put("cell", "14");
-		channels = ChannelFinderClient.getInstance().queryChannels(
-				map);		
+		channels = ChannelFinderClient.getInstance().queryChannels(map);
 	}
-	
+
+	/**
+	 * When you have multiple value for same property results in the values
+	 * being OR'ed
+	 */
 	@Test
-	public void testMultipleParameters(){
+	public void testMultipleParameters() {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		map.add("prop", "1");
 		map.add("prop", "2");
-		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(map);
-		assertTrue(channels.getChannels().size() == 3);		
+		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
+				map);
+		assertTrue(channels.getChannels().size() == 3);
+	}
+
+	/**
+	 * Testing for the use of special chars.
+	 */
+	@Test
+	public void testQueryForSpecialChar(){
+		MultivaluedMapImpl map = new MultivaluedMapImpl();
+		// property values are special chars
+		map.add("prop", "*");
+		assertTrue(ChannelFinderClient.getInstance().queryChannels(
+				map).getChannels().size() == 4);
+		map.clear();
+		map.add("prop", "\\*");
+		assertTrue(ChannelFinderClient.getInstance().queryChannels(
+				map).getChannels().size() == 1);
+		// tag names are special chars
+		map.clear();
+		map.add("~tag", "*");
+		assertTrue(ChannelFinderClient.getInstance().queryChannels(
+				map).getChannels().size() == 4);
+		map.clear();
+		map.add("~tag", "*\\*");
+		assertTrue(ChannelFinderClient.getInstance().queryChannels(
+				map).getChannels().size() == 1);
 	}
 
 	@AfterClass
