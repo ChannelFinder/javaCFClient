@@ -135,11 +135,11 @@ public class QueryTest {
 				map).getChannels().size() == 1);
 		// tag names are special chars
 		map.clear();
-		map.add("~tag", "*");
+		map.add("~tag", "Tag*");
 		assertTrue(ChannelFinderClient.getInstance().queryChannels(
 				map).getChannels().size() == 4);
 		map.clear();
-		map.add("~tag", "*\\*");
+		map.add("~tag", "Tag\\*");
 		assertTrue(ChannelFinderClient.getInstance().queryChannels(
 				map).getChannels().size() == 1);
 	}
