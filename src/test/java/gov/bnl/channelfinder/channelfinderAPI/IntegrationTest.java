@@ -27,13 +27,13 @@ public class IntegrationTest {
 	@BeforeClass
 	public static void setUp() throws Exception {
 		// set up the preferences
-		Preferences preferences = Preferences
-				.userNodeForPackage(ChannelFinderClient.class);
-		preferences
-				.put("channel_finder_url",
-						"https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder/resources");
-		preferences.put("username", "boss");
-		preferences.put("password", "1234");
+//		Preferences preferences = Preferences
+//				.userNodeForPackage(ChannelFinderClient.class);
+//		preferences
+//				.put("channel_finder_url",
+//						"https://channelfinder.nsls2.bnl.gov:8181/ChannelFinder/resources");
+//		preferences.put("username", "boss");
+//		preferences.put("password", "****");
 	}
 
 	/**
