@@ -5,6 +5,7 @@ import gov.bnl.channelfinder.model.XmlChannels;
 import gov.bnl.channelfinder.model.XmlProperty;
 import gov.bnl.channelfinder.model.XmlTag;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -45,7 +46,7 @@ import java.util.prefs.*;
  * the configuration.
  * 
  * TODO: sanitize the input
- *
+ * 
  * @author shroffk
  * 
  */
@@ -53,47 +54,113 @@ public class ChannelFinderClient {
 	private static ChannelFinderClient instance = new ChannelFinderClient();
 	private WebResource service;
 	private static Preferences preferences;
-	private static Properties properties;
-	
+	private static Properties defaultProperties;
+	private static Properties userCFProperties;
+	private static Properties userHomeCFProperties;
+	private static Properties systemCFProperties;
+
+	/**
+	 * check java preferences for the requested key - then checks the various
+	 * default properties files.
+	 * 
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
+	private static String getPreferenceValue(String key, String defaultValue) {
+		return preferences.get(key, getDefaultValue(key, defaultValue));
+	}
+
+	/**
+	 * cycles through the default properties files and return the value for the
+	 * key from the highest priority file
+	 * 
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
+	private static String getDefaultValue(String key, String defaultValue) {
+		if (userCFProperties.containsKey(key))
+			return userCFProperties.getProperty(key);
+		else if (userHomeCFProperties.containsKey(key))
+			return userHomeCFProperties.getProperty(key);
+		else if (systemCFProperties.containsKey(key))
+			return systemCFProperties.getProperty(key);
+		else if (defaultProperties.containsKey(key))
+			return defaultProperties.getProperty(key);
+		else
+			return defaultValue;
+	}
+
+	private void init() {
+
+		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
+
+		try {
+			File userCFPropertiesFile = new File(System.getProperty(
+					"channelfinder.properties", ""));
+			File userHomeCFPropertiesFile = new File(System
+					.getProperty("user.home")
+					+ "/channelfinder.properties");
+			File systemCFPropertiesFile = null;
+			if (System.getProperty("os.name").startsWith("Windows")) {
+				systemCFPropertiesFile = new File("/channelfinder.properties");
+			} else if (System.getProperty("os.name").startsWith("Linux")) {
+				systemCFPropertiesFile = new File(
+						"/etc/channelfinder.properties");
+			} else {
+				systemCFPropertiesFile = new File(
+						"/etc/channelfinder.properties");
+			}
+
+			File defaultPropertiesFile = new File(this.getClass().getResource(
+					"/channelfinder.properties").getPath());
+
+			// Not using to new Properties(default Properties) constructor to
+			// make the hierarchy clear.
+			// TODO replace using constructor with default.
+			userCFProperties = new Properties();
+			if (userCFPropertiesFile.exists()) {
+				userCFProperties
+						.load(new FileInputStream(userCFPropertiesFile));
+			}
+			userHomeCFProperties = new Properties();
+			if (userHomeCFPropertiesFile.exists()) {
+				userHomeCFProperties.load(new FileInputStream(
+						userHomeCFPropertiesFile));
+			}
+			systemCFProperties = new Properties();
+			if (systemCFPropertiesFile.exists()) {
+				systemCFProperties.load(new FileInputStream(
+						systemCFPropertiesFile));
+			}
+			defaultProperties = new Properties();
+			if (defaultPropertiesFile.exists()) {
+				defaultProperties.load(new FileInputStream(
+						defaultPropertiesFile));
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * Create an instance of ChannelFinderClient
 	 */
 	private ChannelFinderClient() {
 
-		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
-		// Use the properties file for defaults
-		properties = new Properties();
-		// FileInputStream in;
-		InputStream is;
-		try {
-			String propertyFile = System
-					.getProperty("channelfinder.properties");
-			if (propertyFile != null) {
-				is = new FileInputStream(propertyFile);
-			} else {
-				is = this.getClass().getResourceAsStream(
-						"/channelfinder.properties");
-			}
-			properties.load(is);
-			is.close();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+		init();
 
 		// Authentication and Authorization configuration
 		TrustManager mytm[] = null;
 		SSLContext ctx = null;
 
-		// trail
 		try {
 			mytm = new TrustManager[] { new MyX509TrustManager(
-					preferences.get(
-							"trustStore", properties.getProperty("trustStore")), //$NON-NLS-1$
-					preferences
-							.get(
-									"trustPass", properties.getProperty("trustPass")).toCharArray()) }; //$NON-NLS-1$
+					getPreferenceValue("trustStore", this.getClass()
+							.getResource("/truststore.jks").getPath()),
+					getPreferenceValue("trustPass", "default").toCharArray()) }; //$NON-NLS-1$
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (Exception ex) {
@@ -101,8 +168,7 @@ public class ChannelFinderClient {
 		}
 
 		try {
-			ctx = SSLContext.getInstance(preferences.get(
-					"protocol", properties.getProperty("protocol"))); //$NON-NLS-1$
+			ctx = SSLContext.getInstance(getPreferenceValue("protocol", "SSL")); //$NON-NLS-1$
 			ctx.init(null, mytm, null);
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -116,14 +182,11 @@ public class ChannelFinderClient {
 		config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
 				new HTTPSProperties(null, ctx));
 		Client client = Client.create(config);
-		client.addFilter(new HTTPBasicAuthFilter(preferences.get("username",
-				properties.getProperty("username")), preferences.get(
-				"password", properties.getProperty("password")))); //$NON-NLS-1$ //$NON-NLS-2$
+		client.addFilter(new HTTPBasicAuthFilter(getPreferenceValue("username",
+				"username"), getPreferenceValue("password", "password"))); //$NON-NLS-1$ //$NON-NLS-2$
 
 		// Logging filter - raw request and response printed to sys.o
-		if (preferences
-				.get(
-						"raw_html_logging", properties.getProperty("raw_html_logging")).equals("on")) { //$NON-NLS-1$ //$NON-NLS-2$
+		if (getPreferenceValue("raw_html_logging", "off").equals("on")) { //$NON-NLS-1$ //$NON-NLS-2$
 			client.addFilter(new LoggingFilter());
 		}
 		service = client.resource(getBaseURI());
@@ -139,11 +202,8 @@ public class ChannelFinderClient {
 	}
 
 	private static URI getBaseURI() {
-		return UriBuilder
-				.fromUri(
-						preferences
-								.get(
-										"channel_finder_url", properties.getProperty("channel_finder_url"))).build(); //$NON-NLS-1$
+		return UriBuilder.fromUri(
+				getPreferenceValue("channel_finder_url", null)).build(); //$NON-NLS-1$
 	}
 
 	@Deprecated
