@@ -87,7 +87,8 @@ public class ChannelFinderClient {
 	}
 
 	private void init() {
-
+		System.out.println("Initializing channel finder client.");
+		// log.info("Initializing channel finder client.");
 		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
 
 		try {
@@ -107,32 +108,39 @@ public class ChannelFinderClient {
 						"/etc/channelfinder.properties");
 			}
 
-			File defaultPropertiesFile = new File(this.getClass().getResource(
-					"/channelfinder.properties").getPath());
+			// File defaultPropertiesFile = new
+			// File(this.getClass().getResource(
+			// "/config/channelfinder.properties").getPath());
+
+			defaultProperties = new Properties();
+			try {
+				defaultProperties.load(this.getClass().getResourceAsStream(
+						"/config/channelfinder.properties"));
+			} catch (Exception e) {
+				// The jar has been modified and the default packaged properties
+				// file has been moved
+				defaultProperties = null;
+			}
 
 			// Not using to new Properties(default Properties) constructor to
 			// make the hierarchy clear.
 			// TODO replace using constructor with default.
-			userCFProperties = new Properties();
-			if (userCFPropertiesFile.exists()) {
-				userCFProperties
-						.load(new FileInputStream(userCFPropertiesFile));
-			}
-			userHomeCFProperties = new Properties();
-			if (userHomeCFPropertiesFile.exists()) {
-				userHomeCFProperties.load(new FileInputStream(
-						userHomeCFPropertiesFile));
-			}
-			systemCFProperties = new Properties();
+			systemCFProperties = new Properties(defaultProperties);
 			if (systemCFPropertiesFile.exists()) {
 				systemCFProperties.load(new FileInputStream(
 						systemCFPropertiesFile));
 			}
-			defaultProperties = new Properties();
-			if (defaultPropertiesFile.exists()) {
-				defaultProperties.load(new FileInputStream(
-						defaultPropertiesFile));
+			userHomeCFProperties = new Properties(systemCFProperties);
+			if (userHomeCFPropertiesFile.exists()) {
+				userHomeCFProperties.load(new FileInputStream(
+						userHomeCFPropertiesFile));
 			}
+			userCFProperties = new Properties(userHomeCFProperties);
+			if (userCFPropertiesFile.exists()) {
+				userCFProperties
+						.load(new FileInputStream(userCFPropertiesFile));
+			}				
+
 		} catch (Exception e) {
 			// TODO: handle exception
 			e.printStackTrace();
@@ -143,7 +151,6 @@ public class ChannelFinderClient {
 	 * Create an instance of ChannelFinderClient
 	 */
 	private ChannelFinderClient() {
-
 		init();
 
 		// Authentication and Authorization configuration
@@ -151,12 +158,13 @@ public class ChannelFinderClient {
 		SSLContext ctx = null;
 
 		try {
-			mytm = new TrustManager[] { new MyX509TrustManager(
-					getPreferenceValue("trustStore", this.getClass()
-							.getResource("/truststore.jks").getPath()),
-					getPreferenceValue("trustPass", "default").toCharArray()) }; //$NON-NLS-1$
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			// System.out.println(this.getClass()
+			// .getResource("/config/truststore.jks").getPath());
+			// mytm = new TrustManager[] { new MyX509TrustManager(
+			// getPreferenceValue("trustStore", this.getClass()
+			// .getResource("/config/truststore.jks").getPath()),
+			//					getPreferenceValue("trustPass", "default").toCharArray()) }; //$NON-NLS-1$
+			mytm = new TrustManager[] { new DummyX509TrustManager() };
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -192,6 +200,8 @@ public class ChannelFinderClient {
 	 * @return the instance of ChannelFinderClient
 	 */
 	public static ChannelFinderClient getInstance() {
+		// System.out.println("requesting channel finder client object.");
+		// log.info("requesting channel finder client object.");
 		return instance;
 	}
 
