@@ -1,11 +1,14 @@
-package gov.bnl.channelfinder.channelfinderAPI;
+package gov.bnl.channelfinder.api;
 
 import gov.bnl.channelfinder.api.ChannelFinderException;
 import gov.bnl.channelfinder.api.ChannelFinderClient;
+import gov.bnl.channelfinder.api.XmlChannel;
+import gov.bnl.channelfinder.api.XmlChannels;
+import gov.bnl.channelfinder.api.XmlTag;
 import static org.junit.Assert.*;
-import gov.bnl.channelfinder.model.XmlChannel;
-import gov.bnl.channelfinder.model.XmlChannels;
-import gov.bnl.channelfinder.model.XmlTag;
+import static gov.bnl.channelfinder.api.Channel.Builder.*; 
+import static gov.bnl.channelfinder.api.Tag.Builder.*;
+import static gov.bnl.channelfinder.api.Property.Builder.*;
 
 import org.junit.Test;
 
@@ -15,21 +18,21 @@ public class ErrorConditionTest {
 	// test check if error with the correct messages are thrown.
 	
 //	@Test
-	public void addEmptyChannel() {
-		try {
-			ChannelFinderClient.getInstance().addChannel(new XmlChannel());
-			assertTrue(false);
-		} catch (ChannelFinderException e) {
-			assertTrue(true);
-		}
-
-	}
+//	public void addEmptyChannel() {
+//		try {
+//			ChannelFinderClient.getInstance().addChannel(channel(new XmlChannel()));
+//			fail("Added an empty channel.");
+//		} catch (ChannelFinderException e) {
+//			assertTrue(true);
+//		}
+//
+//	}
 	
 	@Test (expected=ChannelFinderException.class)
 	public void addOrphanChannel(){
 		XmlChannel xmlChannel = new XmlChannel();
 		xmlChannel.setName("onlyName");
-		ChannelFinderClient.getInstance().addChannel(xmlChannel );
+		ChannelFinderClient.getInstance().add(channel("JustName"));
 	}
 	
 	/**

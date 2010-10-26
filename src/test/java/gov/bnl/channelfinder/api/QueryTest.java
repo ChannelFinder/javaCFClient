@@ -1,16 +1,16 @@
-package gov.bnl.channelfinder.channelfinderAPI;
+package gov.bnl.channelfinder.api;
 
 import gov.bnl.channelfinder.api.ChannelFinderClient;
+import gov.bnl.channelfinder.api.XmlChannel;
+import gov.bnl.channelfinder.api.XmlChannels;
+import gov.bnl.channelfinder.api.XmlProperty;
+import gov.bnl.channelfinder.api.XmlTag;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Hashtable;
 import java.util.Map;
 
 import gov.bnl.channelfinder.api.ChannelFinderException;
-import gov.bnl.channelfinder.model.XmlChannel;
-import gov.bnl.channelfinder.model.XmlChannels;
-import gov.bnl.channelfinder.model.XmlProperty;
-import gov.bnl.channelfinder.model.XmlTag;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
