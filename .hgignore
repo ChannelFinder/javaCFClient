@@ -8,3 +8,8 @@ syntax: regexp
 \.chg\..*$
 \.rej$
 \.conflict\~$
+
+syntax: regexp
+^\.settings$
+syntax: regexp
+^bin$
