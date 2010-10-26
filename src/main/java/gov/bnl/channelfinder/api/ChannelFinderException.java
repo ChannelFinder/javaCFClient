@@ -13,8 +13,6 @@ import javax.swing.text.html.parser.ParserDelegator;
 
 /**
  *
- * TODO: remove Status
- *
  * @author shroffk
  *
  */
@@ -29,11 +27,11 @@ public class ChannelFinderException extends RuntimeException {
 	
 	public ChannelFinderException() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	public ChannelFinderException(UniformInterfaceException cause) {
 		super(parseErrorMsg(cause), cause);
+		this.setStatus(Status.fromStatusCode(cause.getResponse().getStatus()));
 	}
 
 	private static String parseErrorMsg(UniformInterfaceException ex) {
