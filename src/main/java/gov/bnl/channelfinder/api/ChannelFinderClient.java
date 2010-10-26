@@ -1,9 +1,9 @@
 package gov.bnl.channelfinder.api;
 
-import gov.bnl.channelfinder.model.XmlChannel;
-import gov.bnl.channelfinder.model.XmlChannels;
-import gov.bnl.channelfinder.model.XmlProperty;
-import gov.bnl.channelfinder.model.XmlTag;
+import static gov.bnl.channelfinder.api.Channel.Builder.*;
+import static gov.bnl.channelfinder.api.Tag.Builder.*;
+
+import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,9 +14,11 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -39,8 +41,12 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  * TODO: make this not a singleton. Add a constructor to programmatically pass
  * the configuration.
  * 
- * TODO: sanitize the input
+ * TODO: replace the usage of Xml* types with channel,tag,properties
  * 
+ * @author shroffk
+ * 
+ */
+/**
  * @author shroffk
  * 
  */
@@ -139,7 +145,7 @@ public class ChannelFinderClient {
 			if (userCFPropertiesFile.exists()) {
 				userCFProperties
 						.load(new FileInputStream(userCFPropertiesFile));
-			}				
+			}
 
 		} catch (Exception e) {
 			// TODO: handle exception
@@ -236,6 +242,23 @@ public class ChannelFinderClient {
 	}
 
 	/**
+	 * Returns a channel that exactly matches the channelName
+	 * 
+	 * @param channelName
+	 * @return
+	 * @throws ChannelFinderException
+	 */
+	public Channel getChannel(String channelName) throws ChannelFinderException {
+		try {
+			return new Channel(service
+					.path("channel").path(channelName).accept( //$NON-NLS-1$
+							MediaType.APPLICATION_XML).get(XmlChannel.class));
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	/**
 	 * Test Method
 	 * 
 	 * @return all the channels present in the database.
@@ -247,6 +270,91 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_XML).get(XmlChannels.class);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
+		}
+	}
+	
+	/**
+	 * Add a single channel
+	 * @param channel builder
+	 * @throws ChannelFinderException
+	 */
+	public void add(Channel.Builder channel) throws ChannelFinderException  {
+		try {
+			service.path("channel").path(channel.toXml().getName()).type( //$NON-NLS-1$
+					MediaType.APPLICATION_XML).put(channel.toXml());
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	public void add(Collection<Builder> channels) throws ChannelFinderException {
+		try {
+			XmlChannels xmlChannels = new XmlChannels();
+			for (Channel.Builder channel : channels) {
+				xmlChannels.addChannel(channel.toXml());
+			}
+			service.path("channels").type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
+					xmlChannels);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	/**
+	 * Add Tag to given String
+	 * 
+	 * @param string
+	 * @param tag
+	 */
+
+	public void add(String channelName, Tag.Builder tag) {
+		Set<String> channelNames = new HashSet<String>();
+		channelNames.add(channelName);
+		add(channelNames, tag);
+	}
+
+	/**
+	 * @param channelNames
+	 * @param tag
+	 */
+	public void add(Collection<String> channelNames, Tag.Builder tag) {
+		try {
+			XmlChannels channels = new XmlChannels();
+			XmlChannel channel;
+			for (String channelName : channelNames) {
+				channel = new XmlChannel(channelName, "");
+				channel.addTag(tag.toXml());
+				channels.addChannel(channel);
+			}
+			service
+					.path("tags").path(tag.toXml().getName()).type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
+							channels);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	/**
+	 * Add a property
+	 * 
+	 * @param string
+	 * @param owner
+	 */
+	public void add(String channelName, Property.Builder property) {
+		XmlChannel channel = retreiveChannel(channelName);
+		if (channel != null) {
+			channel.addProperty(property.toXml());
+			updateChannel(channel);
+		}
+	}
+
+	/**
+	 * @param channelNames
+	 * @param property
+	 */
+	public void add(Collection<String> channelNames, Property.Builder property) {
+		for (String channelName : channelNames) {
+			add(channelName, property);
 		}
 	}
 
@@ -263,7 +371,7 @@ public class ChannelFinderClient {
 			throw new ChannelFinderException(e);
 		}
 	}
-
+	
 	/**
 	 * Add a group of channels
 	 * 
@@ -586,6 +694,45 @@ public class ChannelFinderClient {
 					MediaType.APPLICATION_JSON).delete();
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
+		}
+	}
+
+	Collection<Channel> getAllChannels() {
+		try {
+			XmlChannels channels = service.path("channels").accept( //$NON-NLS-1$
+					MediaType.APPLICATION_XML).get(XmlChannels.class);
+			Collection<Channel> set = new HashSet<Channel>();
+			for (XmlChannel channel : channels.getChannels()) {
+				set.add(new Channel(channel));
+			}
+			return set;
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	/**
+	 * 
+	 * @param channel
+	 * @throws ChannelFinderException
+	 */
+	public void remove(Channel.Builder channel) throws ChannelFinderException {
+		try {
+			service.path("channel").path(channel.toXml().getName()).delete(); //$NON-NLS-1$
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
+	/**
+	 * 
+	 * @param channels
+	 * @throws ChannelFinderException
+	 */
+	public void remove(Collection<Channel.Builder> channels)
+			throws ChannelFinderException {
+		for (Channel.Builder channel : channels) {
+			remove(channel);
 		}
 	}
 }
