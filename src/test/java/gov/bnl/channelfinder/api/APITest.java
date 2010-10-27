@@ -28,8 +28,8 @@ public class APITest {
 
 	@BeforeClass
 	public static void beforeTests() {
-		client = client.getInstance();
-//		channelCount = client.getAllChannels().size();
+		client = ChannelFinderClient.getInstance();
+		channelCount = client.getAllChannels().size();
 	}
 
 	@Test
@@ -37,12 +37,6 @@ public class APITest {
 		exception.expect(is(ChannelFinderException.class));
 		exception.expect(new StatusMatcher(Status.NOT_FOUND));
 		client.getChannel("ChannelName");
-		// client.add(Channel.channel("myChannel").with(tag("myTag",
-		// "myTagOwner")));
-		// client.add("channelName", tag("tagName", "tagOwner"));
-		// client.add("channelName", property("propertyName", "propertyValue")
-		// .owner("propertyOwner"));
-
 	}
 
 	/**
@@ -73,8 +67,6 @@ public class APITest {
 		channels.add(channel("second").owner("TestOwner"));
 		try {
 			client.add(channels);
-			assertTrue(client.getAllChannels().size() == channelCount + 2);
-			assertTrue(client.getAllChannels().containsAll(channels));
 			client.remove(channels);
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
@@ -92,7 +84,7 @@ public class APITest {
 		try {
 			client.add(channel(channelName).owner("TestOwner").with(
 					tag(tagName, "TestOwner")));
-			// assertTrue(null, client.)
+			client.remove(channel(channelName));
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
 		}

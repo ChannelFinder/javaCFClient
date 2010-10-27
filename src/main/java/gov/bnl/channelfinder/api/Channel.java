@@ -124,5 +124,13 @@ public class Channel {
 			return false;
 		return true;
 	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Channel [name=" + name + ", owner=" + owner + "]";
+	}
 		
 }
