@@ -33,6 +33,7 @@
 			<version>1.1.5.1</version>
 		</dependency>
 	</dependencies>
+	<description>A Channel Finder Client library for java.</description>
 	<url>http://channelfinder.sourceforge.net/ChannelFinderAPI</url>
 	<scm>
 		<connection>scm:hg:http://channelfinder.hg.sourceforge.net:8000/hgroot/channelfinder/ChannelFinderAPI</connection>
