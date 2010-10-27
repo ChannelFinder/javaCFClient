@@ -7,7 +7,7 @@ import java.util.Set;
 
 /**
  * @author shroffk
- *
+ * 
  */
 public class Channel {
 
@@ -23,6 +23,20 @@ public class Channel {
 		private String owner;
 		private Set<Tag.Builder> tags = new HashSet<Tag.Builder>();
 		private Set<Property.Builder> properties = new HashSet<Property.Builder>();
+
+		public static Builder channel(Channel channel) {
+			Builder channelBuilder = new Builder();
+			channelBuilder.name = channel.getName();
+			channelBuilder.owner = channel.getOwner();
+			for (Tag tag : channel.getTags()) {
+				channelBuilder.tags.add(Tag.Builder.tag(tag));
+			}
+			for (Property property : channel.getProperties()) {
+				channelBuilder.properties.add(Property.Builder
+						.property(property));
+			}
+			return channelBuilder;
+		}
 
 		public static Builder channel(String name) {
 			Builder channelBuilder = new Builder();
@@ -56,6 +70,10 @@ public class Channel {
 			return xmlChannel;
 
 		}
+
+		Channel build() {
+			return new Channel(this);
+		}
 	}
 
 	Channel(XmlChannel channel) {
@@ -72,6 +90,21 @@ public class Channel {
 		}
 		this.properties = Collections.unmodifiableSet(newProperties);
 
+	}
+
+	private Channel(Builder builder) {
+		this.name = builder.name;
+		this.owner = builder.owner;
+		Set<Tag> newTags = new HashSet<Tag>();
+		for (Tag.Builder tag : builder.tags) {
+			newTags.add(tag.build());
+		}
+		this.tags = Collections.unmodifiableSet(newTags);
+		Set<Property> newProperties = new HashSet<Property>();
+		for (Property.Builder property : builder.properties) {
+			newProperties.add(property.build());
+		}
+		this.properties = Collections.unmodifiableSet(newProperties);
 	}
 
 	public String getName() {
@@ -93,8 +126,9 @@ public class Channel {
 		return properties;
 	}
 
-	
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -105,7 +139,9 @@ public class Channel {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -125,12 +161,14 @@ public class Channel {
 		return true;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
 		return "Channel [name=" + name + ", owner=" + owner + "]";
 	}
-		
+
 }

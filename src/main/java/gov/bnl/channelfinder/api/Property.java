@@ -3,12 +3,6 @@
  */
 package gov.bnl.channelfinder.api;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
-
 /**
  * @author shroffk
  * 
@@ -44,18 +38,21 @@ public class Property {
 			propertyBuilder.owner = property.getOwner();
 			return propertyBuilder;
 		}
-		
+
 		public Builder owner(String owner) {
 			this.owner = owner;
 			return this;
 		}
-		
-		XmlProperty toXml(){
+
+		XmlProperty toXml() {
 			return new XmlProperty(name, owner, value);
 		}
 
+		Property build() {
+			return new Property(this);
+		}
 	}
-	
+
 	/**
 	 * @param xmlProperty
 	 */
@@ -63,6 +60,12 @@ public class Property {
 		this.name = xmlProperty.getName();
 		this.owner = xmlProperty.getOwner();
 		this.value = xmlProperty.getValue();
+	}
+
+	private Property(Builder builder) {
+		this.name = builder.name;
+		this.value = builder.value;
+		this.owner = builder.owner;
 	}
 
 	public String getName() {
@@ -77,7 +80,9 @@ public class Property {
 		return value;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -89,7 +94,9 @@ public class Property {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -113,6 +120,5 @@ public class Property {
 			return false;
 		return true;
 	}
-	
 
 }

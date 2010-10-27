@@ -45,11 +45,20 @@ public class Tag {
 			xml.setOwner(owner);
 			return xml;
 		}
+		
+		Tag build(){
+			return new Tag(this);
+		}
 	}
 
 	Tag(XmlTag xml) {
 		this.name = xml.getName();
 		this.owner = xml.getOwner();
+	}
+
+	private Tag(Builder builder) {
+		this.name = builder.name;
+		this.owner = builder.owner;
 	}
 
 	public String getName() {
