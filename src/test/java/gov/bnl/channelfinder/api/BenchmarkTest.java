@@ -1,5 +1,7 @@
 package gov.bnl.channelfinder.api;
 
+import java.util.Collection;
+
 import gov.bnl.channelfinder.api.ChannelFinderClient;
 import gov.bnl.channelfinder.api.XmlChannel;
 import gov.bnl.channelfinder.api.XmlChannels;
@@ -92,44 +94,44 @@ public class BenchmarkTest {
 	@Test
 	public void query10Channels() {
 		time = System.currentTimeMillis();
-		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsByName(
+		Collection<Channel> chs = ChannelFinderClient.getInstance().findChannelsByName(
 				"2000first:a<400>:0*");
-		assertTrue(chs.getChannels().size() == 10);
+		assertTrue(chs.size() == 10);
 		System.out.println("query10Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
 	public void query100Channels() {
 		time = System.currentTimeMillis();
-		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsByName(
+		Collection<Channel> chs = ChannelFinderClient.getInstance().findChannelsByName(
 				"2000first:a<400>:*");
-		assertTrue(chs.getChannels().size() == 100);
+		assertTrue(chs.size() == 100);
 		System.out.println("query100Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
 	public void query500Channels() {
 		time = System.currentTimeMillis();
-		XmlChannels chs = ChannelFinderClient.getInstance()
-				.queryChannelsByName("2000first:b*");
-		assertTrue(chs.getChannels().size() == 500);
+		Collection<Channel> chs = ChannelFinderClient.getInstance()
+				.findChannelsByName("2000first:b*");
+		assertTrue(chs.size() == 500);
 		System.out.println("query500Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
 	public void query1000Channels() {
 		time = System.currentTimeMillis();
-		XmlChannels chs = ChannelFinderClient.getInstance().queryChannelsByName("2000second:*");
-		assertTrue(chs.getChannels().size() == 1000);
+		Collection<Channel> chs = ChannelFinderClient.getInstance().findChannelsByName("2000second:*");
+		assertTrue(chs.size() == 1000);
 		System.out.println("query1000Channels duration : " + (System.currentTimeMillis() - time));
 	}
 
 	@Test
 	public synchronized void query2000Channels() {
 		time = System.currentTimeMillis();
-		XmlChannels chs = ChannelFinderClient.getInstance()
-				.queryChannelsByName("2000*");
-		assertTrue(chs.getChannels().size() == 2000);
+		Collection<Channel> chs = ChannelFinderClient.getInstance()
+				.findChannelsByName("2000*");
+		assertTrue(chs.size() == 2000);
 		System.out.println("query2000Channels duration : " + (System.currentTimeMillis() - time));
 	}
 

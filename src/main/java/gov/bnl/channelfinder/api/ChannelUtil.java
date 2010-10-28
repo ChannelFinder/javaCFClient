@@ -95,7 +95,7 @@ public class ChannelUtil {
 	 * @param channelBuilders
 	 * @return
 	 */
-	static Collection<Channel> copyof(
+	static Collection<Channel> toChannels(
 			Collection<Channel.Builder> channelBuilders) {
 		Collection<Channel> channels = new HashSet<Channel>();
 		for (Channel.Builder builder : channelBuilders) {

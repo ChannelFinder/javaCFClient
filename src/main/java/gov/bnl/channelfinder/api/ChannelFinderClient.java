@@ -14,6 +14,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -433,13 +434,18 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public XmlChannels queryChannelsByName(String pattern)
+	public Collection<Channel> findChannelsByName(String pattern)
 			throws ChannelFinderException {
 		try {
-			return service
+			Collection<Channel> channels = new HashSet<Channel>();
+			XmlChannels xmlChannels = service
 					.path("channels").queryParam("~name", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
 							MediaType.APPLICATION_XML).accept(
 							MediaType.APPLICATION_JSON).get(XmlChannels.class);
+			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
+				channels.add(new Channel(xmlchannel));
+			}
+			return Collections.unmodifiableCollection(channels);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -450,12 +456,18 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public XmlChannels queryChannelsByTag(String pattern)
+	public Collection<Channel> findChannelsByTag(String pattern)
 			throws ChannelFinderException {
 		try {
-			return service.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
+			Collection<Channel> channels = new HashSet<Channel>();
+			XmlChannels xmlChannels = service.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
 					MediaType.APPLICATION_XML).accept(
 					MediaType.APPLICATION_JSON).get(XmlChannels.class);
+			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
+				channels.add(new Channel(xmlchannel));
+			}
+			return Collections.unmodifiableCollection(channels);
+			
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -471,12 +483,17 @@ public class ChannelFinderClient {
 	 * @return
 	 * @throws ChannelFinderException
 	 */
-	public XmlChannels queryChannelsByProp(String property, String... patterns)
+	public Collection<Channel> findChannelsByProp(String property, String... patterns)
 			throws ChannelFinderException {
 		try {
-			return service.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
+			Collection<Channel> channels = new HashSet<Channel>();
+			XmlChannels xmlChannels =  service.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
 					MediaType.APPLICATION_XML).accept(
 					MediaType.APPLICATION_JSON).get(XmlChannels.class);
+			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
+				channels.add(new Channel(xmlchannel));
+			}
+			return Collections.unmodifiableCollection(channels);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -488,7 +505,7 @@ public class ChannelFinderClient {
 	 * @param map
 	 * @return
 	 */
-	public XmlChannels queryChannels(Map<String, String> map) {
+	public Collection<Channel> findChannels(Map<String, String> map) {
 		MultivaluedMapImpl mMap = new MultivaluedMapImpl();
 		Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
 		while (itr.hasNext()) {
@@ -497,7 +514,7 @@ public class ChannelFinderClient {
 					.put(entry.getKey(), Arrays.asList(entry.getValue().split(
 							",")));
 		}
-		return queryChannels(mMap);
+		return findChannels(mMap);
 	}
 
 	/**
@@ -508,10 +525,15 @@ public class ChannelFinderClient {
 	 *            Multivalue map for searching a key with multiple values
 	 * @return
 	 */
-	public XmlChannels queryChannels(MultivaluedMapImpl map) {
-		return service.path("channels").queryParams(map).accept(
+	public Collection<Channel> findChannels(MultivaluedMapImpl map) {
+		Collection<Channel> channels = new HashSet<Channel>();
+		XmlChannels xmlChannels = service.path("channels").queryParams(map).accept(
 				MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_JSON)
 				.get(XmlChannels.class);
+		for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
+			channels.add(new Channel(xmlchannel));
+		}
+		return Collections.unmodifiableCollection(channels);
 	}
 
 	/**

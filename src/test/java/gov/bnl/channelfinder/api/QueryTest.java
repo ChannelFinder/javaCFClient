@@ -1,16 +1,15 @@
 package gov.bnl.channelfinder.api;
 
-import gov.bnl.channelfinder.api.ChannelFinderClient;
-import gov.bnl.channelfinder.api.XmlChannel;
-import gov.bnl.channelfinder.api.XmlChannels;
-import gov.bnl.channelfinder.api.XmlProperty;
-import gov.bnl.channelfinder.api.XmlTag;
+import static gov.bnl.channelfinder.api.Channel.Builder.channel;
+import static gov.bnl.channelfinder.api.Property.Builder.property;
+import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
-
-import gov.bnl.channelfinder.api.ChannelFinderException;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -22,7 +21,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 public class QueryTest {
 
-	private static XmlChannels chs;
+	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 	private static int channelcount;
 
 	/**
@@ -30,57 +29,51 @@ public class QueryTest {
 	 */
 	@BeforeClass
 	public static void populateChannels() {
-		chs = new XmlChannels();
-		XmlChannel ch1 = new XmlChannel("pvk:01<first>", "shroffk");
-		ch1.addProperty(new XmlProperty("prop", "shroffk", "1"));
-		ch1.addProperty(new XmlProperty("prop2", "shroffk", "2"));
-		ch1.addTag(new XmlTag("Taga", "shroffk"));
-		XmlChannel ch2 = new XmlChannel("pvk:02<second>", "shroffk");
-		ch2.addProperty(new XmlProperty("prop", "shroffk", "1"));
-		ch2.addTag(new XmlTag("Taga", "shroffk"));
-		ch2.addTag(new XmlTag("Tagb", "shroffk"));
-		XmlChannel ch3 = new XmlChannel("pvk:03<second>", "shroffk");
-		ch3.addProperty(new XmlProperty("prop", "shroffk", "2"));
-		ch3.addTag(new XmlTag("Tagb", "shroffk"));
-		ch3.addTag(new XmlTag("Tagc", "shroffk"));
-		// Channel with special chars
-		XmlChannel ch4 = new XmlChannel("distinctName", "shroffk");
-		ch4.addProperty(new XmlProperty("prop", "shroffk", "*"));
-		ch4.addTag(new XmlTag("Tag*", "shroffk"));
-		chs.addChannel(ch1);
-		chs.addChannel(ch2);
-		chs.addChannel(ch3);
-		chs.addChannel(ch4);
+		channels.add(channel("pvk:01<first>").owner("shroffk").with(
+				property("prop", "1").owner("shroffk")).with(
+				property("prop2", "2").owner("shroffk")).with(
+				tag("Taga", "shroffk")));
+		channels.add(channel("pvk:02<second>").owner("shroffk").with(
+				property("prop", "1").owner("shroffk")).with(
+				tag("Taga", "shroffk")).with(tag("Tagb", "shroffk")));
+		channels.add(channel("pvk:03<second>").owner("shroffk").with(
+				property("prop", "2").owner("shroffk")).with(tag("Tagb", "shroffk")).with(
+				tag("Tagc", "shroffk")));
+		channels.add(channel("distinctName").owner("shroffk").with(
+				property("prop", "*").owner("shroffk")).with(
+				tag("Tag*", "shroffk")));
 		try {
-			channelcount = ChannelFinderClient.getInstance().retrieveChannels()
-					.getChannels().size();
-			ChannelFinderClient.getInstance().addChannels(chs);
+			channelcount = ChannelFinderClient.getInstance().getAllChannels()
+					.size();
+			ChannelFinderClient.getInstance().add(channels);		
 		} catch (ChannelFinderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			fail(e.getMessage());
 		}
+	}
+
+	/**
+	 * check if all channels are returned
+	 */
+	@Test
+	public void queryAllChannels() {
+		Map<String, String> map = new Hashtable<String, String>();
+		map.put("~name", "*");
+		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
+				map);
+		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == channels
+				.size());
 	}
 
 	/**
 	 * 
 	 */
 	@Test
-	public void queryAllChannels() {
-		Map<String, String> map = new Hashtable<String, String>();
-		map.put("~name", "*");
-		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
-				map);
-		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
-				.getChannels().size() == channels.getChannels().size());
-	}
-
-	@Test
 	public void queryChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "pvk:*");
-		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
+		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
 				map);
-		assertTrue(channels.getChannels().size() == 3);
+		assertTrue(channels.size() == 3);
 	}
 
 	/**
@@ -91,18 +84,18 @@ public class QueryTest {
 	public void queryChannelsbyProperty() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("prop", "1");
-		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
+		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
 				map);
-		assertTrue(channels.getChannels().size() == 2);
+		assertTrue(channels.size() == 2);
 
 		map.put("prop", "1");
 		map.put("prop2", "2");
-		channels = ChannelFinderClient.getInstance().queryChannels(map);
-		assertTrue(channels.getChannels().size() == 1);
+		channels = ChannelFinderClient.getInstance().findChannels(map);
+		assertTrue(channels.size() == 1);
 
 		map.clear();
 		map.put("cell", "14");
-		channels = ChannelFinderClient.getInstance().queryChannels(map);
+		channels = ChannelFinderClient.getInstance().findChannels(map);
 	}
 
 	/**
@@ -114,40 +107,39 @@ public class QueryTest {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		map.add("prop", "1");
 		map.add("prop", "2");
-		XmlChannels channels = ChannelFinderClient.getInstance().queryChannels(
+		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
 				map);
-		assertTrue(channels.getChannels().size() == 3);
+		assertTrue(channels.size() == 3);
 	}
 
 	/**
 	 * Testing for the use of special chars.
 	 */
 	@Test
-	public void testQueryForSpecialChar(){
+	public void testQueryForSpecialChar() {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		// property values are special chars
 		map.add("prop", "*");
-		assertTrue(ChannelFinderClient.getInstance().queryChannels(
-				map).getChannels().size() == 4);
+		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
+				.size() == 4);
 		map.clear();
 		map.add("prop", "\\*");
-		assertTrue(ChannelFinderClient.getInstance().queryChannels(
-				map).getChannels().size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
+				.size() == 1);
 		// tag names are special chars
 		map.clear();
 		map.add("~tag", "Tag*");
-		assertTrue(ChannelFinderClient.getInstance().queryChannels(
-				map).getChannels().size() == 4);
+		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
+				.size() == 4);
 		map.clear();
 		map.add("~tag", "Tag\\*");
-		assertTrue(ChannelFinderClient.getInstance().queryChannels(
-				map).getChannels().size() == 1);
+		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
+				.size() == 1);
 	}
 
 	@AfterClass
 	public static void cleanup() {
-		ChannelFinderClient.getInstance().removeChannels(chs.getChannelNames());
-		assertTrue(ChannelFinderClient.getInstance().retrieveChannels()
-				.getChannels().size() == channelcount);
+		ChannelFinderClient.getInstance().remove(channels);
+		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == channelcount);
 	}
 }
