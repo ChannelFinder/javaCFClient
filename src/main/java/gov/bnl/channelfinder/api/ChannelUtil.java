@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import static gov.bnl.channelfinder.api.Channel.Builder.*;
+
 /**
  * @author shroffk
  * 
@@ -29,6 +31,7 @@ public class ChannelUtil {
 
 	/**
 	 * Return a union of tag names associated with channels
+	 * 
 	 * @param channels
 	 * @return
 	 */
@@ -56,6 +59,7 @@ public class ChannelUtil {
 
 	/**
 	 * Return a union of property names associated with channels
+	 * 
 	 * @param channels
 	 * @return
 	 */
@@ -67,6 +71,37 @@ public class ChannelUtil {
 		}
 		return propertyNames;
 	}
-	
-	
+
+	/**
+	 * Returns all the channel Names
+	 * 
+	 * @param channels
+	 * @return
+	 */
+	public static Collection<String> getChannelNames(
+			Collection<Channel> channels) {
+		Collection<String> channelNames = new HashSet<String>();
+		for (Channel channel : channels) {
+			channelNames.add(channel.getName());
+		}
+		return channelNames;
+	}
+
+	/**
+	 * TODO evaluate need/correctness
+	 * Returns a collection of objects of Type Channel derived from the
+	 * collection of Channel.Builders <tt>channelBuilders</tt>
+	 * 
+	 * @param channelBuilders
+	 * @return
+	 */
+	static Collection<Channel> copyof(
+			Collection<Channel.Builder> channelBuilders) {
+		Collection<Channel> channels = new HashSet<Channel>();
+		for (Channel.Builder builder : channelBuilders) {
+			channels.add(builder.build());
+		}
+		return Collections.unmodifiableCollection(channels);
+	}
+
 }
