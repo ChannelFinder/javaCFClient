@@ -228,23 +228,8 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * 
-	 * @param name
-	 * @return the channel which matches the queried name
-	 */
-	@Deprecated
-	public XmlChannel retreiveChannel(String name)
-			throws ChannelFinderException {
-		try {
-			return service.path("channel").path(name).accept( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).get(XmlChannel.class);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
 	 * Returns a channel that exactly matches the channelName
+	 * <tt>channelName</tt>
 	 * 
 	 * @param channelName
 	 * @return
@@ -261,26 +246,10 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Test Method
-	 * 
-	 * @return all the channels present in the database.
-	 */
-	@Deprecated
-	public XmlChannels retrieveChannels() throws ChannelFinderException {
-		// will be replaced by the XmlChannels structure.
-		try {
-			return service.path("channels").accept( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).get(XmlChannels.class);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Add a single channel
+	 * Add a single channel <tt>channel</tt>
 	 * 
 	 * @param channel
-	 *            builder
+	 *            the channel to be added
 	 * @throws ChannelFinderException
 	 */
 	public void add(Channel.Builder channel) throws ChannelFinderException {
@@ -296,7 +265,7 @@ public class ChannelFinderClient {
 	 * Add a set of channels
 	 * 
 	 * @param channels
-	 *            - set of channels to be added
+	 *            set of channels to be added
 	 * @throws ChannelFinderException
 	 */
 	public void add(Collection<Builder> channels) throws ChannelFinderException {
@@ -316,8 +285,9 @@ public class ChannelFinderClient {
 	 * Add Tag <tt>tag </tt> to Channel with name <tt>channelName</tt>
 	 * 
 	 * @param string
-	 *            Channel Name
+	 *            Name of the channel to which the tag is to be added
 	 * @param tag
+	 *            the tag to be added
 	 */
 	public void add(Tag.Builder tag, String channelName) {
 		Set<String> channelNames = new HashSet<String>();
@@ -371,32 +341,6 @@ public class ChannelFinderClient {
 			add(property, channelName);
 		}
 	}
-	
-	/**
-	 * Remove Channel with specified name;
-	 * 
-	 * @param name
-	 */
-	@Deprecated
-	public void removeChannel(String name) throws ChannelFinderException {
-		try {
-			service.path("channel").path(name).delete(); //$NON-NLS-1$
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Remove a group of channels
-	 * 
-	 * @param channels
-	 */
-	@Deprecated
-	public void removeChannels(Collection<String> channels) {
-		for (String channelName : channels) {
-			removeChannel(channelName);
-		}
-	}
 
 	/**
 	 * 
@@ -429,14 +373,15 @@ public class ChannelFinderClient {
 			throws ChannelFinderException {
 		try {
 			Collection<Channel> channels = new HashSet<Channel>();
-			XmlChannels xmlChannels = service.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).get(XmlChannels.class);
+			XmlChannels xmlChannels = service
+					.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
+							MediaType.APPLICATION_XML).accept(
+							MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 				channels.add(new Channel(xmlchannel));
 			}
 			return Collections.unmodifiableCollection(channels);
-			
+
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -452,13 +397,14 @@ public class ChannelFinderClient {
 	 * @return
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> findChannelsByProp(String property, String... patterns)
-			throws ChannelFinderException {
+	public Collection<Channel> findChannelsByProp(String property,
+			String... patterns) throws ChannelFinderException {
 		try {
 			Collection<Channel> channels = new HashSet<Channel>();
-			XmlChannels xmlChannels =  service.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).get(XmlChannels.class);
+			XmlChannels xmlChannels = service
+					.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
+							MediaType.APPLICATION_XML).accept(
+							MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 				channels.add(new Channel(xmlchannel));
 			}
@@ -496,97 +442,13 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findChannels(MultivaluedMapImpl map) {
 		Collection<Channel> channels = new HashSet<Channel>();
-		XmlChannels xmlChannels = service.path("channels").queryParams(map).accept(
-				MediaType.APPLICATION_XML).accept(MediaType.APPLICATION_JSON)
-				.get(XmlChannels.class);
+		XmlChannels xmlChannels = service.path("channels").queryParams(map)
+				.accept(MediaType.APPLICATION_XML).accept(
+						MediaType.APPLICATION_JSON).get(XmlChannels.class);
 		for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 			channels.add(new Channel(xmlchannel));
 		}
 		return Collections.unmodifiableCollection(channels);
-	}
-
-	/**
-	 * Update properties and tags of existing channel "channel"
-	 * 
-	 * @param channel
-	 * @throws ChannelFinderException
-	 */
-	@Deprecated
-	public void updateChannel(XmlChannel channel) throws ChannelFinderException {
-		try {
-			service.path("channel").path(channel.getName()).type( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).post(channel);
-		} catch (UniformInterfaceException e) {
-			// check for errors while trying an update
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Remove Tag {tagName} from channel {channelName}
-	 * 
-	 * @param channelName
-	 * @param tagName
-	 */
-	@Deprecated
-	public void removeTag(String channelName, String tagName) {
-		service.path("tags").path(tagName).path(channelName).accept( //$NON-NLS-1$
-				MediaType.APPLICATION_XML).delete();
-	}
-
-	/**
-	 * Remove Tag {tagName} from a list of channels {channelNames}
-	 * 
-	 * @param channelName
-	 * @param tagName
-	 */
-	@Deprecated
-	public void removeTag(Collection<String> channelNames, String tagName) {
-		for (String channelName : channelNames) {
-			removeTag(channelName, tagName);
-		}
-	}
-
-	/**
-	 * Add Tag {tagName} to channel {channelName}
-	 * 
-	 * @param channelName
-	 * @param tagName
-	 */
-	@Deprecated
-	public void resetTag(String channelName, XmlTag tag)
-			throws ChannelFinderException {
-		try {
-			service.path("tags").path(tag.getName()).path(channelName).type(
-					MediaType.APPLICATION_XML).put(tag);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Set {tag} on the set of channels {channels} and remove it from all others
-	 * 
-	 * @param channels
-	 * @param tag
-	 */
-	@Deprecated
-	public void resetTag(Collection<String> channelNames, XmlTag tag) {
-		try {
-			XmlChannels channels = new XmlChannels();
-			XmlChannel channel;
-			for (String channelName : channelNames) {
-				channel = new XmlChannel();
-				channel.setName(channelName);
-				channel.addTag(tag);
-				channels.addChannel(channel);
-			}
-			service
-					.path("tags").path(tag.getName()).accept(MediaType.APPLICATION_XML).put( //$NON-NLS-1$
-							channels);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
 	}
 
 	/**
@@ -600,38 +462,6 @@ public class ChannelFinderClient {
 					.delete();
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param channelName
-	 * @param propertyName
-	 * @throws ChannelFinderException
-	 */
-	@Deprecated
-	public void removeProperty(String channelName, String propertyName)
-			throws ChannelFinderException {
-		try {
-			service.path("properties").path(propertyName).path(channelName)
-					.accept(MediaType.APPLICATION_XML).accept(
-							MediaType.APPLICATION_JSON).delete();
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * 
-	 * @param channels
-	 * @param propertyName
-	 * @throws ChannelFinderException
-	 */
-	@Deprecated
-	public void removeProperty(Collection<String> channelNames,
-			String propertyName) throws ChannelFinderException {
-		for (String channelName : channelNames) {
-			removeProperty(channelName, propertyName);
 		}
 	}
 
@@ -685,6 +515,7 @@ public class ChannelFinderClient {
 	 * @param channels
 	 * @throws ChannelFinderException
 	 */
+	@Deprecated
 	public void remove(Collection<Channel.Builder> channels)
 			throws ChannelFinderException {
 		for (Channel.Builder channel : channels) {
