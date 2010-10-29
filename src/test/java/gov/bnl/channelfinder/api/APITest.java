@@ -72,6 +72,7 @@ public class APITest {
 	/**
 	 * Add a set of channels
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	public void addRemoveChannels() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
@@ -79,7 +80,8 @@ public class APITest {
 		channels.add(channel("second").owner("TestOwner"));
 		try {
 			client.add(channels);
-			assertTrue(client.getAllChannels().containsAll(toChannels(channels)));
+			assertTrue(client.getAllChannels()
+					.containsAll(toChannels(channels)));
 
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
@@ -98,17 +100,21 @@ public class APITest {
 	@Test
 	public void updateChannel() {
 		Channel.Builder testChannel = channel("TestChannel").owner("shroffk");
-		Tag.Builder testTag = tag("TestTag").owner("shroffk");
+		Tag.Builder testTag1 = tag("TestTag1").owner("shroffk");
+		Tag.Builder testTag2 = tag("TestTag2").owner("shroffk");
 		try {
-			client.add(testChannel);
+			client.add(testChannel.with(testTag1));
 			Channel retChannel = client.getChannel(testChannel.build()
 					.getName());
 			// check for no initial properties or tags
-			assertTrue(retChannel.getTags().size() == 0);
+			assertTrue(retChannel.getTags().contains(testTag1.build()));
 			// uses the POST method
-			client.updateChannel(testChannel.with(testTag));
+			testChannel = channel("TestChannel").owner("shroffk");
+			client.updateChannel(testChannel.with(testTag2));
 			assertTrue(client.getChannel(testChannel.build().getName())
-					.getTags().contains(testTag.build()));
+					.getTags().contains(testTag1.build()));
+			assertTrue(client.getChannel(testChannel.build().getName())
+					.getTags().contains(testTag2.build()));
 		} catch (ChannelFinderException e) {
 			e.printStackTrace();
 		} finally {
@@ -120,7 +126,6 @@ public class APITest {
 	}
 
 	/**
-	 * TODO fix the assert to be smarter than just size checks
 	 * Test destructive update - existing channel is completely replaced
 	 */
 	@Test
@@ -131,10 +136,13 @@ public class APITest {
 				tag("newTag", "shroffk"));
 		try {
 			client.add(oldChannel);
-			assertTrue(client.findChannelsByTag("oldTag").size() == 1);
+			assertTrue(client.findChannelsByTag("oldTag").contains(
+					oldChannel.build()));
 			client.add(newChannel);
-			assertTrue(client.findChannelsByTag("oldTag").size() == 0);
-			assertTrue(client.findChannelsByTag("newTag").size() == 1);
+			assertTrue(!client.findChannelsByTag("oldTag").contains(
+					oldChannel.build()));
+			assertTrue(client.findChannelsByTag("newTag").contains(
+					newChannel.build()));
 		} catch (ChannelFinderException e) {
 			e.printStackTrace();
 		} finally {
@@ -168,8 +176,9 @@ public class APITest {
 	}
 
 	/**
-	 * TODO redo assert with new find methods and checks .contains
+	 * Add a Remove a tag from multiple channels
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	public void addRemoveTag2Channels() {
 		Tag.Builder tag = tag("tag", "tagOwner");
@@ -183,7 +192,15 @@ public class APITest {
 		try {
 			client.add(channelSet);
 			client.add(tag, getChannelNames(toChannels(channelSet)));
+			assertTrue(client.findChannelsByTag(tag.build().getName())
+					.containsAll(toChannels(channelSet)));
 			client.remove(tag, getChannelNames(toChannels(channelSubSet)));
+			Collection<Channel.Builder> diffSet = new HashSet<Channel.Builder>(
+					channelSet);
+			diffSet.removeAll(channelSubSet);
+			assertTrue(client.findChannelsByTag(tag.build().getName())
+					.containsAll(toChannels(diffSet)));
+			// this method is not atomic
 			client.remove(channelSet);
 		} catch (ChannelFinderException e) {
 		}
@@ -191,9 +208,9 @@ public class APITest {
 	}
 
 	/**
-	 * TODO redo assert with new find methods and checks .contains Remove Tag
-	 * from all channels
+	 * Remove Tag from all channels
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	public void deleteTag() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
@@ -201,9 +218,8 @@ public class APITest {
 		channels.add(channel("second").owner("TestOwner"));
 		try {
 			client.add(channels);
-			client
-					.add(tag("Tag", "shroffk"),
-							getChannelNames(toChannels(channels)));
+			client.add(tag("Tag", "shroffk"),
+					getChannelNames(toChannels(channels)));
 			assertTrue(client.findChannelsByTag("Tag").size() > 0);
 			client.deleteTag("Tag");
 			assertTrue(client.findChannelsByTag("Tag").size() == 0);
@@ -215,9 +231,9 @@ public class APITest {
 	}
 
 	/**
-	 * TODO redo assert with new find methods and checks .contains test the
-	 * destructive setting of tags on channel/s
+	 * test the destructive setting of tags on channel/s
 	 */
+	@SuppressWarnings("deprecation")
 	@Test
 	public void testSetTag() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
@@ -234,19 +250,19 @@ public class APITest {
 			// add tag to set1
 			client.add(tag, getChannelNames(toChannels(channelSet1)));
 			assertTrue(client.findChannelsByTag(tag.toXml().getName())
-					.size() == 2);
+					.containsAll(toChannels(channelSet1)));
 			// set the tag on channel first and remove it from every other
 			// channel
 			client.set(tag, "first");
-			assertTrue(client.findChannelsByTag(tag.toXml().getName())
-					.size() == 1);
+			assertTrue(client.findChannelsByTag(tag.build().getName()).size() == 1);
+			assertTrue(client.findChannelsByTag(tag.build().getName())
+					.contains(channel("first").build()));
 			// add the tag to set2 and remove it from every other channel
 			client.set(tag, getChannelNames(toChannels(channelSet2)));
+			assertTrue(client.findChannelsByTag(tag.build().getName()).size() == 2);
 			assertTrue(client.findChannelsByTag(tag.toXml().getName())
-					.size() == 2);
-			// TODO check if the rest of the channel remains unchanges
+					.containsAll(toChannels(channelSet2)));
 		} catch (ChannelFinderException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
 			client.remove(channelSet1);
@@ -256,7 +272,7 @@ public class APITest {
 	}
 
 	/**
-	 * Add And Remove a property to a single channel
+	 * Add and Remove a property to a single channel
 	 */
 	@Test
 	public void addRemoveProperty() {
@@ -267,8 +283,9 @@ public class APITest {
 		try {
 			client.add(testChannel);
 			client.add(property, testChannel.toXml().getName());
-			assertTrue(client.findChannelsByProp(property.toXml().getName())
-					.size() == 1);
+			Collection<Channel> result = client.findChannelsByProp(property
+					.build().getName());
+			assertTrue(result.contains(testChannel.build()));
 			client.remove(property, testChannel.toXml().getName());
 			assertTrue(client.findChannelsByProp(property.toXml().getName())
 					.size() == 0);
@@ -292,14 +309,15 @@ public class APITest {
 				.owner("shroffk");
 		try {
 			client.add(channels);
+			int initialCount = client.findChannelsByProp(
+					property.toXml().getName(), "*").size();
 			client.add(property, getChannelNames(toChannels(channels)));
 			assertTrue(client.findChannelsByProp(property.toXml().getName(),
-					"*").size() == 2);
+					"*").containsAll(toChannels(channels)));
 			client.remove(property, getChannelNames(toChannels(channels)));
 			assertTrue(client.findChannelsByProp(property.toXml().getName(),
-					"*").size() == 0);
+					"*").size() == initialCount);
 		} catch (ChannelFinderException e) {
-			// TODO Auto-generated catch block
 			fail(e.getMessage());
 		} finally {
 			client.remove(channels);
@@ -307,7 +325,7 @@ public class APITest {
 	}
 
 	/**
-	 * TODO fix the asserts 
+	 * TODO fix the asserts
 	 */
 	@Test
 	public void deleteProperty() {
@@ -329,6 +347,36 @@ public class APITest {
 		} finally {
 			client.remove(channels);
 		}
+	}
+
+	/**
+	 * check non-destructive addition of tags and channels
+	 */
+	@Test
+	public void addTagsProperty() {
+		Channel.Builder testChannel = channel("testChannel").owner("owner")
+				.with(tag("existingTag", "owner")).with(
+						property("existingProperty", "propValue")
+								.owner("owner"));
+		client.add(testChannel);
+		Channel result = (client.getChannel(testChannel.build().getName()));
+		assertTrue(result.getTags().contains(
+				tag("existingTag", "owner").build()));
+		assertTrue(result.getProperties().contains(
+				property("existingProperty", "propValue").build()));
+		client.add(tag("newTag", "owner"), testChannel.build().getName());
+		client.add(property("newProperty", "newPropValue").owner("owner"),
+				testChannel.build().getName());
+		result = (client.getChannel(testChannel.build().getName()));
+		assertTrue(result.getTags().contains(
+				tag("existingTag", "owner").build()));
+		assertTrue(result.getTags().contains(tag("newTag", "owner").build()));
+		assertTrue(result.getProperties().contains(
+				property("existingProperty", "propValue").build()));
+		assertTrue(result.getProperties().contains(
+				property("newProperty", "newPropValue").build()));
+
+		client.remove(testChannel);
 	}
 
 	class StatusMatcher extends BaseMatcher<ChannelFinderException> {

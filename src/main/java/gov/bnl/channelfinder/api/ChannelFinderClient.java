@@ -149,7 +149,6 @@ public class ChannelFinderClient {
 			}
 
 		} catch (Exception e) {
-			// TODO: handle exception
 			e.printStackTrace();
 		}
 	}
@@ -180,10 +179,8 @@ public class ChannelFinderClient {
 			ctx = SSLContext.getInstance(getPreferenceValue("protocol", "SSL")); //$NON-NLS-1$
 			ctx.init(null, mytm, null);
 		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (KeyManagementException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -222,7 +219,6 @@ public class ChannelFinderClient {
 		try {
 			Preferences.userNodeForPackage(this.getClass()).clear();
 		} catch (BackingStoreException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -629,8 +625,8 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * TODO check the state of channel and properties Set tag <tt>tag</tt> on
-	 * the set of channels {channels} and remove it from all others
+	 * Set tag <tt>tag</tt> on the set of channels {channels} and remove it from
+	 * all others
 	 * 
 	 * @param channels
 	 * @param tag
