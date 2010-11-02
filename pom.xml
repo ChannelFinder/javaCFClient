@@ -4,7 +4,7 @@
 	<groupId>gov.bnl.channelfinder</groupId>
 	<artifactId>ChannelFinderAPI</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-rc1</version>
 	<name>ChannelFinder Client API</name>
 	<repositories>
 		<repository>
