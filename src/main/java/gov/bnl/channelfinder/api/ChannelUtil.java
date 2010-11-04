@@ -16,6 +16,12 @@ import static gov.bnl.channelfinder.api.Channel.Builder.*;
 public class ChannelUtil {
 
 	/**
+	 * This class is not meant to be instantiated or extended
+	 */
+	private ChannelUtil(){
+		
+	}
+	/**
 	 * Return a list of tag names associated with this channel
 	 * 
 	 * @param channel
