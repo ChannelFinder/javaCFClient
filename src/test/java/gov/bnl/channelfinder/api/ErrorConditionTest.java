@@ -2,6 +2,7 @@ package gov.bnl.channelfinder.api;
 
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
+import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
@@ -25,11 +26,23 @@ public class ErrorConditionTest {
 	//
 	// }
 
+	private static ChannelFinderClient client = ChannelFinderClient.getInstance();
+	
 	@Test(expected = ChannelFinderException.class)
 	public void addOrphanChannel() {
 		XmlChannel xmlChannel = new XmlChannel();
 		xmlChannel.setName("onlyName");
-		ChannelFinderClient.getInstance().add(channel("JustName"));
+		client.add(channel("JustName"));
+	}
+
+	@Test(expected = ChannelFinderException.class)
+	public void addOrphanTag() {
+		client.add(tag("JustName"));
+	}
+
+	@Test(expected = ChannelFinderException.class)
+	public void addOrphanProperty() {
+		client.add(property("JustName"));
 	}
 
 	/**

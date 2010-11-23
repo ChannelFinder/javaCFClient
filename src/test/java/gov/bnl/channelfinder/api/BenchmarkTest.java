@@ -17,13 +17,18 @@ public class BenchmarkTest {
 	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 	private static long originalChannelCount;
 	private long time;
+	private static ChannelFinderClient client = ChannelFinderClient
+			.getInstance();
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		// create a table of 2000 channels
-		originalChannelCount = ChannelFinderClient.getInstance().getAllChannels()
-				.size();
-		
+		originalChannelCount = client.getAllChannels().size();
+		// Add the tags and the properties to be used.
+		client.add(property("prop").owner("boss"));
+		client.add(tag("tagA").owner("boss"));
+		client.add(tag("tagB").owner("boss"));
+
 		for (int i = 0; i < 2000; i++) {
 			String channelName = "2000";
 			channelName += getName(i);
@@ -46,8 +51,7 @@ public class BenchmarkTest {
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
 		ChannelFinderClient.getInstance().remove(channels);
-		assertTrue(ChannelFinderClient.getInstance().getAllChannels()
-				.size() == originalChannelCount);
+		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == originalChannelCount);
 	}
 
 	private static String getName(int i) {

@@ -22,30 +22,45 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 public class QueryTest {
 
 	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-	private static int channelcount;
+	private static int initialChannelCount;
+
+	private static ChannelFinderClient client = ChannelFinderClient
+			.getInstance();
+
+	// Tags
+	static Tag.Builder tagA = tag("Taga", "shroffk");
+	static Tag.Builder tagB = tag("Tagb", "shroffk");
+	static Tag.Builder tagC = tag("Tagc", "shroffk");
+	static Tag.Builder tagStar = tag("Tag*", "shroffk");
+	// Properties
+	static Property.Builder prop = property("prop").owner("shroffk");
+	static Property.Builder prop2 = property("prop2").owner("shroffk");
 
 	/**
 	 * insert test data - for performing the queries described below.
 	 */
 	@BeforeClass
 	public static void populateChannels() {
-		channels.add(channel("pvk:01<first>").owner("shroffk").with(
-				property("prop", "1").owner("shroffk")).with(
-				property("prop2", "2").owner("shroffk")).with(
-				tag("Taga", "shroffk")));
-		channels.add(channel("pvk:02<second>").owner("shroffk").with(
-				property("prop", "1").owner("shroffk")).with(
-				tag("Taga", "shroffk")).with(tag("Tagb", "shroffk")));
-		channels.add(channel("pvk:03<second>").owner("shroffk").with(
-				property("prop", "2").owner("shroffk")).with(tag("Tagb", "shroffk")).with(
-				tag("Tagc", "shroffk")));
-		channels.add(channel("distinctName").owner("shroffk").with(
-				property("prop", "*").owner("shroffk")).with(
-				tag("Tag*", "shroffk")));
+
 		try {
-			channelcount = ChannelFinderClient.getInstance().getAllChannels()
-					.size();
-			ChannelFinderClient.getInstance().add(channels);		
+			initialChannelCount = client.getAllChannels().size();
+			// Add the tags and properties.
+			client.add(prop);
+			client.add(prop2);
+			client.add(tagA);
+			client.add(tagB);
+			client.add(tagC);
+			client.add(tagStar);
+
+			// Add the channels
+			client.add(channel("pvk:01<first>").owner("shroffk").with(
+					prop.value("1")).with(prop2.value("2")).with(tagA));
+			client.add(channel("pvk:02<second>").owner("shroffk").with(
+					prop.value("1")).with(tagA).with(tagB));
+			client.add(channel("pvk:03<second>").owner("shroffk").with(
+					prop.value("2")).with(tagB).with(tagC));
+			client.add(channel("distinctName").owner("shroffk").with(
+					prop.value("*")).with(tagStar));
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
 		}
@@ -58,10 +73,8 @@ public class QueryTest {
 	public void queryAllChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "*");
-		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
-				map);
-		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == channels
-				.size());
+		Collection<Channel> channels = client.findChannels(map);
+		assertTrue(client.getAllChannels().size() == channels.size());
 	}
 
 	/**
@@ -71,8 +84,7 @@ public class QueryTest {
 	public void queryChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "pvk:*");
-		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
-				map);
+		Collection<Channel> channels = client.findChannels(map);
 		assertTrue(channels.size() == 3);
 	}
 
@@ -84,18 +96,17 @@ public class QueryTest {
 	public void queryChannelsbyProperty() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("prop", "1");
-		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
-				map);
+		Collection<Channel> channels = client.findChannels(map);
 		assertTrue(channels.size() == 2);
 
 		map.put("prop", "1");
 		map.put("prop2", "2");
-		channels = ChannelFinderClient.getInstance().findChannels(map);
+		channels = client.findChannels(map);
 		assertTrue(channels.size() == 1);
 
 		map.clear();
 		map.put("cell", "14");
-		channels = ChannelFinderClient.getInstance().findChannels(map);
+		channels = client.findChannels(map);
 	}
 
 	/**
@@ -107,8 +118,7 @@ public class QueryTest {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		map.add("prop", "1");
 		map.add("prop", "2");
-		Collection<Channel> channels = ChannelFinderClient.getInstance().findChannels(
-				map);
+		Collection<Channel> channels = client.findChannels(map);
 		assertTrue(channels.size() == 3);
 	}
 
@@ -120,26 +130,35 @@ public class QueryTest {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		// property values are special chars
 		map.add("prop", "*");
-		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
-				.size() == 4);
+		assertTrue(client.findChannels(map).size() == 4);
 		map.clear();
 		map.add("prop", "\\*");
-		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
-				.size() == 1);
+		assertTrue(client.findChannels(map).size() == 1);
 		// tag names are special chars
 		map.clear();
 		map.add("~tag", "Tag*");
-		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
-				.size() == 4);
+		assertTrue(client.findChannels(map).size() == 4);
 		map.clear();
 		map.add("~tag", "Tag\\*");
-		assertTrue(ChannelFinderClient.getInstance().findChannels(map)
-				.size() == 1);
+		assertTrue(client.findChannels(map).size() == 1);
 	}
 
 	@AfterClass
 	public static void cleanup() {
-		ChannelFinderClient.getInstance().remove(channels);
-		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == channelcount);
+
+		channels.add(channel("pvk:01<first>"));
+		channels.add(channel("pvk:02<second>"));
+		channels.add(channel("pvk:03<second>"));
+		channels.add(channel("distinctName"));
+
+		client.remove(channels);
+		// clean up all the tags and properties
+		client.deleteProperty(prop.build().getName());
+		client.deleteProperty(prop2.toXml().getName());
+		client.deleteTag(tagA.toXml().getName());
+		client.deleteTag(tagB.toXml().getName());
+		client.deleteTag(tagC.toXml().getName());
+		client.deleteTag(tagStar.toXml().getName());
+		assertTrue(client.getAllChannels().size() == initialChannelCount);
 	}
 }
