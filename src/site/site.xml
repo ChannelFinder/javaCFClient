@@ -17,7 +17,6 @@
         <menu name="ChannelFinderAPI">
             <item name="Overview" href="index.html"/>
             <item name="Download" href="download.html"/>
-            <item name="Installation" href="installation.html"/>
         </menu>
         <menu ref="reports"/>
     </body>
