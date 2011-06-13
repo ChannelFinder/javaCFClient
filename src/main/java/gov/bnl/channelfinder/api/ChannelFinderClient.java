@@ -23,7 +23,9 @@ import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -186,7 +188,7 @@ public class ChannelFinderClient {
 
 		ClientConfig config = new DefaultClientConfig();
 		config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
-				new HTTPSProperties(null, ctx));
+				new HTTPSProperties(new TestHostnameVerifier(), ctx));
 		Client client = Client.create(config);
 		client.addFilter(new HTTPBasicAuthFilter(getPreferenceValue("username",
 				"username"), getPreferenceValue("password", "password"))); //$NON-NLS-1$ //$NON-NLS-2$
@@ -718,5 +720,13 @@ public class ChannelFinderClient {
 			throw new ChannelFinderException(e);
 		}
 	}
+	
+
+	public class TestHostnameVerifier implements HostnameVerifier {
+		public boolean verify(String arg0, SSLSession arg1) {
+			return true;
+		}
+	}
+
 
 }
