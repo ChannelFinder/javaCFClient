@@ -24,8 +24,7 @@ public class QueryTest {
 	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 	private static int initialChannelCount;
 
-	private static ChannelFinderClient client = ChannelFinderClient
-			.getInstance();
+	private static ChannelFinderClient client;
 
 	// Tags
 	static Tag.Builder tagA = tag("Taga", "shroffk");
@@ -42,6 +41,8 @@ public class QueryTest {
 	@BeforeClass
 	public static void populateChannels() {
 
+		ChannelFinderClient.resetPreferences();
+		client = ChannelFinderClient.getInstance();
 		try {
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.
@@ -53,14 +54,14 @@ public class QueryTest {
 			client.add(tagStar);
 
 			// Add the channels
-			client.add(channel("pvk:01<first>").owner("shroffk").with(
-					prop.value("1")).with(prop2.value("2")).with(tagA));
-			client.add(channel("pvk:02<second>").owner("shroffk").with(
-					prop.value("1")).with(tagA).with(tagB));
-			client.add(channel("pvk:03<second>").owner("shroffk").with(
-					prop.value("2")).with(tagB).with(tagC));
-			client.add(channel("distinctName").owner("shroffk").with(
-					prop.value("*")).with(tagStar));
+			client.add(channel("pvk:01<first>").owner("shroffk")
+					.with(prop.value("1")).with(prop2.value("2")).with(tagA));
+			client.add(channel("pvk:02<second>").owner("shroffk")
+					.with(prop.value("1")).with(tagA).with(tagB));
+			client.add(channel("pvk:03<second>").owner("shroffk")
+					.with(prop.value("2")).with(tagB).with(tagC));
+			client.add(channel("distinctName").owner("shroffk")
+					.with(prop.value("*")).with(tagStar));
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
 		}

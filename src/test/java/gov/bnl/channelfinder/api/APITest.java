@@ -31,6 +31,7 @@ public class APITest {
 
 	@BeforeClass
 	public static void beforeTests() {
+		ChannelFinderClient.resetPreferences();
 		client = ChannelFinderClient.getInstance();
 		channelCount = client.getAllChannels().size();
 	}
@@ -56,7 +57,7 @@ public class APITest {
 		try {
 			// Add a channel
 			client.add(channel(channelName).owner("TestOwner"));
-			client.getChannel(channelName);
+			Channel channel = client.getChannel(channelName);
 			// Remove a channel
 			client.remove(channel(channelName));
 			assertTrue(!client.getAllChannels().contains(channel(channelName)));

@@ -17,11 +17,13 @@ public class BenchmarkTest {
 	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 	private static long originalChannelCount;
 	private long time;
-	private static ChannelFinderClient client = ChannelFinderClient
-			.getInstance();
+	private static ChannelFinderClient client;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
+		ChannelFinderClient.resetPreferences();
+		client = ChannelFinderClient.getInstance();
+
 		// create a table of 2000 channels
 		originalChannelCount = client.getAllChannels().size();
 		// Add the tags and the properties to be used.

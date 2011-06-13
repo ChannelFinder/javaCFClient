@@ -253,9 +253,9 @@ public class ChannelFinderClient {
 	}
 
 	@Deprecated
-	public void resetPreferences() {
+	public static void resetPreferences() {
 		try {
-			Preferences.userNodeForPackage(this.getClass()).clear();
+			Preferences.userNodeForPackage(ChannelFinderClient.class).clear();
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
@@ -272,7 +272,7 @@ public class ChannelFinderClient {
 	public Channel getChannel(String channelName) throws ChannelFinderException {
 		try {
 			return new Channel(service
-					.path("channel").path(channelName).accept( //$NON-NLS-1$
+					.path("channels").path(channelName).accept( //$NON-NLS-1$
 							MediaType.APPLICATION_XML).get(XmlChannel.class));
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);

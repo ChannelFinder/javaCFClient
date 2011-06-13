@@ -8,6 +8,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 import java.util.HashSet;
 
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ErrorConditionTest {
@@ -26,7 +28,14 @@ public class ErrorConditionTest {
 	//
 	// }
 
-	private static ChannelFinderClient client = ChannelFinderClient.getInstance();
+	private static ChannelFinderClient client;
+	
+	@BeforeClass
+	public static void setup(){
+		ChannelFinderClient.resetPreferences();
+		client = ChannelFinderClient.getInstance();
+	}
+	
 	
 	@Test(expected = ChannelFinderException.class)
 	public void addOrphanChannel() {
