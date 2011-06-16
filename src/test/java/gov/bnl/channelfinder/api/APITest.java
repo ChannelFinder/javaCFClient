@@ -56,7 +56,7 @@ public class APITest {
 		String channelName = "TestChannelName";
 		try {
 			// Add a channel
-			client.add(channel(channelName).owner("TestOwner"));
+			client.add(channel(channelName).owner("carcassi"));
 			Channel channel = client.getChannel(channelName);
 			// Remove a channel
 			client.remove(channel(channelName));
@@ -120,6 +120,8 @@ public class APITest {
 					.getTags().contains(testTag2.build()));
 		} finally {
 			client.remove(testChannel);
+                        client.deleteTag("TestTag1");
+                        client.deleteTag("TestTag2");
 			assertTrue("CleanUp failed",
 					client.getAllChannels().size() == channelCount);
 		}
@@ -203,7 +205,9 @@ public class APITest {
 			// this method is not atomic
 			client.remove(channelSet);
 		} catch (ChannelFinderException e) {
-		}
+		} finally{
+                    
+                }
 
 	}
 
@@ -349,12 +353,14 @@ public class APITest {
 	 */
 	@Test
 	public void addTagsProperty() {
-		client.add(tag("existingTag", "owner"));
-		client.add(property("existingProperty", "propValue").owner("owner"));
-		Channel.Builder testChannel = channel("testChannel").owner("owner")
+            Channel.Builder testChannel = channel("testChannel").owner("owner")
 				.with(tag("existingTag", "owner")).with(
 						property("existingProperty", "propValue")
 								.owner("owner"));
+            try{
+		client.add(tag("existingTag", "owner"));
+		client.add(property("existingProperty", "propValue").owner("owner"));
+		
 		client.add(testChannel);
 		Channel result = (client.getChannel(testChannel.build().getName()));
 		assertTrue(result.getTags().contains(
@@ -377,7 +383,13 @@ public class APITest {
 				property("existingProperty", "propValue").build()));
 		assertTrue(result.getProperties().contains(
 				property("newProperty", "newPropValue").build()));
+            } finally {
 		client.remove(testChannel);
+                client.deleteTag("existingTag");
+                client.deleteTag("newTag");
+                client.deleteProperty("existingProperty");
+                client.deleteProperty("newProperty");
+            }
 	}
 
 	@Test
