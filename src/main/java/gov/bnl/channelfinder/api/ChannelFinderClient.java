@@ -80,7 +80,7 @@ public class ChannelFinderClient {
 
 		private Executor executor = Executors.newSingleThreadExecutor();
 
-		private CFPreferences preferences = new CFPreferences();
+		private CFProperties preferences = new CFProperties();
 
 		private static final String default_service_url = "http://localhost:8080/ChannelFinder/resources";
 
@@ -327,6 +327,87 @@ public class ChannelFinderClient {
 		}
 	}
 
+
+	/**
+	 * Add tag <tt>tag</tt> to channel <tt>channelName</tt> and remove the tag
+	 * from all other channels
+	 * 
+	 * @param tag
+	 * @param channel
+	 * @throws ChannelFinderException
+	 */
+	public void set(Tag.Builder tag, String channel)
+			throws ChannelFinderException {
+		try {
+			// service.path("tags").path(tag.toXml().getName()).path(channel)
+			// .type(MediaType.APPLICATION_XML).put(tag.toXml());
+			Collection<String> channels = new ArrayList<String>();
+			channels.add(channel);
+			set(tag, channels);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+
+	}
+	
+
+	/**
+	 * Set tag <tt>tag</tt> on the set of channels {channels} and remove it from
+	 * all others
+	 * 
+	 * @param channels
+	 * @param tag
+	 */
+	public void set(Tag.Builder tag, Collection<String> channelNames) {
+		// Better than recursively calling set(tag, channel) for each channel
+		try {
+			XmlTag xmlTag = tag.toXml();
+			XmlChannels channels = new XmlChannels();
+			XmlChannel channel;
+			for (String channelName : channelNames) {
+				channel = new XmlChannel(channelName);
+				channels.addXmlChannel(channel);
+			}
+			xmlTag.setXmlChannels(channels);
+			service.path("tags").path(tag.toXml().getName())
+					.accept(MediaType.APPLICATION_XML).put(xmlTag);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+	
+	/**
+	 * Add a new property <tt>property</tt>
+	 * 
+	 * @param prop
+	 */
+	public void set(Property.Builder prop) {
+		try {
+			XmlProperty property = prop.toXml();
+			service.path("properties").path(property.getName())
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).put(property);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+	
+	/**
+	 * Update properties and tags of existing channel <tt>channel</tt>
+	 * 
+	 * @param channel
+	 * @throws ChannelFinderException
+	 */
+	public void update(Channel.Builder channel)
+			throws ChannelFinderException {
+		try {
+			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$
+					MediaType.APPLICATION_XML).post(channel.toXml());
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+	
 	/**
 	 * Add Tag <tt>tag </tt> to Channel with name <tt>channelName</tt>
 	 * 
@@ -360,22 +441,6 @@ public class ChannelFinderClient {
 			xmlTag.setXmlChannels(channels);
 			service.path("tags").path(tag.toXml().getName())
 					.type(MediaType.APPLICATION_XML).post(xmlTag);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Add a new property <tt>property</tt>
-	 * 
-	 * @param prop
-	 */
-	public void set(Property.Builder prop) {
-		try {
-			XmlProperty property = prop.toXml();
-			service.path("properties").path(property.getName())
-					.accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(property);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -659,69 +724,6 @@ public class ChannelFinderClient {
 			Collection<String> channelNames) throws ChannelFinderException {
 		for (String channel : channelNames) {
 			delete(property, channel);
-		}
-	}
-
-	/**
-	 * Update properties and tags of existing channel <tt>channel</tt>
-	 * 
-	 * @param channel
-	 * @throws ChannelFinderException
-	 */
-	public void update(Channel.Builder channel)
-			throws ChannelFinderException {
-		try {
-			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).post(channel.toXml());
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-	}
-
-	/**
-	 * Add tag <tt>tag</tt> to channel <tt>channelName</tt> and remove the tag
-	 * from all other channels
-	 * 
-	 * @param tag
-	 * @param channel
-	 * @throws ChannelFinderException
-	 */
-	public void set(Tag.Builder tag, String channel)
-			throws ChannelFinderException {
-		try {
-			// service.path("tags").path(tag.toXml().getName()).path(channel)
-			// .type(MediaType.APPLICATION_XML).put(tag.toXml());
-			Collection<String> channels = new ArrayList<String>();
-			channels.add(channel);
-			set(tag, channels);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
-
-	}
-
-	/**
-	 * Set tag <tt>tag</tt> on the set of channels {channels} and remove it from
-	 * all others
-	 * 
-	 * @param channels
-	 * @param tag
-	 */
-	public void set(Tag.Builder tag, Collection<String> channelNames) {
-		// Better than recursively calling set(tag, channel) for each channel
-		try {
-			XmlTag xmlTag = tag.toXml();
-			XmlChannels channels = new XmlChannels();
-			XmlChannel channel;
-			for (String channelName : channelNames) {
-				channel = new XmlChannel(channelName);
-				channels.addXmlChannel(channel);
-			}
-			xmlTag.setXmlChannels(channels);
-			service.path("tags").path(tag.toXml().getName())
-					.accept(MediaType.APPLICATION_XML).put(xmlTag);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
 		}
 	}
 

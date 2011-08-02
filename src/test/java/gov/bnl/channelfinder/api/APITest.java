@@ -261,7 +261,7 @@ public class APITest {
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
-	public void testSetTag() {
+	public void SetTag() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
 		channelSet1.add(channel("first").owner("channel"));
 		channelSet1.add(channel("second").owner("channel"));
@@ -316,6 +316,7 @@ public class APITest {
 			assertTrue(client.findByProperty(property.toXml().getName()).size() == 0);
 		} finally {
 			client.delete(testChannel);
+			client.deleteProperty("TestProperty");
 		}
 
 	}

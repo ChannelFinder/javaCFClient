@@ -5,16 +5,14 @@ import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.prefs.Preferences;
 
-class CFPreferences {
+class CFProperties {
 	
-	private static Preferences preferences;
 	private static Properties defaultProperties;
 	private static Properties userCFProperties;
 	private static Properties userHomeCFProperties;
 	private static Properties systemCFProperties;
 	
-	public CFPreferences() {
-		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
+	public CFProperties() {
 
 		try {
 			File userCFPropertiesFile = new File(System.getProperty(
@@ -49,7 +47,6 @@ class CFPreferences {
 
 			// Not using to new Properties(default Properties) constructor to
 			// make the hierarchy clear.
-			// TODO replace using constructor with default.
 			systemCFProperties = new Properties(defaultProperties);
 			if (systemCFPropertiesFile.exists()) {
 				systemCFProperties.load(new FileInputStream(
@@ -80,18 +77,6 @@ class CFPreferences {
 	 * @return
 	 */
 	public String getPreferenceValue(String key, String defaultValue) {
-		return preferences.get(key, getDefaultValue(key, defaultValue));
-	}
-
-	/**
-	 * cycles through the default properties files and return the value for the
-	 * key from the highest priority file
-	 * 
-	 * @param key
-	 * @param defaultValue
-	 * @return
-	 */
-	private String getDefaultValue(String key, String defaultValue) {
 		if (userCFProperties.containsKey(key))
 			return userCFProperties.getProperty(key);
 		else if (userHomeCFProperties.containsKey(key))
@@ -103,6 +88,5 @@ class CFPreferences {
 		else
 			return defaultValue;
 	}
-
 
 }
