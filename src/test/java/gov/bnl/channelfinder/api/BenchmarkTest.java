@@ -1,5 +1,6 @@
 package gov.bnl.channelfinder.api;
 
+import static gov.bnl.channelfinder.api.ChannelFinderClient.*;
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
@@ -22,7 +23,8 @@ public class BenchmarkTest {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 		ChannelFinderClient.resetPreferences();
-		client = ChannelFinderClient.getInstance();
+		// client = ChannelFinderClient.getInstance();
+		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 
 		// create a table of 2000 channels
 		originalChannelCount = client.getAllChannels().size();
@@ -44,7 +46,7 @@ public class BenchmarkTest {
 		}
 		// Add all the channels;
 		try {
-			ChannelFinderClient.getInstance().add(channels);
+			client.add(channels);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -52,8 +54,8 @@ public class BenchmarkTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		ChannelFinderClient.getInstance().remove(channels);
-		assertTrue(ChannelFinderClient.getInstance().getAllChannels().size() == originalChannelCount);
+		client.remove(channels);
+		assertTrue(client.getAllChannels().size() == originalChannelCount);
 	}
 
 	private static String getName(int i) {
@@ -82,8 +84,7 @@ public class BenchmarkTest {
 	public synchronized void query1Channel() {
 		time = System.currentTimeMillis();
 		try {
-			Channel ch = ChannelFinderClient.getInstance().getChannel(
-					"2000first:a<000>:0:0");
+			Channel ch = client.getChannel("2000first:a<000>:0:0");
 			assertTrue(ch.getName().equals("2000first:a<000>:0:0"));
 			System.out.println("query1Channel duration : "
 					+ (System.currentTimeMillis() - time));
@@ -95,7 +96,7 @@ public class BenchmarkTest {
 	@Test
 	public void query10Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = ChannelFinderClient.getInstance()
+		Collection<Channel> chs = client
 				.findChannelsByName("2000first:a<400>:0*");
 		assertTrue(chs.size() == 10);
 		System.out.println("query10Channels duration : "
@@ -105,7 +106,7 @@ public class BenchmarkTest {
 	@Test
 	public void query100Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = ChannelFinderClient.getInstance()
+		Collection<Channel> chs = client
 				.findChannelsByName("2000first:a<400>:*");
 		assertTrue(chs.size() == 100);
 		System.out.println("query100Channels duration : "
@@ -115,8 +116,7 @@ public class BenchmarkTest {
 	@Test
 	public void query500Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = ChannelFinderClient.getInstance()
-				.findChannelsByName("2000first:b*");
+		Collection<Channel> chs = client.findChannelsByName("2000first:b*");
 		assertTrue(chs.size() == 500);
 		System.out.println("query500Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -125,8 +125,7 @@ public class BenchmarkTest {
 	@Test
 	public void query1000Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = ChannelFinderClient.getInstance()
-				.findChannelsByName("2000second:*");
+		Collection<Channel> chs = client.findChannelsByName("2000second:*");
 		assertTrue(chs.size() == 1000);
 		System.out.println("query1000Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -135,8 +134,7 @@ public class BenchmarkTest {
 	@Test
 	public synchronized void query2000Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = ChannelFinderClient.getInstance()
-				.findChannelsByName("2000*");
+		Collection<Channel> chs = client.findChannelsByName("2000*");
 		assertTrue(chs.size() == 2000);
 		System.out.println("query2000Channels duration : "
 				+ (System.currentTimeMillis() - time));

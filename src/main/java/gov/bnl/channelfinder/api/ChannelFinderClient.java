@@ -20,6 +20,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -54,150 +57,154 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  * 
  */
 public class ChannelFinderClient {
-	private static ChannelFinderClient instance = new ChannelFinderClient();
 	private WebResource service;
-	private static Preferences preferences;
-	private static Properties defaultProperties;
-	private static Properties userCFProperties;
-	private static Properties userHomeCFProperties;
-	private static Properties systemCFProperties;
 
-	/**
-	 * check java preferences for the requested key - then checks the various
-	 * default properties files.
-	 * 
-	 * @param key
-	 * @param defaultValue
-	 * @return
-	 */
-	private static String getPreferenceValue(String key, String defaultValue) {
-		return preferences.get(key, getDefaultValue(key, defaultValue));
-	}
+	public static class CFCBuilder {
 
-	/**
-	 * cycles through the default properties files and return the value for the
-	 * key from the highest priority file
-	 * 
-	 * @param key
-	 * @param defaultValue
-	 * @return
-	 */
-	private static String getDefaultValue(String key, String defaultValue) {
-		if (userCFProperties.containsKey(key))
-			return userCFProperties.getProperty(key);
-		else if (userHomeCFProperties.containsKey(key))
-			return userHomeCFProperties.getProperty(key);
-		else if (systemCFProperties.containsKey(key))
-			return systemCFProperties.getProperty(key);
-		else if (defaultProperties.containsKey(key))
-			return defaultProperties.getProperty(key);
-		else
-			return defaultValue;
-	}
+		// required
+		private URI uri = null;
 
-	private void init() {
-		System.out.println("Initializing channel finder client.");
-		// log.info("Initializing channel finder client.");
-		preferences = Preferences.userNodeForPackage(ChannelFinderClient.class);
+		// optional
+		private boolean withHTTPAuthentication = false;
+		private HTTPBasicAuthFilter httpBasicAuthFilter = null;
+		private LoggingFilter logginFilter = null;
 
-		try {
-			File userCFPropertiesFile = new File(System.getProperty(
-					"channelfinder.properties", ""));
-			File userHomeCFPropertiesFile = new File(System
-					.getProperty("user.home")
-					+ "/channelfinder.properties");
-			File systemCFPropertiesFile = null;
-			if (System.getProperty("os.name").startsWith("Windows")) {
-				systemCFPropertiesFile = new File("/channelfinder.properties");
-			} else if (System.getProperty("os.name").startsWith("Linux")) {
-				systemCFPropertiesFile = new File(
-						"/etc/channelfinder.properties");
+		private ClientConfig clientConfig = null;
+		private TrustManager[] trustManager = new TrustManager[] { new DummyX509TrustManager() };;
+		@SuppressWarnings("unused")
+		private SSLContext sslContext = null;
+
+		private String protocol = null;
+		private String username = null;
+		private String password = null;
+
+		private Executor executor = Executors.newSingleThreadExecutor();
+
+		private CFPreferences preferences = new CFPreferences();
+
+		private static final String default_service_url="http://localhost:8080/ChannelFinder/resources";
+		
+		private CFCBuilder(){
+			this.uri = URI.create(this.preferences.getPreferenceValue("channel_finder_url", default_service_url));
+			this.protocol = this.uri.getScheme();
+		}
+		
+		private CFCBuilder(URI uri){
+			this.uri = uri;
+			this.protocol = this.uri.getScheme();
+		}
+
+		public static CFCBuilder toDefault(){
+			return new CFCBuilder();
+		}
+		
+		public static CFCBuilder to(String uri) {
+			return new CFCBuilder(URI.create(uri));
+		}
+
+		public static CFCBuilder to(URI uri) {
+			return new CFCBuilder(uri);
+		}
+
+		public CFCBuilder withHTTPAuthentication(boolean withHTTPAuthentication) {
+			this.withHTTPAuthentication = withHTTPAuthentication;
+			return this;
+		}
+
+		public CFCBuilder username(String username) {
+			this.username = username;
+			return this;
+		}
+
+		public CFCBuilder password(String password) {
+			this.password = password;
+			return this;
+		}
+
+		public CFCBuilder withLogging(Logger logger) {
+			this.logginFilter = new LoggingFilter(logger);
+			return this;
+		}
+
+		public CFCBuilder withClientConfig(ClientConfig clientConfig) {
+			this.clientConfig = clientConfig;
+			return this;
+		}
+
+		@SuppressWarnings("unused")
+		private CFCBuilder withSSLContext(SSLContext sslContext) {
+			this.sslContext = sslContext;
+			return this;
+		}
+
+		public CFCBuilder withTrustManager(TrustManager[] trustManager) {
+			this.trustManager = trustManager;
+			return this;
+		}
+
+		public CFCBuilder withExecutor(Executor executor) {
+			this.executor = executor;
+			return this;
+		}
+
+		public ChannelFinderClient create() {
+			if (this.protocol.equalsIgnoreCase("http")) {
+				this.clientConfig = new DefaultClientConfig();
+			} else if (this.protocol.equalsIgnoreCase("https")) {
+				if (this.clientConfig == null) {
+					SSLContext sslContext = null;
+					try {
+						sslContext = SSLContext.getInstance("SSL");
+						sslContext.init(null, this.trustManager, null);
+					} catch (NoSuchAlgorithmException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					} catch (KeyManagementException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					this.clientConfig = new DefaultClientConfig();
+					this.clientConfig.getProperties().put(
+							HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
+							new HTTPSProperties(new HostnameVerifier() {
+
+								@Override
+								public boolean verify(String hostname,
+										SSLSession session) {
+									return true;
+								}
+							}, sslContext));
+				}
+			}
+			if (this.withHTTPAuthentication) {
+				this.httpBasicAuthFilter = new HTTPBasicAuthFilter(
+						ifNullReturnPreferenceValue(this.username, "username", "username"), 
+						ifNullReturnPreferenceValue(this.password, "password", "password"));
+			}
+			return new ChannelFinderClient(this.uri, this.clientConfig,
+					this.httpBasicAuthFilter, this.logginFilter);
+		}
+
+		private String ifNullReturnPreferenceValue(String value, String key,
+				String Default) {
+			if (value == null) {
+				return this.preferences.getPreferenceValue(key, Default);
 			} else {
-				systemCFPropertiesFile = new File(
-						"/etc/channelfinder.properties");
+				return value;
 			}
-
-			// File defaultPropertiesFile = new
-			// File(this.getClass().getResource(
-			// "/config/channelfinder.properties").getPath());
-
-			defaultProperties = new Properties();
-			try {
-				defaultProperties.load(this.getClass().getResourceAsStream(
-						"/config/channelfinder.properties"));
-			} catch (Exception e) {
-				// The jar has been modified and the default packaged properties
-				// file has been moved
-				defaultProperties = null;
-			}
-
-			// Not using to new Properties(default Properties) constructor to
-			// make the hierarchy clear.
-			// TODO replace using constructor with default.
-			systemCFProperties = new Properties(defaultProperties);
-			if (systemCFPropertiesFile.exists()) {
-				systemCFProperties.load(new FileInputStream(
-						systemCFPropertiesFile));
-			}
-			userHomeCFProperties = new Properties(systemCFProperties);
-			if (userHomeCFPropertiesFile.exists()) {
-				userHomeCFProperties.load(new FileInputStream(
-						userHomeCFPropertiesFile));
-			}
-			userCFProperties = new Properties(userHomeCFProperties);
-			if (userCFPropertiesFile.exists()) {
-				userCFProperties
-						.load(new FileInputStream(userCFPropertiesFile));
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 	}
-
-	/**
-	 * Create an instance of ChannelFinderClient
-	 */
-	private ChannelFinderClient() {
-		init();
-
-		// Authentication and Authorization configuration
-		TrustManager mytm[] = null;
-		SSLContext ctx = null;
-
-		try {
-			// System.out.println(this.getClass()
-			// .getResource("/config/truststore.jks").getPath());
-			// mytm = new TrustManager[] { new MyX509TrustManager(
-			// getPreferenceValue("trustStore", this.getClass()
-			// .getResource("/config/truststore.jks").getPath()),
-			//					getPreferenceValue("trustPass", "default").toCharArray()) }; //$NON-NLS-1$
-			mytm = new TrustManager[] { new DummyX509TrustManager() };
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
-
-		try {
-			ctx = SSLContext.getInstance(getPreferenceValue("protocol", "SSL")); //$NON-NLS-1$
-			ctx.init(null, mytm, null);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (KeyManagementException e) {
-			e.printStackTrace();
-		}
-
-		ClientConfig config = new DefaultClientConfig();
-		config.getProperties().put(HTTPSProperties.PROPERTY_HTTPS_PROPERTIES,
-				new HTTPSProperties(new TestHostnameVerifier(), ctx));
+	
+	ChannelFinderClient(URI uri, ClientConfig config, HTTPBasicAuthFilter httpBasicAuthFilter,
+			LoggingFilter loggingFilter) {
 		Client client = Client.create(config);
-		client.addFilter(new HTTPBasicAuthFilter(getPreferenceValue("username",
-				"username"), getPreferenceValue("password", "password"))); //$NON-NLS-1$ //$NON-NLS-2$
-
-		// Logging filter - raw request and response printed to sys.o
-		if (getPreferenceValue("raw_html_logging", "off").equals("on")) { //$NON-NLS-1$ //$NON-NLS-2$
-			client.addFilter(new LoggingFilter());
+		if(httpBasicAuthFilter != null){
+			client.addFilter(httpBasicAuthFilter);
 		}
-		service = client.resource(getBaseURI());
+		if(loggingFilter != null){
+			client.addFilter(loggingFilter);
+		}
+		service = client.resource(UriBuilder.fromUri(uri).build());
 	}
 
 	/**
@@ -208,8 +215,8 @@ public class ChannelFinderClient {
 	public Collection<String> getAllProperties() {
 		Collection<String> allProperties = new HashSet<String>();
 		try {
-			XmlProperties allXmlProperties = service.path("properties").accept(
-					MediaType.APPLICATION_XML).get(XmlProperties.class);
+			XmlProperties allXmlProperties = service.path("properties")
+					.accept(MediaType.APPLICATION_XML).get(XmlProperties.class);
 			for (XmlProperty xmlProperty : allXmlProperties.getProperties()) {
 				allProperties.add(xmlProperty.getName());
 			}
@@ -227,8 +234,8 @@ public class ChannelFinderClient {
 	public Collection<String> getAllTags() {
 		Collection<String> allTags = new HashSet<String>();
 		try {
-			XmlTags allXmlTags = service.path("tags").accept(
-					MediaType.APPLICATION_XML).get(XmlTags.class);
+			XmlTags allXmlTags = service.path("tags")
+					.accept(MediaType.APPLICATION_XML).get(XmlTags.class);
 			for (XmlTag xmlTag : allXmlTags.getTags()) {
 				allTags.add(xmlTag.getName());
 			}
@@ -236,22 +243,6 @@ public class ChannelFinderClient {
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
-	}
-
-	/**
-	 * Returns the (singleton) instance of ChannelFinderClient
-	 * 
-	 * @return the instance of ChannelFinderClient
-	 */
-	public static ChannelFinderClient getInstance() {
-		// System.out.println("requesting channel finder client object.");
-		// log.info("requesting channel finder client object.");
-		return instance;
-	}
-
-	private static URI getBaseURI() {
-		return UriBuilder.fromUri(
-				getPreferenceValue("channel_finder_url", null)).build(); //$NON-NLS-1$
 	}
 
 	@Deprecated
@@ -325,9 +316,9 @@ public class ChannelFinderClient {
 	public void add(Tag.Builder tag) {
 		try {
 			XmlTag xmlTag = tag.toXml();
-			service.path("tags").path(xmlTag.getName()).accept(
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).put(xmlTag);
+			service.path("tags").path(xmlTag.getName())
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).put(xmlTag);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -364,8 +355,8 @@ public class ChannelFinderClient {
 				channels.addXmlChannel(channel);
 			}
 			xmlTag.setXmlChannels(channels);
-			service.path("tags").path(tag.toXml().getName()).type(
-					MediaType.APPLICATION_XML).post(xmlTag);
+			service.path("tags").path(tag.toXml().getName())
+					.type(MediaType.APPLICATION_XML).post(xmlTag);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -379,9 +370,9 @@ public class ChannelFinderClient {
 	public void add(Property.Builder prop) {
 		try {
 			XmlProperty property = prop.toXml();
-			service.path("properties").path(property.getName()).accept(
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).put(property);
+			service.path("properties").path(property.getName())
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).put(property);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -421,8 +412,8 @@ public class ChannelFinderClient {
 			Collection<Channel> channels = new HashSet<Channel>();
 			XmlChannels xmlChannels = service
 					.path("channels").queryParam("~name", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
-							MediaType.APPLICATION_XML).accept(
-							MediaType.APPLICATION_JSON).get(XmlChannels.class);
+							MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 				channels.add(new Channel(xmlchannel));
 			}
@@ -443,8 +434,8 @@ public class ChannelFinderClient {
 			Collection<Channel> channels = new HashSet<Channel>();
 			XmlChannels xmlChannels = service
 					.path("channels").queryParam("~tag", pattern).accept( //$NON-NLS-1$ //$NON-NLS-2$
-							MediaType.APPLICATION_XML).accept(
-							MediaType.APPLICATION_JSON).get(XmlChannels.class);
+							MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 				channels.add(new Channel(xmlchannel));
 			}
@@ -471,8 +462,8 @@ public class ChannelFinderClient {
 			Collection<Channel> channels = new HashSet<Channel>();
 			XmlChannels xmlChannels = service
 					.path("channels").queryParam(property, "*").accept( //$NON-NLS-1$ //$NON-NLS-2$
-							MediaType.APPLICATION_XML).accept(
-							MediaType.APPLICATION_JSON).get(XmlChannels.class);
+							MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 				channels.add(new Channel(xmlchannel));
 			}
@@ -493,9 +484,7 @@ public class ChannelFinderClient {
 		Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<String, String> entry = itr.next();
-			mMap
-					.put(entry.getKey(), Arrays.asList(entry.getValue().split(
-							",")));
+			mMap.put(entry.getKey(), Arrays.asList(entry.getValue().split(",")));
 		}
 		return findChannels(mMap);
 	}
@@ -511,8 +500,8 @@ public class ChannelFinderClient {
 	public Collection<Channel> findChannels(MultivaluedMapImpl map) {
 		Collection<Channel> channels = new HashSet<Channel>();
 		XmlChannels xmlChannels = service.path("channels").queryParams(map)
-				.accept(MediaType.APPLICATION_XML).accept(
-						MediaType.APPLICATION_JSON).get(XmlChannels.class);
+				.accept(MediaType.APPLICATION_XML)
+				.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 		for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
 			channels.add(new Channel(xmlchannel));
 		}
@@ -540,9 +529,9 @@ public class ChannelFinderClient {
 	 */
 	public void deleteProperty(String property) throws ChannelFinderException {
 		try {
-			service.path("properties").path(property).accept(
-					MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).delete();
+			service.path("properties").path(property)
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).delete();
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -601,8 +590,7 @@ public class ChannelFinderClient {
 	public void remove(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
 		try {
-			service
-					.path("tags").path(tag.toXml().getName()).path(channelName).accept( //$NON-NLS-1$
+			service.path("tags").path(tag.toXml().getName()).path(channelName).accept( //$NON-NLS-1$
 							MediaType.APPLICATION_XML).delete();
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
@@ -635,9 +623,9 @@ public class ChannelFinderClient {
 	public void remove(Property.Builder property, String channelName)
 			throws ChannelFinderException {
 		try {
-			service.path("properties").path(property.toXml().getName()).path(
-					channelName).accept(MediaType.APPLICATION_XML).accept(
-					MediaType.APPLICATION_JSON).delete();
+			service.path("properties").path(property.toXml().getName())
+					.path(channelName).accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).delete();
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
@@ -714,19 +702,11 @@ public class ChannelFinderClient {
 				channels.addXmlChannel(channel);
 			}
 			xmlTag.setXmlChannels(channels);
-			service.path("tags").path(tag.toXml().getName()).accept(
-					MediaType.APPLICATION_XML).put(xmlTag);
+			service.path("tags").path(tag.toXml().getName())
+					.accept(MediaType.APPLICATION_XML).put(xmlTag);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
 	}
-	
-
-	public class TestHostnameVerifier implements HostnameVerifier {
-		public boolean verify(String arg0, SSLSession arg1) {
-			return true;
-		}
-	}
-
 
 }

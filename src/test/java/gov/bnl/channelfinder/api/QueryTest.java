@@ -1,5 +1,6 @@
 package gov.bnl.channelfinder.api;
 
+import static gov.bnl.channelfinder.api.ChannelFinderClient.*;
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
@@ -42,7 +43,7 @@ public class QueryTest {
 	public static void populateChannels() {
 
 		ChannelFinderClient.resetPreferences();
-		client = ChannelFinderClient.getInstance();
+		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 		try {
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.

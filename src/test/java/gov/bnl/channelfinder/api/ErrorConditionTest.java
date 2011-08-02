@@ -1,14 +1,14 @@
 package gov.bnl.channelfinder.api;
 
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
-import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
+import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.junit.Assert.assertTrue;
+import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -29,14 +29,13 @@ public class ErrorConditionTest {
 	// }
 
 	private static ChannelFinderClient client;
-	
+
 	@BeforeClass
-	public static void setup(){
+	public static void setup() {
 		ChannelFinderClient.resetPreferences();
-		client = ChannelFinderClient.getInstance();
+		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 	}
-	
-	
+
 	@Test(expected = ChannelFinderException.class)
 	public void addOrphanChannel() {
 		XmlChannel xmlChannel = new XmlChannel();
@@ -64,7 +63,7 @@ public class ErrorConditionTest {
 		channels.add(channel(""));
 		// channel ch2 has empty name
 		try {
-			ChannelFinderClient.getInstance().add(channels);
+			client.add(channels);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -75,7 +74,7 @@ public class ErrorConditionTest {
 		channels.add(channel("name1").owner("owner"));
 		channels.add(channel("name2"));
 		try {
-			ChannelFinderClient.getInstance().add(channels);
+			client.add(channels);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -88,8 +87,7 @@ public class ErrorConditionTest {
 	@Test
 	public void removeNonExistentChannel() {
 		try {
-			ChannelFinderClient.getInstance().remove(
-					channel("NonExistantChannel"));
+			client.remove(channel("NonExistantChannel"));
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -107,8 +105,7 @@ public class ErrorConditionTest {
 	@Test
 	public void updateNonExistentChannel() {
 		try {
-			ChannelFinderClient.getInstance().updateChannel(
-					channel("NonExistantChannel"));
+			client.updateChannel(channel("NonExistantChannel"));
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -118,8 +115,7 @@ public class ErrorConditionTest {
 	@Test
 	public void addTag2NonExistentChannel() {
 		try {
-			ChannelFinderClient.getInstance().set(tag("sometag", "boss"),
-					"NonExistantChannel");
+			client.set(tag("sometag", "boss"), "NonExistantChannel");
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);

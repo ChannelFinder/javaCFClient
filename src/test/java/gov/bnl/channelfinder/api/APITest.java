@@ -1,14 +1,15 @@
 package gov.bnl.channelfinder.api;
 
-import static gov.bnl.channelfinder.api.Channel.Builder.*;
-import static gov.bnl.channelfinder.api.ChannelUtil.*;
-import static gov.bnl.channelfinder.api.Property.Builder.*;
-import static gov.bnl.channelfinder.api.Tag.Builder.*;
+import static gov.bnl.channelfinder.api.ChannelFinderClient.*;
+import static gov.bnl.channelfinder.api.Channel.Builder.channel;
+import static gov.bnl.channelfinder.api.ChannelUtil.getChannelNames;
+import static gov.bnl.channelfinder.api.ChannelUtil.getTagNames;
+import static gov.bnl.channelfinder.api.ChannelUtil.toChannels;
+import static gov.bnl.channelfinder.api.Property.Builder.property;
+import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
-import gov.bnl.channelfinder.api.Tag.Builder;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +33,8 @@ public class APITest {
 	@BeforeClass
 	public static void beforeTests() {
 		ChannelFinderClient.resetPreferences();
-		client = ChannelFinderClient.getInstance();
+//		client = ChannelFinderClient.getInstance();
+		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 		channelCount = client.getAllChannels().size();
 	}
 
