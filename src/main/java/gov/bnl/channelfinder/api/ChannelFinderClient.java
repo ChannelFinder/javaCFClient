@@ -82,22 +82,23 @@ public class ChannelFinderClient {
 
 		private CFPreferences preferences = new CFPreferences();
 
-		private static final String default_service_url="http://localhost:8080/ChannelFinder/resources";
-		
-		private CFCBuilder(){
-			this.uri = URI.create(this.preferences.getPreferenceValue("channel_finder_url", default_service_url));
+		private static final String default_service_url = "http://localhost:8080/ChannelFinder/resources";
+
+		private CFCBuilder() {
+			this.uri = URI.create(this.preferences.getPreferenceValue(
+					"channel_finder_url", default_service_url));
 			this.protocol = this.uri.getScheme();
 		}
-		
-		private CFCBuilder(URI uri){
+
+		private CFCBuilder(URI uri) {
 			this.uri = uri;
 			this.protocol = this.uri.getScheme();
 		}
 
-		public static CFCBuilder toDefault(){
+		public static CFCBuilder toDefault() {
 			return new CFCBuilder();
 		}
-		
+
 		public static CFCBuilder to(String uri) {
 			return new CFCBuilder(URI.create(uri));
 		}
@@ -178,8 +179,9 @@ public class ChannelFinderClient {
 			}
 			if (this.withHTTPAuthentication) {
 				this.httpBasicAuthFilter = new HTTPBasicAuthFilter(
-						ifNullReturnPreferenceValue(this.username, "username", "username"), 
-						ifNullReturnPreferenceValue(this.password, "password", "password"));
+						ifNullReturnPreferenceValue(this.username, "username",
+								"username"), ifNullReturnPreferenceValue(
+								this.password, "password", "password"));
 			}
 			return new ChannelFinderClient(this.uri, this.clientConfig,
 					this.httpBasicAuthFilter, this.logginFilter);
@@ -194,14 +196,14 @@ public class ChannelFinderClient {
 			}
 		}
 	}
-	
-	ChannelFinderClient(URI uri, ClientConfig config, HTTPBasicAuthFilter httpBasicAuthFilter,
-			LoggingFilter loggingFilter) {
+
+	ChannelFinderClient(URI uri, ClientConfig config,
+			HTTPBasicAuthFilter httpBasicAuthFilter, LoggingFilter loggingFilter) {
 		Client client = Client.create(config);
-		if(httpBasicAuthFilter != null){
+		if (httpBasicAuthFilter != null) {
 			client.addFilter(httpBasicAuthFilter);
 		}
-		if(loggingFilter != null){
+		if (loggingFilter != null) {
 			client.addFilter(loggingFilter);
 		}
 		service = client.resource(UriBuilder.fromUri(uri).build());
@@ -273,13 +275,14 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add a single channel <tt>channel</tt>
+	 * Set a single channel <tt>channel</tt>, if the channel already exists it
+	 * will be replaced with the given channel
 	 * 
 	 * @param channel
 	 *            the channel to be added
 	 * @throws ChannelFinderException
 	 */
-	public void add(Channel.Builder channel) throws ChannelFinderException {
+	public void set(Channel.Builder channel) throws ChannelFinderException {
 		try {
 			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$
 					MediaType.APPLICATION_XML).put(channel.toXml());
@@ -289,13 +292,13 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add a set of channels
+	 * Set a set of channels, if any channels already exists it is replaced.
 	 * 
 	 * @param channels
 	 *            set of channels to be added
 	 * @throws ChannelFinderException
 	 */
-	public void add(Collection<Builder> channels) throws ChannelFinderException {
+	public void set(Collection<Builder> channels) throws ChannelFinderException {
 		try {
 			XmlChannels xmlChannels = new XmlChannels();
 			for (Channel.Builder channel : channels) {
@@ -313,7 +316,7 @@ public class ChannelFinderClient {
 	 * 
 	 * @param tag
 	 */
-	public void add(Tag.Builder tag) {
+	public void set(Tag.Builder tag) {
 		try {
 			XmlTag xmlTag = tag.toXml();
 			service.path("tags").path(xmlTag.getName())
@@ -332,10 +335,10 @@ public class ChannelFinderClient {
 	 * @param tag
 	 *            the tag to be added
 	 */
-	public void add(Tag.Builder tag, String channelName) {
+	public void update(Tag.Builder tag, String channelName) {
 		Set<String> channelNames = new HashSet<String>();
 		channelNames.add(channelName);
-		add(tag, channelNames);
+		update(tag, channelNames);
 	}
 
 	/**
@@ -345,7 +348,7 @@ public class ChannelFinderClient {
 	 * @param channelNames
 	 * @param tag
 	 */
-	public void add(Tag.Builder tag, Collection<String> channelNames) {
+	public void update(Tag.Builder tag, Collection<String> channelNames) {
 		try {
 			XmlTag xmlTag = tag.toXml();
 			XmlChannels channels = new XmlChannels();
@@ -367,7 +370,7 @@ public class ChannelFinderClient {
 	 * 
 	 * @param prop
 	 */
-	public void add(Property.Builder prop) {
+	public void set(Property.Builder prop) {
 		try {
 			XmlProperty property = prop.toXml();
 			service.path("properties").path(property.getName())
@@ -384,20 +387,33 @@ public class ChannelFinderClient {
 	 * @param string
 	 * @param owner
 	 */
-	public void add(Property.Builder property, String channelName) {
-		Channel channel = getChannel(channelName);
-		if (channel != null) {
-			updateChannel(channel(channel).with(property));
-		}
+	public void update(Property.Builder property, String channelName) {
+		Set<String> channelNames = new HashSet<String>();
+		channelNames.add(channelName);
+		update(property, channelNames);
 	}
 
 	/**
 	 * @param channelNames
 	 * @param property
 	 */
-	public void add(Property.Builder property, Collection<String> channelNames) {
+	public void update(Property.Builder property, Collection<String> channelNames) {
+		XmlProperty xmlProperty = property.toXml();
+		XmlChannels channels = new XmlChannels();
 		for (String channelName : channelNames) {
-			add(property, channelName);
+			XmlChannel xmlChannel = new XmlChannel(channelName);
+			// need a defensive copy to avoid A cycle
+			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
+					xmlProperty.getOwner(), xmlProperty.getValue()));
+			channels.addXmlChannel(xmlChannel);
+		}
+		xmlProperty.setXmlChannels(channels);
+		try {
+			service.path("properties").path(xmlProperty.getName())
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).post(xmlProperty);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -406,7 +422,7 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public Collection<Channel> findChannelsByName(String pattern)
+	public Collection<Channel> findByName(String pattern)
 			throws ChannelFinderException {
 		try {
 			Collection<Channel> channels = new HashSet<Channel>();
@@ -428,7 +444,7 @@ public class ChannelFinderClient {
 	 * @param pattern
 	 * @return
 	 */
-	public Collection<Channel> findChannelsByTag(String pattern)
+	public Collection<Channel> findByTag(String pattern)
 			throws ChannelFinderException {
 		try {
 			Collection<Channel> channels = new HashSet<Channel>();
@@ -456,7 +472,7 @@ public class ChannelFinderClient {
 	 * @return
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> findChannelsByProp(String property,
+	public Collection<Channel> findByProperty(String property,
 			String... patterns) throws ChannelFinderException {
 		try {
 			Collection<Channel> channels = new HashSet<Channel>();
@@ -479,14 +495,14 @@ public class ChannelFinderClient {
 	 * @param map
 	 * @return
 	 */
-	public Collection<Channel> findChannels(Map<String, String> map) {
+	public Collection<Channel> find(Map<String, String> map) {
 		MultivaluedMapImpl mMap = new MultivaluedMapImpl();
 		Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
 		while (itr.hasNext()) {
 			Map.Entry<String, String> entry = itr.next();
 			mMap.put(entry.getKey(), Arrays.asList(entry.getValue().split(",")));
 		}
-		return findChannels(mMap);
+		return find(mMap);
 	}
 
 	/**
@@ -497,7 +513,7 @@ public class ChannelFinderClient {
 	 *            Multivalue map for searching a key with multiple values
 	 * @return
 	 */
-	public Collection<Channel> findChannels(MultivaluedMapImpl map) {
+	public Collection<Channel> find(MultivaluedMapImpl map) {
 		Collection<Channel> channels = new HashSet<Channel>();
 		XmlChannels xmlChannels = service.path("channels").queryParams(map)
 				.accept(MediaType.APPLICATION_XML)
@@ -558,7 +574,7 @@ public class ChannelFinderClient {
 	 *            channel to be removed
 	 * @throws ChannelFinderException
 	 */
-	public void remove(Channel.Builder channel) throws ChannelFinderException {
+	public void delete(Channel.Builder channel) throws ChannelFinderException {
 		try {
 			service.path("channels").path(channel.toXml().getName()).delete(); //$NON-NLS-1$
 		} catch (UniformInterfaceException e) {
@@ -573,10 +589,10 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	@Deprecated
-	public void remove(Collection<Channel.Builder> channels)
+	public void delete(Collection<Channel.Builder> channels)
 			throws ChannelFinderException {
 		for (Channel.Builder channel : channels) {
-			remove(channel);
+			delete(channel);
 		}
 	}
 
@@ -587,7 +603,7 @@ public class ChannelFinderClient {
 	 * @param tag
 	 * @param channelName
 	 */
-	public void remove(Tag.Builder tag, String channelName)
+	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
 		try {
 			service.path("tags").path(tag.toXml().getName()).path(channelName).accept( //$NON-NLS-1$
@@ -604,11 +620,11 @@ public class ChannelFinderClient {
 	 * @param channelNames
 	 * @throws ChannelFinderException
 	 */
-	public void remove(Tag.Builder tag, Collection<String> channelNames)
+	public void delete(Tag.Builder tag, Collection<String> channelNames)
 			throws ChannelFinderException {
 		// TODO optimize using the /tags/<name> payload with list of channels
 		for (String channelName : channelNames) {
-			remove(tag, channelName);
+			delete(tag, channelName);
 		}
 	}
 
@@ -620,7 +636,7 @@ public class ChannelFinderClient {
 	 * @param name
 	 * @throws ChannelFinderException
 	 */
-	public void remove(Property.Builder property, String channelName)
+	public void delete(Property.Builder property, String channelName)
 			throws ChannelFinderException {
 		try {
 			service.path("properties").path(property.toXml().getName())
@@ -639,10 +655,10 @@ public class ChannelFinderClient {
 	 * @param channelNames
 	 * @throws ChannelFinderException
 	 */
-	public void remove(Property.Builder property,
+	public void delete(Property.Builder property,
 			Collection<String> channelNames) throws ChannelFinderException {
 		for (String channel : channelNames) {
-			remove(property, channel);
+			delete(property, channel);
 		}
 	}
 
@@ -652,7 +668,7 @@ public class ChannelFinderClient {
 	 * @param channel
 	 * @throws ChannelFinderException
 	 */
-	public void updateChannel(Channel.Builder channel)
+	public void update(Channel.Builder channel)
 			throws ChannelFinderException {
 		try {
 			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$

@@ -29,9 +29,9 @@ public class BenchmarkTest {
 		// create a table of 2000 channels
 		originalChannelCount = client.getAllChannels().size();
 		// Add the tags and the properties to be used.
-		client.add(property("prop").owner("channel"));
-		client.add(tag("tagA").owner("channel"));
-		client.add(tag("tagB").owner("channel"));
+		client.set(property("prop").owner("channel"));
+		client.set(tag("tagA").owner("channel"));
+		client.set(tag("tagB").owner("channel"));
 
 		for (int i = 0; i < 2000; i++) {
 			String channelName = "2000";
@@ -46,7 +46,7 @@ public class BenchmarkTest {
 		}
 		// Add all the channels;
 		try {
-			client.add(channels);
+			client.set(channels);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -54,7 +54,7 @@ public class BenchmarkTest {
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		client.remove(channels);
+		client.delete(channels);
 		assertTrue(client.getAllChannels().size() == originalChannelCount);
 	}
 
@@ -97,7 +97,7 @@ public class BenchmarkTest {
 	public void query10Channels() {
 		time = System.currentTimeMillis();
 		Collection<Channel> chs = client
-				.findChannelsByName("2000first:a<400>:0*");
+				.findByName("2000first:a<400>:0*");
 		assertTrue(chs.size() == 10);
 		System.out.println("query10Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -107,7 +107,7 @@ public class BenchmarkTest {
 	public void query100Channels() {
 		time = System.currentTimeMillis();
 		Collection<Channel> chs = client
-				.findChannelsByName("2000first:a<400>:*");
+				.findByName("2000first:a<400>:*");
 		assertTrue(chs.size() == 100);
 		System.out.println("query100Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -116,7 +116,7 @@ public class BenchmarkTest {
 	@Test
 	public void query500Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = client.findChannelsByName("2000first:b*");
+		Collection<Channel> chs = client.findByName("2000first:b*");
 		assertTrue(chs.size() == 500);
 		System.out.println("query500Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -125,7 +125,7 @@ public class BenchmarkTest {
 	@Test
 	public void query1000Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = client.findChannelsByName("2000second:*");
+		Collection<Channel> chs = client.findByName("2000second:*");
 		assertTrue(chs.size() == 1000);
 		System.out.println("query1000Channels duration : "
 				+ (System.currentTimeMillis() - time));
@@ -134,7 +134,7 @@ public class BenchmarkTest {
 	@Test
 	public synchronized void query2000Channels() {
 		time = System.currentTimeMillis();
-		Collection<Channel> chs = client.findChannelsByName("2000*");
+		Collection<Channel> chs = client.findByName("2000*");
 		assertTrue(chs.size() == 2000);
 		System.out.println("query2000Channels duration : "
 				+ (System.currentTimeMillis() - time));

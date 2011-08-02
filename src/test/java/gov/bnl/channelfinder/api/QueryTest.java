@@ -47,21 +47,21 @@ public class QueryTest {
 		try {
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.
-			client.add(prop);
-			client.add(prop2);
-			client.add(tagA);
-			client.add(tagB);
-			client.add(tagC);
-			client.add(tagStar);
+			client.set(prop);
+			client.set(prop2);
+			client.set(tagA);
+			client.set(tagB);
+			client.set(tagC);
+			client.set(tagStar);
 
 			// Add the channels
-			client.add(channel("pvk:01<first>").owner("channel")
+			client.set(channel("pvk:01<first>").owner("channel")
 					.with(prop.value("1")).with(prop2.value("2")).with(tagA));
-			client.add(channel("pvk:02<second>").owner("channel")
+			client.set(channel("pvk:02<second>").owner("channel")
 					.with(prop.value("1")).with(tagA).with(tagB));
-			client.add(channel("pvk:03<second>").owner("channel")
+			client.set(channel("pvk:03<second>").owner("channel")
 					.with(prop.value("2")).with(tagB).with(tagC));
-			client.add(channel("distinctName").owner("channel")
+			client.set(channel("distinctName").owner("channel")
 					.with(prop.value("*")).with(tagStar));
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
@@ -75,7 +75,7 @@ public class QueryTest {
 	public void queryAllChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "*");
-		Collection<Channel> channels = client.findChannels(map);
+		Collection<Channel> channels = client.find(map);
 		assertTrue(client.getAllChannels().size() == channels.size());
 	}
 
@@ -86,7 +86,7 @@ public class QueryTest {
 	public void queryChannels() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "pvk:*");
-		Collection<Channel> channels = client.findChannels(map);
+		Collection<Channel> channels = client.find(map);
 		assertTrue(channels.size() == 3);
 	}
 
@@ -98,17 +98,17 @@ public class QueryTest {
 	public void queryChannelsbyProperty() {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("prop", "1");
-		Collection<Channel> channels = client.findChannels(map);
+		Collection<Channel> channels = client.find(map);
 		assertTrue(channels.size() == 2);
 
 		map.put("prop", "1");
 		map.put("prop2", "2");
-		channels = client.findChannels(map);
+		channels = client.find(map);
 		assertTrue(channels.size() == 1);
 
 		map.clear();
 		map.put("cell", "14");
-		channels = client.findChannels(map);
+		channels = client.find(map);
 	}
 
 	/**
@@ -120,7 +120,7 @@ public class QueryTest {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		map.add("prop", "1");
 		map.add("prop", "2");
-		Collection<Channel> channels = client.findChannels(map);
+		Collection<Channel> channels = client.find(map);
 		assertTrue(channels.size() == 3);
 	}
 
@@ -132,17 +132,17 @@ public class QueryTest {
 		MultivaluedMapImpl map = new MultivaluedMapImpl();
 		// property values are special chars
 		map.add("prop", "*");
-		assertTrue(client.findChannels(map).size() == 4);
+		assertTrue(client.find(map).size() == 4);
 		map.clear();
 		map.add("prop", "\\*");
-		assertTrue(client.findChannels(map).size() == 1);
+		assertTrue(client.find(map).size() == 1);
 		// tag names are special chars
 		map.clear();
 		map.add("~tag", "Tag*");
-		assertTrue(client.findChannels(map).size() == 4);
+		assertTrue(client.find(map).size() == 4);
 		map.clear();
 		map.add("~tag", "Tag\\*");
-		assertTrue(client.findChannels(map).size() == 1);
+		assertTrue(client.find(map).size() == 1);
 	}
 
 	@AfterClass
@@ -153,7 +153,7 @@ public class QueryTest {
 		channels.add(channel("pvk:03<second>"));
 		channels.add(channel("distinctName"));
 
-		client.remove(channels);
+		client.delete(channels);
 		// clean up all the tags and properties
 		client.deleteProperty(prop.build().getName());
 		client.deleteProperty(prop2.toXml().getName());

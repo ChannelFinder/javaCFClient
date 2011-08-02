@@ -34,7 +34,7 @@ public class CFCManagerTest {
 				.create();
 		cfc.getAllTags();
 		cfc.getAllChannels();
-		cfc.findChannelsByName("_*");
+		cfc.findByName("_*");
 	}
 
 }

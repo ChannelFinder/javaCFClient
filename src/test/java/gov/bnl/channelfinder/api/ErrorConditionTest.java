@@ -40,17 +40,17 @@ public class ErrorConditionTest {
 	public void addOrphanChannel() {
 		XmlChannel xmlChannel = new XmlChannel();
 		xmlChannel.setName("onlyName");
-		client.add(channel("JustName"));
+		client.set(channel("JustName"));
 	}
 
 	@Test(expected = ChannelFinderException.class)
 	public void addOrphanTag() {
-		client.add(tag("JustName"));
+		client.set(tag("JustName"));
 	}
 
 	@Test(expected = ChannelFinderException.class)
 	public void addOrphanProperty() {
-		client.add(property("JustName"));
+		client.set(property("JustName"));
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class ErrorConditionTest {
 		channels.add(channel(""));
 		// channel ch2 has empty name
 		try {
-			client.add(channels);
+			client.set(channels);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -74,7 +74,7 @@ public class ErrorConditionTest {
 		channels.add(channel("name1").owner("owner"));
 		channels.add(channel("name2"));
 		try {
-			client.add(channels);
+			client.set(channels);
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -87,7 +87,7 @@ public class ErrorConditionTest {
 	@Test
 	public void removeNonExistentChannel() {
 		try {
-			client.remove(channel("NonExistantChannel"));
+			client.delete(channel("NonExistantChannel"));
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
@@ -105,7 +105,7 @@ public class ErrorConditionTest {
 	@Test
 	public void updateNonExistentChannel() {
 		try {
-			client.updateChannel(channel("NonExistantChannel"));
+			client.update(channel("NonExistantChannel"));
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);
