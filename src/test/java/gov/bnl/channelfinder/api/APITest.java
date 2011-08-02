@@ -197,6 +197,7 @@ public class APITest {
 		client.delete(channel(channelName));
 		assertTrue("CleanUp failed",
 				!client.getAllChannels().contains(channel(channelName).build()));
+		client.deleteTag(tagName);
 	}
 
 	/**
