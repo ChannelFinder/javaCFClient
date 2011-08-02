@@ -28,13 +28,13 @@ public class QueryTest {
 	private static ChannelFinderClient client;
 
 	// Tags
-	static Tag.Builder tagA = tag("Taga", "shroffk");
-	static Tag.Builder tagB = tag("Tagb", "shroffk");
-	static Tag.Builder tagC = tag("Tagc", "shroffk");
-	static Tag.Builder tagStar = tag("Tag*", "shroffk");
+	static Tag.Builder tagA = tag("Taga").owner("channel");
+	static Tag.Builder tagB = tag("Tagb").owner("channel");
+	static Tag.Builder tagC = tag("Tagc").owner("channel");
+	static Tag.Builder tagStar = tag("Tag*").owner("channel");
 	// Properties
-	static Property.Builder prop = property("prop").owner("shroffk");
-	static Property.Builder prop2 = property("prop2").owner("shroffk");
+	static Property.Builder prop = property("prop").owner("channel");
+	static Property.Builder prop2 = property("prop2").owner("channel");
 
 	/**
 	 * insert test data - for performing the queries described below.
@@ -55,13 +55,13 @@ public class QueryTest {
 			client.add(tagStar);
 
 			// Add the channels
-			client.add(channel("pvk:01<first>").owner("shroffk")
+			client.add(channel("pvk:01<first>").owner("channel")
 					.with(prop.value("1")).with(prop2.value("2")).with(tagA));
-			client.add(channel("pvk:02<second>").owner("shroffk")
+			client.add(channel("pvk:02<second>").owner("channel")
 					.with(prop.value("1")).with(tagA).with(tagB));
-			client.add(channel("pvk:03<second>").owner("shroffk")
+			client.add(channel("pvk:03<second>").owner("channel")
 					.with(prop.value("2")).with(tagB).with(tagC));
-			client.add(channel("distinctName").owner("shroffk")
+			client.add(channel("distinctName").owner("channel")
 					.with(prop.value("*")).with(tagStar));
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());

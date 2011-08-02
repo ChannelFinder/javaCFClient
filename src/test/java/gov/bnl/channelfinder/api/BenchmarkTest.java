@@ -29,15 +29,15 @@ public class BenchmarkTest {
 		// create a table of 2000 channels
 		originalChannelCount = client.getAllChannels().size();
 		// Add the tags and the properties to be used.
-		client.add(property("prop").owner("boss"));
-		client.add(tag("tagA").owner("boss"));
-		client.add(tag("tagB").owner("boss"));
+		client.add(property("prop").owner("channel"));
+		client.add(tag("tagA").owner("channel"));
+		client.add(tag("tagB").owner("channel"));
 
 		for (int i = 0; i < 2000; i++) {
 			String channelName = "2000";
 			channelName += getName(i);
-			Channel.Builder channel = channel(channelName).owner("boss").with(
-					property("prop", Integer.toString(i)).owner("boss"));
+			Channel.Builder channel = channel(channelName).owner("channel").with(
+					property("prop", Integer.toString(i)).owner("channel"));
 			if (i < 1000)
 				channel.with(tag("tagA", "boss"));
 			if ((i >= 500) || (i < 1500))

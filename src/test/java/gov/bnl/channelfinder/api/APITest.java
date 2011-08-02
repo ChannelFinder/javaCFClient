@@ -11,6 +11,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.security.acl.Owner;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -33,7 +34,7 @@ public class APITest {
 	@BeforeClass
 	public static void beforeTests() {
 		ChannelFinderClient.resetPreferences();
-//		client = ChannelFinderClient.getInstance();
+		// client = ChannelFinderClient.getInstance();
 		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 		channelCount = client.getAllChannels().size();
 	}
@@ -58,7 +59,7 @@ public class APITest {
 		String channelName = "TestChannelName";
 		try {
 			// Add a channel
-			client.add(channel(channelName).owner("carcassi"));
+			client.add(channel(channelName).owner("channel"));
 			Channel channel = client.getChannel(channelName);
 			// Remove a channel
 			client.remove(channel(channelName));
@@ -80,13 +81,14 @@ public class APITest {
 	@Test
 	public void addRemoveChannels() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("TestOwner"));
-		channels.add(channel("second").owner("TestOwner"));
+		channels.add(channel("first").owner("channel"));
+		channels.add(channel("second").owner("channel"));
 		try {
 			client.add(channels);
 			assertTrue(client.getAllChannels()
 					.containsAll(toChannels(channels)));
-
+		} catch (ChannelFinderException e) {
+			fail("Failed to add channels first and/or second \n Cause:"+e.getMessage());
 		} finally {
 			client.remove(channels);
 			assertTrue("CleanUp failed",
@@ -101,9 +103,9 @@ public class APITest {
 	 */
 	@Test
 	public void updateChannel() {
-		Channel.Builder testChannel = channel("TestChannel").owner("shroffk");
-		Tag.Builder testTag1 = tag("TestTag1").owner("shroffk");
-		Tag.Builder testTag2 = tag("TestTag2").owner("shroffk");
+		Channel.Builder testChannel = channel("TestChannel").owner("channel");
+		Tag.Builder testTag1 = tag("TestTag1").owner("channel");
+		Tag.Builder testTag2 = tag("TestTag2").owner("channel");
 		try {
 			// ensure that the tag exist.
 			client.add(testTag1);
@@ -114,7 +116,7 @@ public class APITest {
 			// check for no initial properties or tags
 			assertTrue(retChannel.getTags().contains(testTag1.build()));
 			// uses the POST method
-			testChannel = channel("TestChannel").owner("shroffk");
+			testChannel = channel("TestChannel").owner("channel");
 			client.updateChannel(testChannel.with(testTag2));
 			assertTrue(client.getChannel(testChannel.build().getName())
 					.getTags().contains(testTag1.build()));
@@ -122,8 +124,8 @@ public class APITest {
 					.getTags().contains(testTag2.build()));
 		} finally {
 			client.remove(testChannel);
-                        client.deleteTag("TestTag1");
-                        client.deleteTag("TestTag2");
+			client.deleteTag("TestTag1");
+			client.deleteTag("TestTag2");
 			assertTrue("CleanUp failed",
 					client.getAllChannels().size() == channelCount);
 		}
@@ -135,12 +137,12 @@ public class APITest {
 	 */
 	@Test
 	public void setChannel() {
-		Channel.Builder oldChannel = channel("old").owner("shroffk").with(
-				tag("oldTag", "shroffk"));
-		Channel.Builder newChannel = channel("old").owner("shroffk").with(
-				tag("newTag", "shroffk"));
-		client.add(tag("oldTag", "shroffk"));
-		client.add(tag("newTag", "shroffk"));
+		Channel.Builder oldChannel = channel("old").owner("channel").with(
+				tag("oldTag").owner("channel"));
+		Channel.Builder newChannel = channel("old").owner("channel").with(
+				tag("newTag").owner("channel"));
+		client.add(tag("oldTag").owner("channel"));
+		client.add(tag("newTag").owner("channel"));
 		try {
 			client.add(oldChannel);
 			assertTrue(client.findChannelsByTag("oldTag").contains(
@@ -164,19 +166,19 @@ public class APITest {
 	public void addRemoveTag() {
 		String channelName = "TestChannel";
 		String tagName = "TestTag";
-		client.add(tag(tagName, "tagOwner"));
-		client.add(channel(channelName).owner("TestOwner"));
+		client.add(tag(tagName).owner("channel"));
+		client.add(channel(channelName).owner("channel"));
 		assertTrue(!getTagNames(client.getChannel(channelName)).contains(
 				tagName));
-		client.add(tag(tagName, "tagOwner"), channelName);
+		client.add(tag(tagName, "channel"), channelName);
 		assertTrue(getTagNames(client.getChannel(channelName))
 				.contains(tagName));
 		client.remove(tag(tagName), channelName);
 		assertTrue(!getTagNames(client.getChannel(channelName)).contains(
 				tagName));
 		client.remove(channel(channelName));
-		assertTrue("CleanUp failed", !client.getAllChannels().contains(
-				channel(channelName).build()));
+		assertTrue("CleanUp failed",
+				!client.getAllChannels().contains(channel(channelName).build()));
 	}
 
 	/**
@@ -185,13 +187,13 @@ public class APITest {
 	@SuppressWarnings("deprecation")
 	@Test
 	public void addRemoveTag2Channels() {
-		Tag.Builder tag = tag("tag", "tagOwner");
+		Tag.Builder tag = tag("tag").owner("channel");
 		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
 		Collection<Channel.Builder> channelSubSet = new HashSet<Channel.Builder>();
-		channelSubSet.add(channel("first").owner("TestOwner"));
-		channelSubSet.add(channel("second").owner("TestOwner"));
+		channelSubSet.add(channel("first").owner("channel"));
+		channelSubSet.add(channel("second").owner("channel"));
 		channelSet.addAll(channelSubSet);
-		channelSet.add(channel("third").owner("TestOwner"));
+		channelSet.add(channel("third").owner("channel"));
 
 		try {
 			client.add(channelSet);
@@ -207,9 +209,9 @@ public class APITest {
 			// this method is not atomic
 			client.remove(channelSet);
 		} catch (ChannelFinderException e) {
-		} finally{
-                    
-                }
+		} finally {
+
+		}
 
 	}
 
@@ -220,11 +222,11 @@ public class APITest {
 	@Test
 	public void deleteTag() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("TestOwner"));
-		channels.add(channel("second").owner("TestOwner"));
+		channels.add(channel("first").owner("channel"));
+		channels.add(channel("second").owner("channel"));
 		try {
 			client.add(channels);
-			Tag.Builder tag = tag("TestTag", "shroffk");
+			Tag.Builder tag = tag("TestTag").owner("channel");
 			client.add(tag);
 			client.add(tag, getChannelNames(toChannels(channels)));
 			assertTrue(client.findChannelsByTag("TestTag").size() > 0);
@@ -242,12 +244,12 @@ public class APITest {
 	@Test
 	public void testSetTag() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
-		channelSet1.add(channel("first").owner("TestOwner"));
-		channelSet1.add(channel("second").owner("TestOwner"));
+		channelSet1.add(channel("first").owner("channel"));
+		channelSet1.add(channel("second").owner("channel"));
 		Collection<Channel.Builder> channelSet2 = new HashSet<Channel.Builder>();
-		channelSet2.add(channel("third").owner("TestOwner"));
-		channelSet2.add(channel("forth").owner("TestOwner"));
-		Tag.Builder tag = tag("TestTag", "TestOwner");
+		channelSet2.add(channel("third").owner("channel"));
+		channelSet2.add(channel("forth").owner("channel"));
+		Tag.Builder tag = tag("TestTag").owner("channel");
 
 		try {
 			client.add(channelSet2);
@@ -280,9 +282,9 @@ public class APITest {
 	 */
 	@Test
 	public void addRemoveProperty() {
-		Channel.Builder testChannel = channel("TestChannel").owner("shroffk");
+		Channel.Builder testChannel = channel("TestChannel").owner("channel");
 		Property.Builder property = property("TestProperty", "TestValue")
-				.owner("TestOwner");
+				.owner("channel");
 
 		try {
 			client.add(testChannel);
@@ -306,10 +308,10 @@ public class APITest {
 	@Test
 	public void addRemoveProperty2Channels() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("shroffk"));
-		channels.add(channel("second").owner("shroffk"));
+		channels.add(channel("first").owner("channel"));
+		channels.add(channel("second").owner("channel"));
 		Property.Builder property = property("TestProperty", "TestValue")
-				.owner("shroffk");
+				.owner("channel");
 		try {
 			client.add(channels);
 			client.add(property);
@@ -332,10 +334,10 @@ public class APITest {
 	@Test
 	public void deleteProperty() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("shroffk"));
-		channels.add(channel("second").owner("shroffk"));
+		channels.add(channel("first").owner("channel"));
+		channels.add(channel("second").owner("channel"));
 		Property.Builder property = property("DeleteProp", "TestValue").owner(
-				"shroffk");
+				"channel");
 		try {
 			client.add(channels);
 			client.add(property);
@@ -355,58 +357,62 @@ public class APITest {
 	 */
 	@Test
 	public void addTagsProperty() {
-            Channel.Builder testChannel = channel("testChannel").owner("owner")
-				.with(tag("existingTag", "owner")).with(
-						property("existingProperty", "propValue")
-								.owner("owner"));
-            try{
-		client.add(tag("existingTag", "owner"));
-		client.add(property("existingProperty", "propValue").owner("owner"));
-		
-		client.add(testChannel);
-		Channel result = (client.getChannel(testChannel.build().getName()));
-		assertTrue(result.getTags().contains(
-				tag("existingTag", "owner").build()));
-		assertTrue(result.getProperties().contains(
-				property("existingProperty", "propValue").build()));
+		Channel.Builder testChannel = channel("testChannel")
+				.owner("channel")
+				.with(tag("existingTag").owner("channel"))
+				.with(property("existingProperty", "propValue")
+						.owner("channel"));
+		try {
+			client.add(tag("existingTag").owner("channel"));
+			client.add(property("existingProperty", "propValue").owner(
+					"channel"));
 
-		client.add(tag("newTag", "owner"));
-		client.add(tag("newTag", "owner"), testChannel.build().getName());
+			client.add(testChannel);
+			Channel result = (client.getChannel(testChannel.build().getName()));
+			assertTrue(result.getTags().contains(
+					tag("existingTag").owner("channel").build()));
+			assertTrue(result.getProperties().contains(
+					property("existingProperty", "propValue").build()));
 
-		client.add(property("newProperty", "newPropValue").owner("owner"));
-		client.add(property("newProperty", "newPropValue").owner("owner"),
-				testChannel.build().getName());
+			client.add(tag("newTag").owner("channel"));
+			client.add(tag("newTag").owner("channel"), testChannel.build().getName());
 
-		result = (client.getChannel(testChannel.build().getName()));
-		assertTrue(result.getTags().contains(
-				tag("existingTag", "owner").build()));
-		assertTrue(result.getTags().contains(tag("newTag", "owner").build()));
-		assertTrue(result.getProperties().contains(
-				property("existingProperty", "propValue").build()));
-		assertTrue(result.getProperties().contains(
-				property("newProperty", "newPropValue").build()));
-            } finally {
-		client.remove(testChannel);
-                client.deleteTag("existingTag");
-                client.deleteTag("newTag");
-                client.deleteProperty("existingProperty");
-                client.deleteProperty("newProperty");
-            }
+			client.add(property("newProperty", "newPropValue").owner("channel"));
+			client.add(
+					property("newProperty", "newPropValue").owner("channel"),
+					testChannel.build().getName());
+
+			result = (client.getChannel(testChannel.build().getName()));
+			assertTrue(result.getTags().contains(
+					tag("existingTag").owner("channel").build()));
+			assertTrue(result.getTags()
+					.contains(tag("newTag").owner("channel").build()));
+			assertTrue(result.getProperties().contains(
+					property("existingProperty", "propValue").build()));
+			assertTrue(result.getProperties().contains(
+					property("newProperty", "newPropValue").build()));
+		} finally {
+			client.remove(testChannel);
+			client.deleteTag("existingTag");
+			client.deleteTag("newTag");
+			client.deleteProperty("existingProperty");
+			client.deleteProperty("newProperty");
+		}
 	}
 
 	@Test
 	public void getAllTags() {
-		client.add(tag("TestTag", "testOwner"));
+		client.add(tag("TestTag", "channel"));
 		assertTrue(client.getAllTags().contains("TestTag"));
 		client.deleteTag("TestTag");
-		assertTrue("TestTag clean up failed", !client.getAllTags().contains(
-				"TestTag"));
+		assertTrue("TestTag clean up failed",
+				!client.getAllTags().contains("TestTag"));
 	}
 
 	@Test
 	public void getAllProperties() {
 		String propertyName = "TestProperty";
-		client.add(property(propertyName, "testValue").owner("testOwner"));
+		client.add(property(propertyName, "testValue").owner("channel"));
 		assertTrue(client.getAllProperties().contains(propertyName));
 		client.deleteProperty(propertyName);
 		assertTrue("TestProperty clean up failed", !client.getAllProperties()
