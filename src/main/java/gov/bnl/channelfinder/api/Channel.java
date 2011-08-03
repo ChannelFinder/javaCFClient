@@ -53,11 +53,11 @@ public class Channel {
 			tags.add(tag);
 			return this;
 		}
-
+		
 		public Builder with(Property.Builder property) {
 			properties.add(property);
 			return this;
-		}
+		}		
 
 		XmlChannel toXml() {
 			XmlChannel xmlChannel = new XmlChannel(name, owner);

@@ -21,9 +21,10 @@ public class ChannelUtil {
 	/**
 	 * This class is not meant to be instantiated or extended
 	 */
-	private ChannelUtil(){
-		
+	private ChannelUtil() {
+
 	}
+
 	/**
 	 * Return a list of tag names associated with this channel
 	 * 
@@ -65,8 +66,49 @@ public class ChannelUtil {
 		}
 		return propertyNames;
 	}
-	
 
+	/**
+	 * Return the Tag object with name <tt>tagName</tt> if it exists on the
+	 * channel <tt>channel</tt> else return null
+	 * 
+	 * @param channel
+	 * @param tagName
+	 * @return
+	 */
+	public static Tag getTag(Channel channel, String tagName) {
+		Collection<Tag> tag = Collections2.filter(
+				channel.getTags(),
+				new TagNamePredicate(tagName));
+		if (tag.size() == 1)
+			return tag.iterator().next();
+		else
+			return null;	
+	}
+
+	private static class TagNamePredicate implements Predicate<Tag> {
+
+		private String tagName;
+
+		TagNamePredicate(String tagName) {
+			this.tagName = tagName;
+		}
+
+		@Override
+		public boolean apply(Tag input) {
+			if (input.getName().equals(tagName))
+				return true;
+			return false;
+		}
+	}
+
+	/**
+	 * Return the property object with the name <tt>propertyName</tt> if it
+	 * exists on the channel <tt>channel</tt> else return null
+	 * 
+	 * @param channel
+	 * @param propertyName
+	 * @return
+	 */
 	public static Property getProperty(Channel channel, String propertyName) {
 		Collection<Property> property = Collections2.filter(
 				channel.getProperties(),
@@ -92,6 +134,7 @@ public class ChannelUtil {
 			return false;
 		}
 	}
+
 	/**
 	 * Return a union of property names associated with channels
 	 * 
@@ -123,9 +166,9 @@ public class ChannelUtil {
 	}
 
 	/**
-	 * TODO evaluate need/correctness
-	 * Returns a collection of objects of Type Channel derived from the
-	 * collection of Channel.Builders <tt>channelBuilders</tt>
+	 * TODO evaluate need/correctness Returns a collection of objects of Type
+	 * Channel derived from the collection of Channel.Builders
+	 * <tt>channelBuilders</tt>
 	 * 
 	 * @param channelBuilders
 	 * @return
@@ -138,7 +181,5 @@ public class ChannelUtil {
 		}
 		return Collections.unmodifiableCollection(channels);
 	}
-	
-	
 
 }
