@@ -15,9 +15,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Executor;
@@ -333,16 +335,16 @@ public class ChannelFinderClient {
 	 * from all other channels
 	 * 
 	 * @param tag
-	 * @param channel
+	 * @param channelName
 	 * @throws ChannelFinderException
 	 */
-	public void set(Tag.Builder tag, String channel)
+	public void set(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
 		try {
 			// service.path("tags").path(tag.toXml().getName()).path(channel)
 			// .type(MediaType.APPLICATION_XML).put(tag.toXml());
 			Collection<String> channels = new ArrayList<String>();
-			channels.add(channel);
+			channels.add(channelName);
 			set(tag, channels);
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
@@ -392,6 +394,41 @@ public class ChannelFinderClient {
 		}
 	}
 	
+	public void set(Property.Builder prop, String channelName){
+		Map<String, String> map = new HashMap<String, String>();
+		map.put(channelName, prop.toXml().getValue());
+		set(prop, map);
+	}
+	
+	public void set(Property.Builder prop, Collection<String> channelNames){
+		Map<String, String> map = new HashMap<String, String>();
+		String propertyValue = prop.toXml().getValue();
+		for (String channelName : channelNames) {
+			map.put(channelName, propertyValue);			
+		}
+		set(prop, map);
+	}
+	
+	public void set(Property.Builder prop, Map<String, String> channelPropertyMap) {
+		XmlProperty xmlProperty = prop.toXml();
+		XmlChannels channels = new XmlChannels();
+		for(Entry<String, String> e : channelPropertyMap.entrySet()){
+			XmlChannel xmlChannel = new XmlChannel(e.getKey());
+			// need a defensive copy to avoid a cycle
+			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
+					xmlProperty.getOwner(), e.getValue()));
+			channels.addXmlChannel(xmlChannel);
+		}
+		xmlProperty.setXmlChannels(channels);
+		try {
+			service.path("properties").path(xmlProperty.getName())
+					.accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
+		} catch (UniformInterfaceException e) {
+			throw new ChannelFinderException(e);
+		}
+	}
+
 	/**
 	 * Update properties and tags of existing channel <tt>channel</tt>
 	 * 
@@ -463,13 +500,22 @@ public class ChannelFinderClient {
 	 * @param property
 	 */
 	public void update(Property.Builder property, Collection<String> channelNames) {
+		Map<String, String> map = new HashMap<String, String>();
+		String propertyValue = property.toXml().getValue();
+		for (String channelName : channelNames) {
+			map.put(channelName, propertyValue);			
+		}
+		update(property, map);
+	}
+	
+	public void update(Property.Builder property, Map<String, String> channelPropertyMap) {
 		XmlProperty xmlProperty = property.toXml();
 		XmlChannels channels = new XmlChannels();
-		for (String channelName : channelNames) {
-			XmlChannel xmlChannel = new XmlChannel(channelName);
+		for ( Entry<String, String> e: channelPropertyMap.entrySet()) {
+			XmlChannel xmlChannel = new XmlChannel(e.getKey());
 			// need a defensive copy to avoid A cycle
 			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
-					xmlProperty.getOwner(), xmlProperty.getValue()));
+					xmlProperty.getOwner(), e.getValue()));
 			channels.addXmlChannel(xmlChannel);
 		}
 		xmlProperty.setXmlChannels(channels);

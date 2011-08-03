@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+
 import static gov.bnl.channelfinder.api.Channel.Builder.*;
 
 /**
@@ -62,7 +65,33 @@ public class ChannelUtil {
 		}
 		return propertyNames;
 	}
+	
 
+	public static Property getProperty(Channel channel, String propertyName) {
+		Collection<Property> property = Collections2.filter(
+				channel.getProperties(),
+				new PropertyNamePredicate(propertyName));
+		if (property.size() == 1)
+			return property.iterator().next();
+		else
+			return null;
+	}
+
+	private static class PropertyNamePredicate implements Predicate<Property> {
+
+		private String propertyName;
+
+		PropertyNamePredicate(String propertyName) {
+			this.propertyName = propertyName;
+		}
+
+		@Override
+		public boolean apply(Property input) {
+			if (input.getName().equals(propertyName))
+				return true;
+			return false;
+		}
+	}
 	/**
 	 * Return a union of property names associated with channels
 	 * 
@@ -109,5 +138,7 @@ public class ChannelUtil {
 		}
 		return Collections.unmodifiableCollection(channels);
 	}
+	
+	
 
 }

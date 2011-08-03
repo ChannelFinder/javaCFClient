@@ -5,6 +5,7 @@ import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.ChannelUtil.getChannelNames;
 import static gov.bnl.channelfinder.api.ChannelUtil.getTagNames;
 import static gov.bnl.channelfinder.api.ChannelUtil.toChannels;
+import static gov.bnl.channelfinder.api.ChannelUtil.getProperty;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.hamcrest.CoreMatchers.is;
@@ -13,7 +14,11 @@ import static org.junit.Assert.fail;
 
 import java.security.acl.Owner;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+
+import junit.framework.TestCase;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -37,11 +42,6 @@ public class APITest {
 		// client = ChannelFinderClient.getInstance();
 		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
 		channelCount = client.getAllChannels().size();
-	}
-
-	@Test
-	public void test() {
-
 	}
 
 	@Test
@@ -178,7 +178,7 @@ public class APITest {
 	}
 
 	/**
-	 * Add a Tag to a single channel
+	 * update and delete a Tag from a single channel
 	 */
 	@Test
 	public void updateDeleteTag2Channel() {
@@ -201,11 +201,12 @@ public class APITest {
 	}
 
 	/**
-	 * Add a Remove a tag from multiple channels
+	 * Update multiple channels with a _tag_
+	 * Delete a tag from multiple channels
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
-	public void addRemoveTag2Channels() {
+	public void updateDeleteTag2Channels() {
 		Tag.Builder tag = tag("tag").owner("channel");
 		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
 		Collection<Channel.Builder> channelSubSet = new HashSet<Channel.Builder>();
@@ -216,6 +217,7 @@ public class APITest {
 
 		try {
 			client.set(channelSet);
+			client.set(tag);
 			client.update(tag, getChannelNames(toChannels(channelSet)));
 			assertTrue(client.findByTag(tag.build().getName()).containsAll(
 					toChannels(channelSet)));
@@ -226,10 +228,10 @@ public class APITest {
 			assertTrue(client.findByTag(tag.build().getName()).containsAll(
 					toChannels(diffSet)));
 			// this method is not atomic
-			client.delete(channelSet);
 		} catch (ChannelFinderException e) {
+			fail(e.getMessage());
 		} finally {
-
+			client.delete(channelSet);
 		}
 
 	}
@@ -257,11 +259,12 @@ public class APITest {
 	}
 
 	/**
-	 * test the destructive setting of tags on channel/s
+	 * test the destructive setting of tags on a single channel and a set of
+	 * channels
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
-	public void SetTag() {
+	public void setTag() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
 		channelSet1.add(channel("first").owner("channel"));
 		channelSet1.add(channel("second").owner("channel"));
@@ -281,14 +284,14 @@ public class APITest {
 			// set the tag on channel first and remove it from every other
 			// channel
 			client.set(tag, "first");
-			assertTrue(client.findByTag(tag.build().getName()).size() == 1);
-			assertTrue(client.findByTag(tag.build().getName()).contains(
-					channel("first").build()));
-			// add the tag to set2 and remove it from every other channel
+			assertTrue(client.findByTag(tag.build().getName()).size() == 1
+					&& client.findByTag(tag.build().getName()).contains(
+							channel("first").build()));
+			// add the tag to channelSet2 and remove it from every other channel
 			client.set(tag, getChannelNames(toChannels(channelSet2)));
-			assertTrue(client.findByTag(tag.build().getName()).size() == 2);
-			assertTrue(client.findByTag(tag.toXml().getName()).containsAll(
-					toChannels(channelSet2)));
+			assertTrue(client.findByTag(tag.build().getName()).size() == 2
+					&& client.findByTag(tag.toXml().getName()).containsAll(
+							toChannels(channelSet2)));
 		} finally {
 			client.delete(channelSet1);
 			client.delete(channelSet2);
@@ -297,10 +300,10 @@ public class APITest {
 	}
 
 	/**
-	 * Add and Remove a property to a single channel
+	 * Update and Delete a property from a single channel
 	 */
 	@Test
-	public void addRemoveProperty() {
+	public void updateDeleteProperty() {
 		Channel.Builder testChannel = channel("TestChannel").owner("channel");
 		Property.Builder property = property("TestProperty", "TestValue")
 				.owner("channel");
@@ -322,10 +325,10 @@ public class APITest {
 	}
 
 	/**
-	 * TODO fix assert stmt Add and Remove a property from multiple channels
+	 * Update and Delete a property from multiple channels
 	 */
 	@Test
-	public void addRemoveProperty2Channels() {
+	public void updateDeleteProperty2Channels() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 		channels.add(channel("first").owner("channel"));
 		channels.add(channel("second").owner("channel"));
@@ -346,9 +349,111 @@ public class APITest {
 			client.delete(channels);
 		}
 	}
-
+	
 	/**
-	 * TODO fix the asserts
+	 * Update Property Values on a set of channels
+	 */
+	@Test
+	public void updatePropertyValue(){
+		String propertyName = "TestProperty";
+		String initialPropertyValue = "TestValue";				
+		Property.Builder property = property(propertyName, initialPropertyValue)
+				.owner("channel");
+		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
+		channels.add(channel("first").owner("channel"));
+		channels.add(channel("second").owner("channel"));
+		try{
+			client.set(property);
+			client.set(channels);
+			// add the property to all channels, all the properties will have the same value
+			client.update(property, getChannelNames(toChannels(channels)));
+			Collection<Channel> result = client.findByProperty(propertyName, "*");
+			for (Channel channel : result) {
+				assertTrue(
+						"Unexpected state of property: TestProperty",
+						getProperty(channel, propertyName)
+								.getValue()
+								.equalsIgnoreCase(initialPropertyValue));
+			}
+			Map<String, String> channelValueMap = new HashMap<String, String>();
+			for (Channel channel : result) {
+				channelValueMap.put(channel.getName(), channel.getName()+"-uniqueValue");
+			}
+			// update the property to a set of channels, each channels specifies
+			// it associated property calue in a channelValueMap
+			client.update(property, channelValueMap);
+			result = client.findByProperty(propertyName, "*");
+			for (Channel channel : result) {
+				assertTrue(
+						"Failed to correctly update the property Value for channel "
+								+ channel.getName(),
+						getProperty(channel, propertyName).getValue()
+								.equalsIgnoreCase(
+										channelValueMap.get(channel.getName())));
+			}
+
+		} finally {
+			client.delete(channels);
+		}
+		
+	}
+	
+	/**
+	 * test the destructive setting of properties on a single channel and a set
+	 * of channels
+	 */
+	@Test
+	public void setProperty() {
+		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
+		channelSet1.add(channel("first").owner("channel"));
+		channelSet1.add(channel("second").owner("channel"));
+		Collection<Channel.Builder> channelSet2 = new HashSet<Channel.Builder>();
+		channelSet2.add(channel("third").owner("channel"));
+		channelSet2.add(channel("forth").owner("channel"));
+		String propertyName = "TestProperty";
+		Property.Builder property = property(propertyName, "TestValue").owner(
+				"channel");
+		try {
+			client.set(channelSet1);
+			client.set(channelSet2);
+			client.update(property, getChannelNames(toChannels(channelSet1)));
+			assertTrue(
+					"Failed to added property to channelSet1",
+					client.findByProperty(propertyName, "*").containsAll(
+							toChannels(channelSet1)));
+			client.set(property, "first");
+			Collection<Channel> result = client.findByProperty(propertyName,
+					"*");
+			assertTrue("Failed to set the property", result.size() == 1
+					&& getChannelNames(result).contains("first"));
+			// set property with unique values for each channel
+			Map<String, String> channelPropertyMap = new HashMap<String, String>();
+			channelPropertyMap.put("third", "thirdValue");
+			channelPropertyMap.put("forth", "forthValue");
+			client.set(property, channelPropertyMap);
+			result = client.findByProperty(propertyName, "*");
+			assertTrue(
+					"Failed to set property on multiple channels",
+					result.size() == 2
+							&& result.containsAll(toChannels(channelSet2)));
+			// check the property values are correctly set
+			for (Channel channel : result) {
+				assertTrue(ChannelUtil
+						.getProperty(channel, propertyName)
+						.getValue()
+						.equalsIgnoreCase(
+								channelPropertyMap.get(channel.getName())));
+			}
+		} catch (Exception e) {
+			
+		} finally {
+			client.delete(channelSet1);
+			client.delete(channelSet2);
+		}
+	}
+	
+	/**
+	 * Delete a Property
 	 */
 	@Test
 	public void deleteProperty() {
@@ -375,7 +480,7 @@ public class APITest {
 	 * check non-destructive addition of tags and channels
 	 */
 	@Test
-	public void addTagsProperty() {
+	public void updateTagsProperty() {
 		Channel.Builder testChannel = channel("testChannel")
 				.owner("channel")
 				.with(tag("existingTag").owner("channel"))
