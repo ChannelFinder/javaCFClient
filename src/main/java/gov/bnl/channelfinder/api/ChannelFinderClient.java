@@ -325,12 +325,7 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void set(Channel.Builder channel) throws ChannelFinderException {
-		try {
-			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).put(channel.toXml());
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		wrappedSubmit(new setChannels(new XmlChannels(channel.toXml())));
 	}
 
 	/**
@@ -346,11 +341,27 @@ public class ChannelFinderClient {
 			for (Channel.Builder channel : channels) {
 				xmlChannels.addXmlChannel(channel.toXml());
 			}
-			service.path("channels").type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
-					xmlChannels);
+			wrappedSubmit(new setChannels(xmlChannels));
 		} catch (UniformInterfaceException e) {
 			throw new ChannelFinderException(e);
 		}
+	}
+
+	private class setChannels implements Runnable {
+
+		private final XmlChannels xmlChannels;
+
+		public setChannels(XmlChannels xmlChannels) {
+			super();
+			this.xmlChannels = xmlChannels;
+		}
+
+		@Override
+		public void run() {
+			service.path("channels").type(MediaType.APPLICATION_XML).post( //$NON-NLS-1$
+					this.xmlChannels);
+		}
+
 	}
 
 	/**

@@ -3,6 +3,8 @@
  */
 package gov.bnl.channelfinder.api;
 
+import gov.bnl.channelfinder.api.Channel.Builder;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -180,6 +182,14 @@ public class ChannelUtil {
 			channels.add(builder.build());
 		}
 		return Collections.unmodifiableCollection(channels);
+	}
+	
+	static XmlChannels toXmlChannels(Collection<Channel.Builder> channelBuilders){
+		XmlChannels xmlChannels = new XmlChannels();
+		for (Builder channel : channelBuilders) {
+			xmlChannels.addXmlChannel(channel.toXml());
+		}
+		return xmlChannels;
 	}
 
 }
