@@ -33,6 +33,7 @@ import javax.net.ssl.TrustManager;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 
+import com.google.common.base.Joiner;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
@@ -293,13 +294,25 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException {
-		try {
+		return wrappedSubmit(new FindByChannelName(channelName));
+	}
+	
+	private class FindByChannelName implements Callable<Channel> {
+
+		private final String channelName;
+		
+		public FindByChannelName(String channelName) {
+			super();
+			this.channelName = channelName;
+		}
+
+		@Override
+		public Channel call() throws UniformInterfaceException {
 			return new Channel(service
 					.path("channels").path(channelName).accept( //$NON-NLS-1$
 							MediaType.APPLICATION_XML).get(XmlChannel.class));
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
 		}
+		
 	}
 
 	/**
@@ -584,7 +597,13 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findByProperty(String property,
 			String... pattern) throws ChannelFinderException {
-		return wrappedSubmit(new FindByParam(property, pattern));
+		Map<String, String> propertyPatterns = new HashMap<String, String>();
+		if(pattern.length > 0){			
+			propertyPatterns.put(property, Joiner.on(",").join(pattern));
+		}else {
+			propertyPatterns.put(property, "*");
+		}
+		return wrappedSubmit(new FindByMap(propertyPatterns));
 
 	}
 
@@ -594,10 +613,11 @@ public class ChannelFinderClient {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		} catch (ExecutionException e) {
+			if(e.getCause() != null && e.getCause() instanceof UniformInterfaceException) {
+				throw new ChannelFinderException((UniformInterfaceException) e.getCause());
+			}
 			throw new RuntimeException(e);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		} 
 	}
 
 	private class FindByParam implements Callable<Collection<Channel>> {
@@ -608,12 +628,6 @@ public class ChannelFinderClient {
 		FindByParam(String parameter, String pattern) {
 			this.parameter = parameter;
 			this.pattern = pattern;
-		}
-
-		// TODO
-		public FindByParam(String parameter, String[] pattern) {
-			this.parameter = parameter;
-			this.pattern = pattern[0];
 		}
 
 		@Override
@@ -637,7 +651,7 @@ public class ChannelFinderClient {
 	 * @param map
 	 * @return
 	 */
-	public Collection<Channel> find(Map<String, String> map) {
+	public Collection<Channel> find(Map<String, String> map) throws ChannelFinderException  {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
@@ -649,7 +663,7 @@ public class ChannelFinderClient {
 	 *            Multivalue map for searching a key with multiple values
 	 * @return
 	 */
-	public Collection<Channel> find(MultivaluedMapImpl map) {
+	public Collection<Channel> find(MultivaluedMapImpl map) throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
