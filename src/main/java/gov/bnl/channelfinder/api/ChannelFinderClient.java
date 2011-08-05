@@ -359,14 +359,7 @@ public class ChannelFinderClient {
 	 * @param tag
 	 */
 	public void set(Tag.Builder tag) {
-		try {
-			XmlTag xmlTag = tag.toXml();
-			service.path("tags").path(xmlTag.getName())
-					.accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(tag.toXml());
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		wrappedSubmit(new setTag(tag.toXml()));
 	}
 
 	/**
@@ -379,13 +372,9 @@ public class ChannelFinderClient {
 	 */
 	public void set(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
-		try {
-			Collection<String> channels = new ArrayList<String>();
-			channels.add(channelName);
-			set(tag, channels);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		Collection<String> channelNames = new ArrayList<String>();
+		channelNames.add(channelName);
+		wrappedSubmit(new setTag(tag.toXml(), channelNames));
 
 	}
 
@@ -397,21 +386,41 @@ public class ChannelFinderClient {
 	 * @param tag
 	 */
 	public void set(Tag.Builder tag, Collection<String> channelNames) {
-		// Better than recursively calling set(tag, channel) for each channel
-		try {
-			XmlTag xmlTag = tag.toXml();
-			XmlChannels channels = new XmlChannels();
-			XmlChannel channel;
-			for (String channelName : channelNames) {
-				channel = new XmlChannel(channelName);
-				channels.addXmlChannel(channel);
-			}
-			xmlTag.setXmlChannels(channels);
-			service.path("tags").path(tag.toXml().getName())
-					.accept(MediaType.APPLICATION_XML).put(xmlTag);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
+		wrappedSubmit(new setTag(tag.toXml(), channelNames));
+	}
+
+	private class setTag implements Runnable {
+		private final XmlTag xmlTag;
+
+		public setTag(XmlTag xmlTag) {
+			super();
+			this.xmlTag = xmlTag;
 		}
+
+		public setTag(XmlTag xmlTag, Collection<String> channelNames) {
+			super();
+			this.xmlTag = xmlTag;
+			try {
+				XmlChannels channels = new XmlChannels();
+				XmlChannel channel;
+				for (String channelName : channelNames) {
+					channel = new XmlChannel(channelName);
+					channels.addXmlChannel(channel);
+				}
+				xmlTag.setXmlChannels(channels);
+				service.path("tags").path(this.xmlTag.getName())
+						.accept(MediaType.APPLICATION_XML).put(this.xmlTag);
+			} catch (UniformInterfaceException e) {
+				throw new ChannelFinderException(e);
+			}
+		}
+
+		@Override
+		public void run() {
+			service.path("tags").path(xmlTag.getName())
+					.accept(MediaType.APPLICATION_XML).put(xmlTag);
+		}
+
 	}
 
 	/**
@@ -420,18 +429,19 @@ public class ChannelFinderClient {
 	 * @param prop
 	 */
 	public void set(Property.Builder prop) {
-		wrappedSubmit(new setProperty(prop));
+		wrappedSubmit(new setProperty(prop.toXml()));
 	}
 
 	/**
 	 * set it on this channel and remove it from all others
+	 * 
 	 * @param prop
 	 * @param channelName
 	 */
 	public void set(Property.Builder prop, String channelName) {
 		Collection<String> ch = new ArrayList<String>();
 		ch.add(channelName);
-		wrappedSubmit(new setProperty(prop, ch));
+		wrappedSubmit(new setProperty(prop.toXml(), ch));
 	}
 
 	/**
@@ -441,7 +451,7 @@ public class ChannelFinderClient {
 	 * @param channelNames
 	 */
 	public void set(Property.Builder prop, Collection<String> channelNames) {
-		wrappedSubmit(new setProperty(prop, channelNames));
+		wrappedSubmit(new setProperty(prop.toXml(), channelNames));
 	}
 
 	/**
@@ -451,20 +461,20 @@ public class ChannelFinderClient {
 	 */
 	public void set(Property.Builder prop,
 			Map<String, String> channelPropertyMap) {
-		wrappedSubmit(new setProperty(prop, channelPropertyMap));
+		wrappedSubmit(new setProperty(prop.toXml(), channelPropertyMap));
 	}
 
 	private class setProperty implements Runnable {
 		private final XmlProperty xmlProperty;
 
-		public setProperty(Property.Builder prop){
-			this.xmlProperty = prop.toXml();
+		public setProperty(XmlProperty prop) {
+			this.xmlProperty = prop;
 		}
-		
-		public setProperty(Property.Builder prop,
+
+		public setProperty(XmlProperty prop,
 				Map<String, String> channelPropertyMap) {
 			super();
-			this.xmlProperty = prop.toXml();
+			this.xmlProperty = prop;
 			XmlChannels channels = new XmlChannels();
 			for (Entry<String, String> e : channelPropertyMap.entrySet()) {
 				XmlChannel xmlChannel = new XmlChannel(e.getKey());
@@ -476,10 +486,9 @@ public class ChannelFinderClient {
 			this.xmlProperty.setXmlChannels(channels);
 		}
 
-		public setProperty(Property.Builder prop,
-				Collection<String> channelNames) {
+		public setProperty(XmlProperty prop, Collection<String> channelNames) {
 			super();
-			this.xmlProperty = prop.toXml();
+			this.xmlProperty = prop;
 			XmlChannels channels = new XmlChannels();
 			for (String channelName : channelNames) {
 				XmlChannel xmlChannel = new XmlChannel(channelName);
@@ -491,7 +500,6 @@ public class ChannelFinderClient {
 			}
 			this.xmlProperty.setXmlChannels(channels);
 		}
-
 
 		@Override
 		public void run() {
