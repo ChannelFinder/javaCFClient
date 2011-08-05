@@ -21,6 +21,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.RunnableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
@@ -419,25 +420,23 @@ public class ChannelFinderClient {
 	 * @param prop
 	 */
 	public void set(Property.Builder prop) {
-		try {
-			XmlProperty property = prop.toXml();
-			service.path("properties").path(property.getName())
-					.accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(property);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		wrappedSubmit(new setProperty(prop));
 	}
 
-	// TODO this should be a put on properties/property/channel
+	/**
+	 * set it on this channel and remove it from all others
+	 * @param prop
+	 * @param channelName
+	 */
 	public void set(Property.Builder prop, String channelName) {
-		Map<String, String> map = new HashMap<String, String>();
-		map.put(channelName, prop.toXml().getValue());
-		set(prop, map);
+		Collection<String> ch = new ArrayList<String>();
+		ch.add(channelName);
+		wrappedSubmit(new setProperty(prop, ch));
 	}
 
 	/**
 	 * all with the same value
+	 * 
 	 * @param prop
 	 * @param channelNames
 	 */
@@ -458,6 +457,10 @@ public class ChannelFinderClient {
 	private class setProperty implements Runnable {
 		private final XmlProperty xmlProperty;
 
+		public setProperty(Property.Builder prop){
+			this.xmlProperty = prop.toXml();
+		}
+		
 		public setProperty(Property.Builder prop,
 				Map<String, String> channelPropertyMap) {
 			super();
@@ -482,11 +485,13 @@ public class ChannelFinderClient {
 				XmlChannel xmlChannel = new XmlChannel(channelName);
 				// need a copy to avoid a linking cycle
 				xmlChannel.addXmlProperty(new XmlProperty(this.xmlProperty
-						.getName(), this.xmlProperty.getOwner(), this.xmlProperty.getValue()));
+						.getName(), this.xmlProperty.getOwner(),
+						this.xmlProperty.getValue()));
 				channels.addXmlChannel(xmlChannel);
 			}
 			this.xmlProperty.setXmlChannels(channels);
 		}
+
 
 		@Override
 		public void run() {
@@ -652,8 +657,8 @@ public class ChannelFinderClient {
 			throw new RuntimeException(e);
 		}
 	}
-	
-	private void wrappedSubmit(Runnable runnable){
+
+	private void wrappedSubmit(Runnable runnable) {
 		try {
 			this.executor.submit(runnable).get();
 		} catch (InterruptedException e) {

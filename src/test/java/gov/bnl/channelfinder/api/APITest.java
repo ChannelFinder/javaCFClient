@@ -15,6 +15,7 @@ import static org.junit.Assert.fail;
 import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.security.acl.Owner;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -444,6 +445,7 @@ public class APITest {
 		Property.Builder property = property(propertyName, "TestValue").owner(
 				"channel");
 		try {
+			client.set(property);
 			client.set(channelSet1);
 			client.set(channelSet2);
 			client.update(property, getChannelNames(toChannels(channelSet1)));
@@ -480,6 +482,40 @@ public class APITest {
 			client.deleteProperty(propertyName);
 			client.delete(channelSet1);
 			client.delete(channelSet2);
+		}
+	}
+
+	/**
+	 * Set a Property on a single Channel, other channels with the same property
+	 * must remain unaffected
+	 * 
+	 * TODO incorporate test into previous test, should be removed
+	 */
+	@Test
+	public void setChannelProperty() {
+		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
+		channelSet.add(channel("first").owner("channel"));
+		channelSet.add(channel("second").owner("channel"));
+		channelSet.add(channel("third").owner("channel"));
+		channelSet.add(channel("forth").owner("channel"));
+		String propertyName = "TestProperty";
+		Property.Builder property = property(propertyName, "TestValue").owner(
+				"channel");
+		try {
+			client.set(channelSet);
+			client.set(property, "first");
+			assertTrue("failed added a property to a single channel: first",
+					getChannelNames(client.findByProperty(propertyName, "*"))
+							.contains("first"));
+			client.set(property, "third");
+			assertTrue(
+					"Failed to add a property in a non destructive manner to channel: third",
+					getChannelNames(client.findByProperty(propertyName, "*"))
+							.contains("third"));
+
+		} finally {
+			client.deleteProperty(propertyName);
+			client.delete(channelSet);
 		}
 	}
 
