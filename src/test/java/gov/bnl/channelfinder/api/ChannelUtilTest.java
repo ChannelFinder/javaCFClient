@@ -42,7 +42,7 @@ public class ChannelUtilTest {
 	@Test
 	public void testFindTag() {
 		int i = generator.nextInt(11);
-		assertTrue("Failed to Find Tag",
+		assertTrue("Failed to Find Tag: tag"+String.valueOf(i),
 				getTag(channel.build(), "tag" + String.valueOf(i)).getName()
 						.equalsIgnoreCase("tag" + String.valueOf(i)));
 	}
@@ -51,7 +51,7 @@ public class ChannelUtilTest {
 	public void testFindProperty() {
 		int i = generator.nextInt(11);
 		assertTrue(
-				"Failed to Find property",
+				"Failed to Find property: propety"+String.valueOf(i),
 				getProperty(channel.build(), "property" + String.valueOf(i))
 						.getName().equalsIgnoreCase(
 								"property" + String.valueOf(i))
