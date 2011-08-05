@@ -12,6 +12,8 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import gov.bnl.channelfinder.api.Channel.Builder;
+
 import java.security.acl.Owner;
 import java.util.Collection;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ public class APITest {
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
+	private Builder channelSet;
 
 	@BeforeClass
 	public static void beforeTests() {
@@ -47,7 +50,7 @@ public class APITest {
 	@Test
 	public void builderTest() {
 		exception.expect(is(ChannelFinderException.class));
-//		exception.expect(new StatusMatcher(Status.NOT_FOUND));
+		// exception.expect(new StatusMatcher(Status.NOT_FOUND));
 		client.getChannel("ChannelName");
 	}
 
@@ -201,8 +204,7 @@ public class APITest {
 	}
 
 	/**
-	 * Update multiple channels with a _tag_
-	 * Delete a tag from multiple channels
+	 * Update multiple channels with a _tag_ Delete a tag from multiple channels
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
@@ -350,35 +352,36 @@ public class APITest {
 			client.delete(channels);
 		}
 	}
-	
+
 	/**
 	 * Update Property Values on a set of channels
 	 */
 	@Test
-	public void updatePropertyValue(){
+	public void updatePropertyValue() {
 		String propertyName = "TestProperty";
-		String initialPropertyValue = "TestValue";				
+		String initialPropertyValue = "TestValue";
 		Property.Builder property = property(propertyName, initialPropertyValue)
 				.owner("channel");
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 		channels.add(channel("first").owner("channel"));
 		channels.add(channel("second").owner("channel"));
-		try{
+		try {
 			client.set(property);
 			client.set(channels);
-			// add the property to all channels, all the properties will have the same value
+			// add the property to all channels, all the properties will have
+			// the same value
 			client.update(property, getChannelNames(toChannels(channels)));
-			Collection<Channel> result = client.findByProperty(propertyName, "*");
+			Collection<Channel> result = client.findByProperty(propertyName,
+					"*");
 			for (Channel channel : result) {
-				assertTrue(
-						"Unexpected state of property: TestProperty",
-						getProperty(channel, propertyName)
-								.getValue()
+				assertTrue("Unexpected state of property: TestProperty",
+						getProperty(channel, propertyName).getValue()
 								.equalsIgnoreCase(initialPropertyValue));
 			}
 			Map<String, String> channelValueMap = new HashMap<String, String>();
 			for (Channel channel : result) {
-				channelValueMap.put(channel.getName(), channel.getName()+"-uniqueValue");
+				channelValueMap.put(channel.getName(), channel.getName()
+						+ "-uniqueValue");
 			}
 			// update the property to a set of channels, each channels specifies
 			// it associated property calue in a channelValueMap
@@ -396,9 +399,35 @@ public class APITest {
 		} finally {
 			client.delete(channels);
 		}
-		
+
 	}
-	
+
+	/**
+	 * Test set a common property on a set of channels all channels should have
+	 * the same property with the same value
+	 */
+	@Test
+	public void setCommonProperty() {
+		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
+		channelSet.add(channel("first").owner("channel"));
+		channelSet.add(channel("second").owner("channel"));
+		Property.Builder property = property("CommonProperty", "CommonValue")
+				.owner("channel");
+		try {
+			client.set(channelSet);
+			client.set(property, getChannelNames(toChannels(channelSet)));
+			assertTrue(
+					"failed to set the common property",
+					getChannelNames(
+							client.findByProperty("CommonProperty",
+									"CommonValue")).containsAll(
+							getChannelNames(toChannels(channelSet))));
+		} finally {
+			client.deleteProperty("CommonProperty");
+			client.delete(channelSet);
+		}
+	}
+
 	/**
 	 * test the destructive setting of properties on a single channel and a set
 	 * of channels
@@ -446,13 +475,14 @@ public class APITest {
 								channelPropertyMap.get(channel.getName())));
 			}
 		} catch (Exception e) {
-			
+
 		} finally {
+			client.deleteProperty(propertyName);
 			client.delete(channelSet1);
 			client.delete(channelSet2);
 		}
 	}
-	
+
 	/**
 	 * Delete a Property
 	 */

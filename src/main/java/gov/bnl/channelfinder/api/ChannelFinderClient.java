@@ -296,11 +296,11 @@ public class ChannelFinderClient {
 	public Channel getChannel(String channelName) throws ChannelFinderException {
 		return wrappedSubmit(new FindByChannelName(channelName));
 	}
-	
+
 	private class FindByChannelName implements Callable<Channel> {
 
 		private final String channelName;
-		
+
 		public FindByChannelName(String channelName) {
 			super();
 			this.channelName = channelName;
@@ -312,7 +312,7 @@ public class ChannelFinderClient {
 					.path("channels").path(channelName).accept( //$NON-NLS-1$
 							MediaType.APPLICATION_XML).get(XmlChannel.class));
 		}
-		
+
 	}
 
 	/**
@@ -429,39 +429,70 @@ public class ChannelFinderClient {
 		}
 	}
 
+	// TODO this should be a put on properties/property/channel
 	public void set(Property.Builder prop, String channelName) {
 		Map<String, String> map = new HashMap<String, String>();
 		map.put(channelName, prop.toXml().getValue());
 		set(prop, map);
 	}
 
+	/**
+	 * all with the same value
+	 * @param prop
+	 * @param channelNames
+	 */
 	public void set(Property.Builder prop, Collection<String> channelNames) {
-		Map<String, String> map = new HashMap<String, String>();
-		String propertyValue = prop.toXml().getValue();
-		for (String channelName : channelNames) {
-			map.put(channelName, propertyValue);
-		}
-		set(prop, map);
+		wrappedSubmit(new setProperty(prop, channelNames));
 	}
 
+	/**
+	 * 
+	 * @param prop
+	 * @param channelPropertyMap
+	 */
 	public void set(Property.Builder prop,
 			Map<String, String> channelPropertyMap) {
-		XmlProperty xmlProperty = prop.toXml();
-		XmlChannels channels = new XmlChannels();
-		for (Entry<String, String> e : channelPropertyMap.entrySet()) {
-			XmlChannel xmlChannel = new XmlChannel(e.getKey());
-			// need a defensive copy to avoid a cycle
-			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
-					xmlProperty.getOwner(), e.getValue()));
-			channels.addXmlChannel(xmlChannel);
+		wrappedSubmit(new setProperty(prop, channelPropertyMap));
+	}
+
+	private class setProperty implements Runnable {
+		private final XmlProperty xmlProperty;
+
+		public setProperty(Property.Builder prop,
+				Map<String, String> channelPropertyMap) {
+			super();
+			this.xmlProperty = prop.toXml();
+			XmlChannels channels = new XmlChannels();
+			for (Entry<String, String> e : channelPropertyMap.entrySet()) {
+				XmlChannel xmlChannel = new XmlChannel(e.getKey());
+				// need a copy to avoid a cycle
+				xmlChannel.addXmlProperty(new XmlProperty(this.xmlProperty
+						.getName(), this.xmlProperty.getOwner(), e.getValue()));
+				channels.addXmlChannel(xmlChannel);
+			}
+			this.xmlProperty.setXmlChannels(channels);
 		}
-		xmlProperty.setXmlChannels(channels);
-		try {
+
+		public setProperty(Property.Builder prop,
+				Collection<String> channelNames) {
+			super();
+			this.xmlProperty = prop.toXml();
+			XmlChannels channels = new XmlChannels();
+			for (String channelName : channelNames) {
+				XmlChannel xmlChannel = new XmlChannel(channelName);
+				// need a copy to avoid a linking cycle
+				xmlChannel.addXmlProperty(new XmlProperty(this.xmlProperty
+						.getName(), this.xmlProperty.getOwner(), this.xmlProperty.getValue()));
+				channels.addXmlChannel(xmlChannel);
+			}
+			this.xmlProperty.setXmlChannels(channels);
+		}
+
+		@Override
+		public void run() {
 			service.path("properties").path(xmlProperty.getName())
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
 		}
 	}
 
@@ -598,9 +629,9 @@ public class ChannelFinderClient {
 	public Collection<Channel> findByProperty(String property,
 			String... pattern) throws ChannelFinderException {
 		Map<String, String> propertyPatterns = new HashMap<String, String>();
-		if(pattern.length > 0){			
+		if (pattern.length > 0) {
 			propertyPatterns.put(property, Joiner.on(",").join(pattern));
-		}else {
+		} else {
 			propertyPatterns.put(property, "*");
 		}
 		return wrappedSubmit(new FindByMap(propertyPatterns));
@@ -613,11 +644,28 @@ public class ChannelFinderClient {
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		} catch (ExecutionException e) {
-			if(e.getCause() != null && e.getCause() instanceof UniformInterfaceException) {
-				throw new ChannelFinderException((UniformInterfaceException) e.getCause());
+			if (e.getCause() != null
+					&& e.getCause() instanceof UniformInterfaceException) {
+				throw new ChannelFinderException(
+						(UniformInterfaceException) e.getCause());
 			}
 			throw new RuntimeException(e);
-		} 
+		}
+	}
+	
+	private void wrappedSubmit(Runnable runnable){
+		try {
+			this.executor.submit(runnable).get();
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		} catch (ExecutionException e) {
+			if (e.getCause() != null
+					&& e.getCause() instanceof UniformInterfaceException) {
+				throw new ChannelFinderException(
+						(UniformInterfaceException) e.getCause());
+			}
+			throw new RuntimeException(e);
+		}
 	}
 
 	private class FindByParam implements Callable<Collection<Channel>> {
@@ -651,7 +699,8 @@ public class ChannelFinderClient {
 	 * @param map
 	 * @return
 	 */
-	public Collection<Channel> find(Map<String, String> map) throws ChannelFinderException  {
+	public Collection<Channel> find(Map<String, String> map)
+			throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
@@ -663,7 +712,8 @@ public class ChannelFinderClient {
 	 *            Multivalue map for searching a key with multiple values
 	 * @return
 	 */
-	public Collection<Channel> find(MultivaluedMapImpl map) throws ChannelFinderException {
+	public Collection<Channel> find(MultivaluedMapImpl map)
+			throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
