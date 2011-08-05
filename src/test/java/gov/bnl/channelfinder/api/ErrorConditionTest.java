@@ -87,7 +87,7 @@ public class ErrorConditionTest {
 	@Test
 	public void removeNonExistentChannel() {
 		try {
-			client.delete(channel("NonExistantChannel"));
+			client.deleteChannel("NonExistantChannel");
 			assertTrue(false);
 		} catch (ChannelFinderException e) {
 			assertTrue(true);

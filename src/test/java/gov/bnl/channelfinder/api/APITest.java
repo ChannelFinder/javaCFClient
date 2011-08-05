@@ -59,14 +59,14 @@ public class APITest {
 	 * set and delete a single channel
 	 */
 	@Test
-	public void setDeleteChannel() {
+	public void setDeleteChannelTest() {
 		String channelName = "TestChannelName";
 		try {
 			// Add a channel
 			client.set(channel(channelName).owner("channel"));
 			client.getChannel(channelName);
 			// Remove a channel
-			client.delete(channel(channelName));
+			client.deleteChannel(channelName);
 			assertTrue(!client.getAllChannels().contains(channel(channelName)));
 			assertTrue("CleanUp failed",
 					client.getAllChannels().size() == channelCount);
@@ -79,7 +79,7 @@ public class APITest {
 	}
 
 	@Test
-	public void setDeleteTag() {
+	public void setDeleteTagTest() {
 		client.set(tag("setTag").owner("channel"));
 		assertTrue("failed to create Tag: setTag ", client.getAllTags()
 				.contains("setTag"));
@@ -89,7 +89,7 @@ public class APITest {
 	}
 
 	@Test
-	public void setDeleteProperty() {
+	public void setDeletePropertTesty() {
 		client.set(property("setProperty").owner("channel"));
 		assertTrue("failed to create Property: setPtoperty", client
 				.getAllProperties().contains("setProperty"));
@@ -103,7 +103,7 @@ public class APITest {
 	 */
 	@SuppressWarnings("deprecation")
 	@Test
-	public void addRemoveChannels() {
+	public void addRemoveChannelsTest() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 		channels.add(channel("first").owner("channel"));
 		channels.add(channel("second").owner("channel"));
@@ -148,7 +148,7 @@ public class APITest {
 			assertTrue(client.getChannel(testChannel.build().getName())
 					.getTags().contains(testTag2.build()));
 		} finally {
-			client.delete(testChannel);
+			client.deleteChannel(testChannel.build().getName());
 			client.deleteTag("TestTag1");
 			client.deleteTag("TestTag2");
 			assertTrue("CleanUp failed",
@@ -177,7 +177,7 @@ public class APITest {
 		} finally {
 			client.deleteTag("oldTag");
 			client.deleteTag("newTag");
-			client.delete(newChannel);
+			client.deleteChannel(newChannel.build().getName());
 		}
 	}
 
@@ -198,7 +198,7 @@ public class APITest {
 		client.delete(tag(tagName), channelName);
 		assertTrue(!getTagNames(client.getChannel(channelName)).contains(
 				tagName));
-		client.delete(channel(channelName));
+		client.deleteChannel(channelName);
 		assertTrue("CleanUp failed",
 				!client.getAllChannels().contains(channel(channelName).build()));
 		client.deleteTag(tagName);
@@ -322,7 +322,7 @@ public class APITest {
 			client.delete(property, testChannel.toXml().getName());
 			assertTrue(client.findByProperty(property.toXml().getName()).size() == 0);
 		} finally {
-			client.delete(testChannel);
+			client.deleteChannel(testChannel.build().getName());
 			client.deleteProperty("TestProperty");
 		}
 
@@ -379,6 +379,34 @@ public class APITest {
 						getProperty(channel, propertyName).getValue()
 								.equalsIgnoreCase(initialPropertyValue));
 			}
+			// update with a property object without any value would add the
+			// property to
+			// the channel if it does noe exist, if the property does exist it
+			// is unaffected.
+			Builder ch3 = channel("third").owner("channel");
+			channels.add(ch3);
+			client.set(ch3);
+			// No value retain the old one
+			client.update(property(propertyName),
+					getChannelNames(toChannels(channels)));
+			result = client.findByProperty(propertyName, "*");
+			for (Channel channel : result) {
+				assertTrue("Unexpected state of property: TestProperty",
+						getProperty(channel, propertyName).getValue()
+								.equalsIgnoreCase(initialPropertyValue));
+			}
+			// update with a property object with a new value, this should add
+			// the
+			// property to the channel if it does not exist, in all cases the
+			// new value of the property will be used
+			client.update(property(propertyName, "newValue"),
+					getChannelNames(toChannels(channels)));
+			result = client.findByProperty(propertyName, "*");
+			for (Channel channel : result) {
+				assertTrue("Unexpected state of property: TestProperty",
+						getProperty(channel, propertyName).getValue()
+								.equalsIgnoreCase("newValue"));
+			}
 			Map<String, String> channelValueMap = new HashMap<String, String>();
 			for (Channel channel : result) {
 				channelValueMap.put(channel.getName(), channel.getName()
@@ -396,7 +424,6 @@ public class APITest {
 								.equalsIgnoreCase(
 										channelValueMap.get(channel.getName())));
 			}
-
 		} finally {
 			client.delete(channels);
 		}
@@ -569,7 +596,7 @@ public class APITest {
 			client.update(tag("newTag").owner("channel"), testChannel.build()
 					.getName());
 
-			client.set(property("newProperty", "newPropValue").owner("channel"));
+			client.set(property("newProperty").owner("channel"));
 			client.update(
 					property("newProperty", "newPropValue").owner("channel"),
 					testChannel.build().getName());
@@ -584,7 +611,7 @@ public class APITest {
 			assertTrue(result.getProperties().contains(
 					property("newProperty", "newPropValue").build()));
 		} finally {
-			client.delete(testChannel);
+			client.deleteChannel(testChannel.build().getName());
 			client.deleteTag("existingTag");
 			client.deleteTag("newTag");
 			client.deleteProperty("existingProperty");
