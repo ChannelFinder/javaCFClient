@@ -214,33 +214,23 @@ public class ChannelFinderClient {
 	 * @return
 	 */
 	public Collection<String> getAllProperties() {
-		try {
-			return executor.submit(new Callable<Collection<String>>() {
 
-				@Override
-				public Collection<String> call() throws Exception {
+		return wrappedSubmit(new Callable<Collection<String>>() {
 
-					Collection<String> allProperties = new HashSet<String>();
-					XmlProperties allXmlProperties = service.path("properties")
-							.accept(MediaType.APPLICATION_XML)
-							.get(XmlProperties.class);
-					for (XmlProperty xmlProperty : allXmlProperties
-							.getProperties()) {
-						allProperties.add(xmlProperty.getName());
-					}
-					return allProperties;
+			@Override
+			public Collection<String> call() throws Exception {
+
+				Collection<String> allProperties = new HashSet<String>();
+				XmlProperties allXmlProperties = service.path("properties")
+						.accept(MediaType.APPLICATION_XML)
+						.get(XmlProperties.class);
+				for (XmlProperty xmlProperty : allXmlProperties.getProperties()) {
+					allProperties.add(xmlProperty.getName());
 				}
+				return allProperties;
+			}
 
-			}).get();
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			throw new RuntimeException();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-			throw new RuntimeException();
-		}
+		});
 	}
 
 	/**
@@ -249,29 +239,19 @@ public class ChannelFinderClient {
 	 * @return a list of the existing TagNames
 	 */
 	public Collection<String> getAllTags() {
-		try {
-			return executor.submit(new Callable<Collection<String>>() {
+		return wrappedSubmit(new Callable<Collection<String>>() {
 
-				@Override
-				public Collection<String> call() throws Exception {
-					Collection<String> allTags = new HashSet<String>();
-					XmlTags allXmlTags = service.path("tags")
-							.accept(MediaType.APPLICATION_XML)
-							.get(XmlTags.class);
-					for (XmlTag xmlTag : allXmlTags.getTags()) {
-						allTags.add(xmlTag.getName());
-					}
-					return allTags;
+			@Override
+			public Collection<String> call() throws Exception {
+				Collection<String> allTags = new HashSet<String>();
+				XmlTags allXmlTags = service.path("tags")
+						.accept(MediaType.APPLICATION_XML).get(XmlTags.class);
+				for (XmlTag xmlTag : allXmlTags.getTags()) {
+					allTags.add(xmlTag.getName());
 				}
-
-			}).get();
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		} catch (InterruptedException e) {
-			throw new RuntimeException();
-		} catch (ExecutionException e) {
-			throw new RuntimeException();
-		}
+				return allTags;
+			}
+		});
 	}
 
 	@Deprecated
@@ -299,7 +279,7 @@ public class ChannelFinderClient {
 
 		private final String channelName;
 
-		public FindByChannelName(String channelName) {
+		FindByChannelName(String channelName) {
 			super();
 			this.channelName = channelName;
 		}
@@ -348,7 +328,7 @@ public class ChannelFinderClient {
 
 		private final XmlChannels xmlChannels;
 
-		public SetChannels(XmlChannels xmlChannels) {
+		SetChannels(XmlChannels xmlChannels) {
 			super();
 			this.xmlChannels = xmlChannels;
 		}
@@ -397,16 +377,15 @@ public class ChannelFinderClient {
 		wrappedSubmit(new SetTag(tag.toXml(), channelNames));
 	}
 
-	// TODO clean up the constructor
 	private class SetTag implements Runnable {
 		private final XmlTag xmlTag;
 
-		public SetTag(XmlTag xmlTag) {
+		SetTag(XmlTag xmlTag) {
 			super();
 			this.xmlTag = xmlTag;
 		}
 
-		public SetTag(XmlTag xmlTag, Collection<String> channelNames) {
+		SetTag(XmlTag xmlTag, Collection<String> channelNames) {
 			super();
 			this.xmlTag = xmlTag;
 			try {
@@ -473,15 +452,14 @@ public class ChannelFinderClient {
 		wrappedSubmit(new SetProperty(prop.toXml(), channelPropertyMap));
 	}
 
-	// TODO clean up the constructors
 	private class SetProperty implements Runnable {
 		private final XmlProperty xmlProperty;
 
-		public SetProperty(XmlProperty prop) {
+		SetProperty(XmlProperty prop) {
 			this.xmlProperty = prop;
 		}
 
-		public SetProperty(XmlProperty prop,
+		SetProperty(XmlProperty prop,
 				Map<String, String> channelPropertyMap) {
 			super();
 			this.xmlProperty = prop;
@@ -496,7 +474,7 @@ public class ChannelFinderClient {
 			this.xmlProperty.setXmlChannels(channels);
 		}
 
-		public SetProperty(XmlProperty prop, Collection<String> channelNames) {
+		SetProperty(XmlProperty prop, Collection<String> channelNames) {
 			super();
 			this.xmlProperty = prop;
 			XmlChannels channels = new XmlChannels();
@@ -526,12 +504,23 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void update(Channel.Builder channel) throws ChannelFinderException {
-		try {
-			service.path("channels").path(channel.toXml().getName()).type( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).post(channel.toXml());
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
+		wrappedSubmit(new UpdateChannel(channel.toXml()));
+	}
+
+	private class UpdateChannel implements Runnable {
+		private final XmlChannel channel;
+
+		UpdateChannel(XmlChannel channel) {
+			super();
+			this.channel = channel;
 		}
+
+		@Override
+		public void run() {
+			service.path("channels").path(channel.getName()).type( //$NON-NLS-1$
+					MediaType.APPLICATION_XML).post(channel);
+		}
+
 	}
 
 	/**
@@ -543,9 +532,7 @@ public class ChannelFinderClient {
 	 *            the tag to be added
 	 */
 	public void update(Tag.Builder tag, String channelName) {
-		XmlTag xmlTag = tag.toXml();
-		xmlTag.setXmlChannels(new XmlChannels(new XmlChannel(channelName)));
-		wrappedSubmit(new UpdateTag(xmlTag));
+		wrappedSubmit(new UpdateTag(tag.toXml(), channelName));
 	}
 
 	/**
@@ -556,23 +543,33 @@ public class ChannelFinderClient {
 	 * @param tag
 	 */
 	public void update(Tag.Builder tag, Collection<String> channelNames) {
-		XmlTag xmlTag = tag.toXml();
-		XmlChannels channels = new XmlChannels();
-		for (String channelName : channelNames) {
-			channels.addXmlChannel(new XmlChannel(channelName, ""));
-		}
-		xmlTag.setXmlChannels(channels);
-		wrappedSubmit(new UpdateTag(xmlTag));
+		wrappedSubmit(new UpdateTag(tag.toXml(), channelNames));
 	}
 
 	private class UpdateTag implements Runnable {
 		private final XmlTag xmlTag;
 
-		public UpdateTag(XmlTag xmlTag) {
+		UpdateTag(XmlTag xmlTag) {
 			super();
 			this.xmlTag = xmlTag;
 		}
-
+		
+		UpdateTag(XmlTag xmlTag, String ChannelName){
+			super();
+			this.xmlTag = xmlTag;
+			this.xmlTag.setXmlChannels(new XmlChannels(new XmlChannel(ChannelName)));
+		}
+		
+		UpdateTag(XmlTag xmlTag, Collection<String> channelNames){
+			super();
+			this.xmlTag = xmlTag;
+			XmlChannels channels = new XmlChannels();
+			for (String channelName : channelNames) {
+				channels.addXmlChannel(new XmlChannel(channelName, ""));
+			}
+			xmlTag.setXmlChannels(channels);
+		}
+		
 		@Override
 		public void run() {
 			service.path("tags").path(xmlTag.getName())
@@ -594,14 +591,14 @@ public class ChannelFinderClient {
 		xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
 				xmlProperty.getOwner(), xmlProperty.getValue()));
 		xmlProperty.setXmlChannels(new XmlChannels(xmlChannel));
-		wrappedSubmit(new updateChannelProperty(xmlProperty, channelName));
+		wrappedSubmit(new UpdateChannelProperty(xmlProperty, channelName));
 	}
 
-	private class updateChannelProperty implements Runnable {
+	private class UpdateChannelProperty implements Runnable {
 		private final String channelName;
 		private final XmlProperty xmlProperty;
 
-		public updateChannelProperty(XmlProperty xmlProperty, String channelName) {
+		UpdateChannelProperty(XmlProperty xmlProperty, String channelName) {
 			super();
 			this.xmlProperty = xmlProperty;
 			this.channelName = channelName;
@@ -653,7 +650,7 @@ public class ChannelFinderClient {
 	private class UpdateProperty implements Runnable {
 		private final XmlProperty xmlProperty;
 
-		public UpdateProperty(XmlProperty xmlProperty) {
+		UpdateProperty(XmlProperty xmlProperty) {
 			super();
 			this.xmlProperty = xmlProperty;
 		}
@@ -798,7 +795,7 @@ public class ChannelFinderClient {
 	 * @param tagName
 	 */
 	public void deleteTag(String tagName) throws ChannelFinderException {
-		wrappedSubmit(new deleteElement("tags", tagName));
+		wrappedSubmit(new DeleteElement("tags", tagName));
 	}
 
 	/**
@@ -809,7 +806,7 @@ public class ChannelFinderClient {
 	 */
 	public void deleteProperty(String propertyName)
 			throws ChannelFinderException {
-		wrappedSubmit(new deleteElement("properties", propertyName));
+		wrappedSubmit(new DeleteElement("properties", propertyName));
 	}
 
 	/**
@@ -820,14 +817,14 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
-		wrappedSubmit(new deleteElement("channels", channelName));
+		wrappedSubmit(new DeleteElement("channels", channelName));
 	}
 
-	private class deleteElement implements Runnable {
+	private class DeleteElement implements Runnable {
 		private final String elementType;
 		private final String elementName;
 
-		public deleteElement(String elementType, String elementName) {
+		DeleteElement(String elementType, String elementName) {
 			super();
 			this.elementType = elementType;
 			this.elementName = elementName;
@@ -863,7 +860,8 @@ public class ChannelFinderClient {
 	 */
 	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
-		wrappedSubmit(new deleteElementfromChannel("tags", tag.toXml().getName(), channelName));
+		wrappedSubmit(new DeleteElementfromChannel("tags", tag.toXml()
+				.getName(), channelName));
 	}
 
 	/**
@@ -891,7 +889,8 @@ public class ChannelFinderClient {
 	 */
 	public void delete(Property.Builder property, String channelName)
 			throws ChannelFinderException {
-		wrappedSubmit(new deleteElementfromChannel("properties", property.build().getName(), channelName));	
+		wrappedSubmit(new DeleteElementfromChannel("properties", property
+				.build().getName(), channelName));
 	}
 
 	/**
@@ -909,12 +908,12 @@ public class ChannelFinderClient {
 		}
 	}
 
-	private class deleteElementfromChannel implements Runnable {
+	private class DeleteElementfromChannel implements Runnable {
 		private final String elementType;
 		private final String elementName;
 		private final String channelName;
 
-		public deleteElementfromChannel(String elementType, String elementName,
+		DeleteElementfromChannel(String elementType, String elementName,
 				String channelName) {
 			super();
 			this.elementType = elementType;
@@ -948,7 +947,6 @@ public class ChannelFinderClient {
 			Thread.currentThread().interrupt();
 		}
 	}
-
 
 	private <T> T wrappedSubmit(Callable<T> callable) {
 		try {
