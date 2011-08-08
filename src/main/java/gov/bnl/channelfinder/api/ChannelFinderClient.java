@@ -53,7 +53,6 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
  */
 public class ChannelFinderClient {
 	private final WebResource service;
-
 	private final ExecutorService executor;
 
 	public static class CFCBuilder {
@@ -79,11 +78,11 @@ public class ChannelFinderClient {
 
 		private CFProperties preferences = new CFProperties();
 
-		private static final String default_service_url = "http://localhost:8080/ChannelFinder/resources";
+		private static final String default_service_url = "http://localhost:8080/ChannelFinder/resources"; //$NON-NLS-1$
 
 		private CFCBuilder() {
 			this.uri = URI.create(this.preferences.getPreferenceValue(
-					"channel_finder_url", default_service_url));
+					"channel_finder_url", default_service_url)); //$NON-NLS-1$
 			this.protocol = this.uri.getScheme();
 		}
 
@@ -146,13 +145,13 @@ public class ChannelFinderClient {
 		}
 
 		public ChannelFinderClient create() {
-			if (this.protocol.equalsIgnoreCase("http")) {
+			if (this.protocol.equalsIgnoreCase("http")) { //$NON-NLS-1$
 				this.clientConfig = new DefaultClientConfig();
-			} else if (this.protocol.equalsIgnoreCase("https")) {
+			} else if (this.protocol.equalsIgnoreCase("https")) { //$NON-NLS-1$
 				if (this.clientConfig == null) {
 					SSLContext sslContext = null;
 					try {
-						sslContext = SSLContext.getInstance("SSL");
+						sslContext = SSLContext.getInstance("SSL"); //$NON-NLS-1$
 						sslContext.init(null, this.trustManager, null);
 					} catch (NoSuchAlgorithmException e) {
 						// TODO Auto-generated catch block
@@ -176,9 +175,9 @@ public class ChannelFinderClient {
 			}
 			if (this.withHTTPAuthentication) {
 				this.httpBasicAuthFilter = new HTTPBasicAuthFilter(
-						ifNullReturnPreferenceValue(this.username, "username",
-								"username"), ifNullReturnPreferenceValue(
-								this.password, "password", "password"));
+						ifNullReturnPreferenceValue(this.username, "username", //$NON-NLS-1$
+								"username"), ifNullReturnPreferenceValue( //$NON-NLS-1$
+								this.password, "password", "password")); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			return new ChannelFinderClient(this.uri, this.clientConfig,
 					this.httpBasicAuthFilter, this.logginFilter, this.executor);
@@ -221,7 +220,7 @@ public class ChannelFinderClient {
 			public Collection<String> call() throws Exception {
 
 				Collection<String> allProperties = new HashSet<String>();
-				XmlProperties allXmlProperties = service.path("properties")
+				XmlProperties allXmlProperties = service.path("properties") //$NON-NLS-1$
 						.accept(MediaType.APPLICATION_XML)
 						.get(XmlProperties.class);
 				for (XmlProperty xmlProperty : allXmlProperties.getProperties()) {
@@ -244,7 +243,7 @@ public class ChannelFinderClient {
 			@Override
 			public Collection<String> call() throws Exception {
 				Collection<String> allTags = new HashSet<String>();
-				XmlTags allXmlTags = service.path("tags")
+				XmlTags allXmlTags = service.path("tags") //$NON-NLS-1$
 						.accept(MediaType.APPLICATION_XML).get(XmlTags.class);
 				for (XmlTag xmlTag : allXmlTags.getTags()) {
 					allTags.add(xmlTag.getName());
@@ -396,7 +395,7 @@ public class ChannelFinderClient {
 					channels.addXmlChannel(channel);
 				}
 				xmlTag.setXmlChannels(channels);
-				service.path("tags").path(this.xmlTag.getName())
+				service.path("tags").path(this.xmlTag.getName()) //$NON-NLS-1$
 						.accept(MediaType.APPLICATION_XML).put(this.xmlTag);
 			} catch (UniformInterfaceException e) {
 				throw new ChannelFinderException(e);
@@ -405,7 +404,7 @@ public class ChannelFinderClient {
 
 		@Override
 		public void run() {
-			service.path("tags").path(xmlTag.getName())
+			service.path("tags").path(xmlTag.getName()) //$NON-NLS-1$
 					.accept(MediaType.APPLICATION_XML).put(xmlTag);
 		}
 
@@ -491,7 +490,7 @@ public class ChannelFinderClient {
 
 		@Override
 		public void run() {
-			service.path("properties").path(xmlProperty.getName())
+			service.path("properties").path(xmlProperty.getName()) //$NON-NLS-1$
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
 		}
@@ -549,6 +548,7 @@ public class ChannelFinderClient {
 	private class UpdateTag implements Runnable {
 		private final XmlTag xmlTag;
 
+		@SuppressWarnings("unused")
 		UpdateTag(XmlTag xmlTag) {
 			super();
 			this.xmlTag = xmlTag;
@@ -565,14 +565,14 @@ public class ChannelFinderClient {
 			this.xmlTag = xmlTag;
 			XmlChannels channels = new XmlChannels();
 			for (String channelName : channelNames) {
-				channels.addXmlChannel(new XmlChannel(channelName, ""));
+				channels.addXmlChannel(new XmlChannel(channelName, "")); //$NON-NLS-1$
 			}
 			xmlTag.setXmlChannels(channels);
 		}
 		
 		@Override
 		public void run() {
-			service.path("tags").path(xmlTag.getName())
+			service.path("tags").path(xmlTag.getName()) //$NON-NLS-1$
 					.type(MediaType.APPLICATION_XML).post(xmlTag);
 		}
 
@@ -584,14 +584,8 @@ public class ChannelFinderClient {
 	 * @param string
 	 * @param owner
 	 */
-	public void update(Property.Builder property, String channelName) {
-		XmlProperty xmlProperty = property.toXml();
-		XmlChannel xmlChannel = new XmlChannel(channelName);
-		// need a defensive copy to avoid A cycle
-		xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
-				xmlProperty.getOwner(), xmlProperty.getValue()));
-		xmlProperty.setXmlChannels(new XmlChannels(xmlChannel));
-		wrappedSubmit(new UpdateChannelProperty(xmlProperty, channelName));
+	public void update(Property.Builder property, String channelName) {		
+		wrappedSubmit(new UpdateChannelProperty(property.toXml(), channelName));
 	}
 
 	private class UpdateChannelProperty implements Runnable {
@@ -602,13 +596,18 @@ public class ChannelFinderClient {
 			super();
 			this.xmlProperty = xmlProperty;
 			this.channelName = channelName;
+			XmlChannel xmlChannel = new XmlChannel(this.channelName);
+			// need a defensive copy to avoid A cycle
+			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
+					xmlProperty.getOwner(), xmlProperty.getValue()));
+			xmlProperty.setXmlChannels(new XmlChannels(xmlChannel));
 		}
 
 		@Override
 		public void run() {
-			service.path("properties").path(xmlProperty.getName())
-					.path(channelName).accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
+			service.path("properties").path(this.xmlProperty.getName()) //$NON-NLS-1$
+					.path(this.channelName).accept(MediaType.APPLICATION_XML)
+					.accept(MediaType.APPLICATION_JSON).put(this.xmlProperty);
 		}
 
 	}
@@ -618,46 +617,55 @@ public class ChannelFinderClient {
 	 * @param property
 	 */
 	public void update(Property.Builder property,
-			Collection<String> channelNames) {
-		XmlProperty xmlProperty = property.toXml();
-		XmlChannels channels = new XmlChannels();
-		for (String channelName : channelNames) {
-			XmlChannel xmlChannel = new XmlChannel(channelName);
-			// need a defensive copy to avoid A cycle
-			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
-					xmlProperty.getOwner(), xmlProperty.getValue()));
-			channels.addXmlChannel(xmlChannel);
-		}
-		xmlProperty.setXmlChannels(channels);
-		wrappedSubmit(new UpdateProperty(xmlProperty));
+			Collection<String> channelNames) {		
+		wrappedSubmit(new UpdateProperty(property.toXml(), channelNames));
 	}
 
 	public void update(Property.Builder property,
-			Map<String, String> channelPropertyMap) {
-		XmlProperty xmlProperty = property.toXml();
-		XmlChannels channels = new XmlChannels();
-		for (Entry<String, String> e : channelPropertyMap.entrySet()) {
-			XmlChannel xmlChannel = new XmlChannel(e.getKey());
-			// need a defensive copy to avoid A cycle
-			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
-					xmlProperty.getOwner(), e.getValue()));
-			channels.addXmlChannel(xmlChannel);
-		}
-		xmlProperty.setXmlChannels(channels);
-		wrappedSubmit(new UpdateProperty(xmlProperty));
+			Map<String, String> channelPropValueMap) {		
+		wrappedSubmit(new UpdateProperty(property.toXml(), channelPropValueMap));
 	}
 
 	private class UpdateProperty implements Runnable {
 		private final XmlProperty xmlProperty;
 
+		@SuppressWarnings("unused")
 		UpdateProperty(XmlProperty xmlProperty) {
 			super();
 			this.xmlProperty = xmlProperty;
 		}
+		
+		UpdateProperty(XmlProperty xmlProperty, Collection<String> channelNames){
+			super();
+			this.xmlProperty = xmlProperty;
+			XmlChannels channels = new XmlChannels();
+			for (String channelName : channelNames) {
+				XmlChannel xmlChannel = new XmlChannel(channelName);
+				// need a defensive copy to avoid A cycle
+				xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
+						xmlProperty.getOwner(), xmlProperty.getValue()));
+				channels.addXmlChannel(xmlChannel);
+			}
+			xmlProperty.setXmlChannels(channels);
+		}
+		
+		UpdateProperty(XmlProperty xmlProperty, Map<String, String> channelPropValueMap){
+			super();
+			this.xmlProperty = xmlProperty;	
+			XmlChannels channels = new XmlChannels();
+			for (Entry<String, String> e : channelPropValueMap.entrySet()) {
+				XmlChannel xmlChannel = new XmlChannel(e.getKey());
+				// need a defensive copy to avoid A cycle
+				xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
+						xmlProperty.getOwner(), e.getValue()));
+				channels.addXmlChannel(xmlChannel);
+			}
+			xmlProperty.setXmlChannels(channels);
+		}
 
 		@Override
 		public void run() {
-			service.path("properties").path(xmlProperty.getName())
+			service.path("properties").path(xmlProperty.getName()) //$NON-NLS-1$
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).post(xmlProperty);
 		}
@@ -671,7 +679,7 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findByName(String pattern)
 			throws ChannelFinderException {
-		return wrappedSubmit(new FindByParam("~name", pattern));
+		return wrappedSubmit(new FindByParam("~name", pattern)); //$NON-NLS-1$
 	}
 
 	/**
@@ -681,7 +689,7 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findByTag(String pattern)
 			throws ChannelFinderException {
-		return wrappedSubmit(new FindByParam("~tag", pattern));
+		return wrappedSubmit(new FindByParam("~tag", pattern)); //$NON-NLS-1$
 	}
 
 	/**
@@ -698,9 +706,9 @@ public class ChannelFinderClient {
 			String... pattern) throws ChannelFinderException {
 		Map<String, String> propertyPatterns = new HashMap<String, String>();
 		if (pattern.length > 0) {
-			propertyPatterns.put(property, Joiner.on(",").join(pattern));
+			propertyPatterns.put(property, Joiner.on(",").join(pattern)); //$NON-NLS-1$
 		} else {
-			propertyPatterns.put(property, "*");
+			propertyPatterns.put(property, "*"); //$NON-NLS-1$
 		}
 		return wrappedSubmit(new FindByMap(propertyPatterns));
 
@@ -765,7 +773,7 @@ public class ChannelFinderClient {
 			while (itr.hasNext()) {
 				Map.Entry<String, String> entry = itr.next();
 				mMap.put(entry.getKey(),
-						Arrays.asList(entry.getValue().split(",")));
+						Arrays.asList(entry.getValue().split(","))); //$NON-NLS-1$
 			}
 			this.map = mMap;
 		}
@@ -778,7 +786,7 @@ public class ChannelFinderClient {
 		@Override
 		public Collection<Channel> call() throws Exception {
 			Collection<Channel> channels = new HashSet<Channel>();
-			XmlChannels xmlChannels = service.path("channels")
+			XmlChannels xmlChannels = service.path("channels") //$NON-NLS-1$
 					.queryParams(this.map).accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
@@ -795,7 +803,7 @@ public class ChannelFinderClient {
 	 * @param tagName
 	 */
 	public void deleteTag(String tagName) throws ChannelFinderException {
-		wrappedSubmit(new DeleteElement("tags", tagName));
+		wrappedSubmit(new DeleteElement("tags", tagName)); //$NON-NLS-1$
 	}
 
 	/**
@@ -806,7 +814,7 @@ public class ChannelFinderClient {
 	 */
 	public void deleteProperty(String propertyName)
 			throws ChannelFinderException {
-		wrappedSubmit(new DeleteElement("properties", propertyName));
+		wrappedSubmit(new DeleteElement("properties", propertyName)); //$NON-NLS-1$
 	}
 
 	/**
@@ -817,7 +825,7 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
-		wrappedSubmit(new DeleteElement("channels", channelName));
+		wrappedSubmit(new DeleteElement("channels", channelName)); //$NON-NLS-1$
 	}
 
 	private class DeleteElement implements Runnable {
@@ -860,7 +868,7 @@ public class ChannelFinderClient {
 	 */
 	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
-		wrappedSubmit(new DeleteElementfromChannel("tags", tag.toXml()
+		wrappedSubmit(new DeleteElementfromChannel("tags", tag.toXml() //$NON-NLS-1$
 				.getName(), channelName));
 	}
 
@@ -889,7 +897,7 @@ public class ChannelFinderClient {
 	 */
 	public void delete(Property.Builder property, String channelName)
 			throws ChannelFinderException {
-		wrappedSubmit(new DeleteElementfromChannel("properties", property
+		wrappedSubmit(new DeleteElementfromChannel("properties", property //$NON-NLS-1$
 				.build().getName(), channelName));
 	}
 
@@ -938,7 +946,7 @@ public class ChannelFinderClient {
 				this.executor.shutdownNow(); // Cancel currently executing tasks
 				// Wait a while for tasks to respond to being cancelled
 				if (!this.executor.awaitTermination(60, TimeUnit.SECONDS))
-					System.err.println("Pool did not terminate");
+					System.err.println("Pool did not terminate"); //$NON-NLS-1$
 			}
 		} catch (InterruptedException ie) {
 			// (Re-)Cancel if current thread also interrupted
