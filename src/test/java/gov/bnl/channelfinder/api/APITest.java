@@ -67,7 +67,8 @@ public class APITest {
 			client.getChannel(channelName);
 			// Remove a channel
 			client.deleteChannel(channelName);
-			assertTrue(!client.getAllChannels().contains(channel(channelName)));
+			Collection<Channel> result = client.findByName("*"); 
+			assertTrue(result == null || !result.contains(channel(channelName)));
 			assertTrue("CleanUp failed",
 					client.getAllChannels().size() == channelCount);
 		} catch (ChannelFinderException e) {
