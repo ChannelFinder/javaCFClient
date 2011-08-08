@@ -30,7 +30,7 @@ public class CFCManagerTest {
 	@Test
 	public void simpleReadConnection() {
 		ChannelFinderClient cfc;
-		cfc = CFCBuilder.to("http://localhost:8080/ChannelFinder/resources")
+		cfc = CFCBuilder.to("http://localhost:8080/ChannelFinder")
 				.create();
 		cfc.getAllTags();
 		cfc.getAllChannels();
