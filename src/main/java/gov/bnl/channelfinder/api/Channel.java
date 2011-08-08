@@ -2,7 +2,9 @@ package gov.bnl.channelfinder.api;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -13,8 +15,9 @@ public class Channel {
 
 	private final String name;
 	private final String owner;
-	private final Set<Tag> tags;
-	private final Set<Property> properties;
+	
+	private final Map<String, Tag> tags;
+	private final Map<String, Property> properties;
 
 	public static class Builder {
 		// required
@@ -50,14 +53,28 @@ public class Channel {
 		}
 
 		public Builder with(Tag.Builder tag) {
-			tags.add(tag);
+			this.tags.add(tag);
 			return this;
 		}
-		
-		public Builder with(Property.Builder property) {
-			properties.add(property);
+
+		public Builder withTags(Collection<Tag.Builder> tags) {
+			for (Tag.Builder tag : tags) {
+				this.tags.add(tag);
+			}
 			return this;
-		}		
+		}
+
+		public Builder with(Property.Builder property) {
+			this.properties.add(property);
+			return this;
+		}
+
+		public Builder withProperties(Collection<Property.Builder> properties) {
+			for (Property.Builder property : properties) {
+				this.properties.add(property);
+			}
+			return this;
+		}
 
 		XmlChannel toXml() {
 			XmlChannel xmlChannel = new XmlChannel(name, owner);
@@ -79,32 +96,32 @@ public class Channel {
 	Channel(XmlChannel channel) {
 		this.name = channel.getName();
 		this.owner = channel.getOwner();
-		Set<Tag> newTags = new HashSet<Tag>();
+		Map<String, Tag> newTags = new HashMap<String, Tag>();
 		for (XmlTag tag : channel.getXmlTags().getTags()) {
-			newTags.add(new Tag(tag));
+			newTags.put(tag.getName(), new Tag(tag));
 		}
-		this.tags = Collections.unmodifiableSet(newTags);
-		Set<Property> newProperties = new HashSet<Property>();
+		this.tags = Collections.unmodifiableMap(newTags);
+		Map<String, Property> newProperties = new HashMap<String, Property>();
 		for (XmlProperty property : channel.getXmlProperties().getProperties()) {
-			newProperties.add(new Property(property));
+			newProperties.put(property.getName(), new Property(property));
 		}
-		this.properties = Collections.unmodifiableSet(newProperties);
+		this.properties = Collections.unmodifiableMap(newProperties);
 
 	}
 
 	private Channel(Builder builder) {
 		this.name = builder.name;
 		this.owner = builder.owner;
-		Set<Tag> newTags = new HashSet<Tag>();
+		Map<String, Tag> newTags = new HashMap<String, Tag>();
 		for (Tag.Builder tag : builder.tags) {
-			newTags.add(tag.build());
+			newTags.put(tag.build().getName(), tag.build());
 		}
-		this.tags = Collections.unmodifiableSet(newTags);
-		Set<Property> newProperties = new HashSet<Property>();
+		this.tags = Collections.unmodifiableMap(newTags);
+		Map<String, Property> newProperties = new HashMap<String, Property>();
 		for (Property.Builder property : builder.properties) {
-			newProperties.add(property.build());
+			newProperties.put(property.build().getName(), property.build());
 		}
-		this.properties = Collections.unmodifiableSet(newProperties);
+		this.properties = Collections.unmodifiableMap(newProperties);
 	}
 
 	public String getName() {
@@ -119,11 +136,19 @@ public class Channel {
 	}
 
 	public Collection<Tag> getTags() {
-		return tags;
+		return tags.values();
 	}
 
+	public Tag getTag(String tagName){
+		return tags.get(tagName);
+	}
+	
 	public Collection<Property> getProperties() {
-		return properties;
+		return properties.values();
+	}
+
+	public Property getProperty(String propertyName) {
+		return properties.get(propertyName);
 	}
 
 	/*
