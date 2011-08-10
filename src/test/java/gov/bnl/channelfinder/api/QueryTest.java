@@ -161,6 +161,7 @@ public class QueryTest {
 		client.deleteTag(tagB.toXml().getName());
 		client.deleteTag(tagC.toXml().getName());
 		client.deleteTag(tagStar.toXml().getName());
-		assertTrue(client.getAllChannels().size() == initialChannelCount);
+		int finalChannelCount = client.getAllChannels().size();
+		assertTrue("Failed clean up expected "+initialChannelCount+ " channels found " + finalChannelCount,finalChannelCount == initialChannelCount);
 	}
 }
