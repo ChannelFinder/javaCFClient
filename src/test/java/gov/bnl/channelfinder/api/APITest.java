@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import junit.framework.TestCase;
 
@@ -44,7 +46,7 @@ public class APITest {
 	public static void beforeTests() {
 		ChannelFinderClient.resetPreferences();
 		// client = ChannelFinderClient.getInstance();
-		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
+		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 		channelCount = client.getAllChannels().size();
 	}
 
@@ -505,7 +507,7 @@ public class APITest {
 								channelPropertyMap.get(channel.getName())));
 			}
 		} catch (Exception e) {
-
+			fail(e.getMessage());
 		} finally {
 			client.deleteProperty(propertyName);
 			client.delete(channelSet1);

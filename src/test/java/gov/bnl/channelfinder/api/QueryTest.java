@@ -43,7 +43,7 @@ public class QueryTest {
 	public static void populateChannels() {
 
 		ChannelFinderClient.resetPreferences();
-		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
+		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 		try {
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.

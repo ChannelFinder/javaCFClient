@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
@@ -63,7 +64,6 @@ public class ChannelFinderClient {
 		// optional
 		private boolean withHTTPAuthentication = false;
 		private HTTPBasicAuthFilter httpBasicAuthFilter = null;
-		private LoggingFilter logginFilter = null;
 
 		private ClientConfig clientConfig = null;
 		private TrustManager[] trustManager = new TrustManager[] { new DummyX509TrustManager() };;
@@ -76,13 +76,13 @@ public class ChannelFinderClient {
 
 		private ExecutorService executor = Executors.newSingleThreadExecutor();
 
-		private CFProperties preferences = new CFProperties();
+		private CFProperties properties = new CFProperties();
 
-		private static final String default_service_url = "http://localhost:8080/ChannelFinder"; //$NON-NLS-1$
+		private static final String serviceURL = "http://localhost:8080/ChannelFinder"; //$NON-NLS-1$
 
 		private CFCBuilder() {
-			this.uri = URI.create(this.preferences.getPreferenceValue(
-					"channel_finder_url", default_service_url)); //$NON-NLS-1$
+			this.uri = URI.create(this.properties.getPreferenceValue(
+					"channelfinder.serviceURL", serviceURL)); //$NON-NLS-1$
 			this.protocol = this.uri.getScheme();
 		}
 
@@ -91,15 +91,15 @@ public class ChannelFinderClient {
 			this.protocol = this.uri.getScheme();
 		}
 
-		public static CFCBuilder toDefault() {
+		public static CFCBuilder serviceURL() {
 			return new CFCBuilder();
 		}
 
-		public static CFCBuilder to(String uri) {
+		public static CFCBuilder serviceURL(String uri) {
 			return new CFCBuilder(URI.create(uri));
 		}
 
-		public static CFCBuilder to(URI uri) {
+		public static CFCBuilder serviceURL(URI uri) {
 			return new CFCBuilder(uri);
 		}
 
@@ -115,11 +115,6 @@ public class ChannelFinderClient {
 
 		public CFCBuilder password(String password) {
 			this.password = password;
-			return this;
-		}
-
-		public CFCBuilder withLogging(Logger logger) {
-			this.logginFilter = new LoggingFilter(logger);
 			return this;
 		}
 
@@ -175,18 +170,20 @@ public class ChannelFinderClient {
 			}
 			if (this.withHTTPAuthentication) {
 				this.httpBasicAuthFilter = new HTTPBasicAuthFilter(
-						ifNullReturnPreferenceValue(this.username, "username", //$NON-NLS-1$
-								"username"), ifNullReturnPreferenceValue( //$NON-NLS-1$
-								this.password, "password", "password")); //$NON-NLS-1$ //$NON-NLS-2$
+						ifNullReturnPreferenceValue(
+								this.username,
+								Messages.getString("ChannelFinderClient.username.key"), //$NON-NLS-2$ //$NON-NLS-1$
+								"username"), ifNullReturnPreferenceValue(this.password, //$NON-NLS-1$ //$NON-NLS-2$
+								Messages.getString("ChannelFinderClient.password.key"), "password")); //$NON-NLS-1$
 			}
 			return new ChannelFinderClient(this.uri, this.clientConfig,
-					this.httpBasicAuthFilter, this.logginFilter, this.executor);
+					this.httpBasicAuthFilter, this.executor);
 		}
 
 		private String ifNullReturnPreferenceValue(String value, String key,
 				String Default) {
 			if (value == null) {
-				return this.preferences.getPreferenceValue(key, Default);
+				return this.properties.getPreferenceValue(key, Default);
 			} else {
 				return value;
 			}
@@ -194,15 +191,13 @@ public class ChannelFinderClient {
 	}
 
 	ChannelFinderClient(URI uri, ClientConfig config,
-			HTTPBasicAuthFilter httpBasicAuthFilter,
-			LoggingFilter loggingFilter, ExecutorService executor) {
+			HTTPBasicAuthFilter httpBasicAuthFilter, ExecutorService executor) {
 		Client client = Client.create(config);
 		if (httpBasicAuthFilter != null) {
 			client.addFilter(httpBasicAuthFilter);
 		}
-		if (loggingFilter != null) {
-			client.addFilter(loggingFilter);
-		}
+		client.addFilter(new RawLoggingFilter(Logger
+				.getLogger(RawLoggingFilter.class.getName())));
 		service = client.resource(UriBuilder.fromUri(uri).build());
 		this.executor = executor;
 	}
@@ -341,7 +336,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.channels"))
+					Messages.getString("ChannelFinderClient.resource.channels")) //$NON-NLS-1$
 					.type(MediaType.APPLICATION_XML).post(this.xmlChannels);
 		}
 
@@ -403,7 +398,7 @@ public class ChannelFinderClient {
 				}
 				xmlTag.setXmlChannels(channels);
 				service.path(
-						Messages.getString("ChannelFinderClient.resource.tags"))
+						Messages.getString("ChannelFinderClient.resource.tags")) //$NON-NLS-1$
 						.path(this.xmlTag.getName())
 						.accept(MediaType.APPLICATION_XML).put(this.xmlTag);
 			} catch (UniformInterfaceException e) {
@@ -414,7 +409,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.tags"))
+					Messages.getString("ChannelFinderClient.resource.tags")) //$NON-NLS-1$
 					.path(xmlTag.getName()).accept(MediaType.APPLICATION_XML)
 					.put(xmlTag);
 		}
@@ -501,7 +496,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.properties"))
+					Messages.getString("ChannelFinderClient.resource.properties")) //$NON-NLS-1$
 					.path(xmlProperty.getName())
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
@@ -529,7 +524,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.channels"))
+					Messages.getString("ChannelFinderClient.resource.channels")) //$NON-NLS-1$
 					.path(channel.getName()).type(MediaType.APPLICATION_XML)
 					.post(channel);
 		}
@@ -588,7 +583,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.tags"))
+					Messages.getString("ChannelFinderClient.resource.tags")) //$NON-NLS-1$
 					.path(xmlTag.getName()).type(MediaType.APPLICATION_XML)
 					.post(xmlTag);
 		}
@@ -623,7 +618,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.properties"))
+					Messages.getString("ChannelFinderClient.resource.properties")) //$NON-NLS-1$
 					.path(this.xmlProperty.getName()).path(this.channelName)
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).put(this.xmlProperty);
@@ -688,7 +683,7 @@ public class ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(
-					Messages.getString("ChannelFinderClient.resource.properties"))
+					Messages.getString("ChannelFinderClient.resource.properties")) //$NON-NLS-1$
 					.path(xmlProperty.getName())
 					.accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).post(xmlProperty);
@@ -755,7 +750,7 @@ public class ChannelFinderClient {
 			Collection<Channel> channels = new HashSet<Channel>();
 			XmlChannels xmlChannels = service
 					.path(Messages
-							.getString("ChannelFinderClient.resource.channels")).queryParam(this.parameter, this.pattern).accept( //$NON-NLS-2$
+							.getString("ChannelFinderClient.resource.channels")).queryParam(this.parameter, this.pattern).accept( //$NON-NLS-2$ //$NON-NLS-1$
 							MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
@@ -815,7 +810,7 @@ public class ChannelFinderClient {
 			Collection<Channel> channels = new HashSet<Channel>();
 			XmlChannels xmlChannels = service
 					.path(Messages
-							.getString("ChannelFinderClient.resource.channels"))
+							.getString("ChannelFinderClient.resource.channels")) //$NON-NLS-1$
 					.queryParams(this.map).accept(MediaType.APPLICATION_XML)
 					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
 			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
@@ -833,7 +828,7 @@ public class ChannelFinderClient {
 	 */
 	public void deleteTag(String tagName) throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(
-				Messages.getString("ChannelFinderClient.resource.tags"),
+				Messages.getString("ChannelFinderClient.resource.tags"), //$NON-NLS-1$
 				tagName));
 	}
 
@@ -846,7 +841,7 @@ public class ChannelFinderClient {
 	public void deleteProperty(String propertyName)
 			throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(
-				Messages.getString("ChannelFinderClient.resource.properties"),
+				Messages.getString("ChannelFinderClient.resource.properties"), //$NON-NLS-1$
 				propertyName));
 	}
 
@@ -859,7 +854,7 @@ public class ChannelFinderClient {
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(
-				Messages.getString("ChannelFinderClient.resource.channels"),
+				Messages.getString("ChannelFinderClient.resource.channels"), //$NON-NLS-1$
 				channelName));
 	}
 
@@ -904,7 +899,7 @@ public class ChannelFinderClient {
 	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
 		wrappedSubmit(new DeleteElementfromChannel(
-				Messages.getString("ChannelFinderClient.resource.tags"), tag
+				Messages.getString("ChannelFinderClient.resource.tags"), tag //$NON-NLS-1$
 						.toXml().getName(), channelName));
 	}
 
@@ -934,7 +929,7 @@ public class ChannelFinderClient {
 	public void delete(Property.Builder property, String channelName)
 			throws ChannelFinderException {
 		wrappedSubmit(new DeleteElementfromChannel(
-				Messages.getString("ChannelFinderClient.resource.properties"),
+				Messages.getString("ChannelFinderClient.resource.properties"), //$NON-NLS-1$
 				property.build().getName(), channelName));
 	}
 
@@ -1027,7 +1022,7 @@ public class ChannelFinderClient {
 		try {
 			XmlChannels channels = service
 					.path(Messages
-							.getString("ChannelFinderClient.resource.channels"))
+							.getString("ChannelFinderClient.resource.channels")) //$NON-NLS-1$
 					.accept(MediaType.APPLICATION_XML).get(XmlChannels.class);
 			Collection<Channel> set = new HashSet<Channel>();
 			for (XmlChannel channel : channels.getChannels()) {

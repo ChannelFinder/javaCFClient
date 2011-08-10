@@ -33,7 +33,7 @@ public class ErrorConditionTest {
 	@BeforeClass
 	public static void setup() {
 		ChannelFinderClient.resetPreferences();
-		client = CFCBuilder.toDefault().withHTTPAuthentication(true).create();
+		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 	}
 
 	@Test(expected = ChannelFinderException.class)
