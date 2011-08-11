@@ -43,8 +43,8 @@ public class QueryTest {
 	public static void populateChannels() {
 
 		ChannelFinderClient.resetPreferences();
-		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 		try {
+			client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.
 			client.set(prop);
@@ -162,6 +162,8 @@ public class QueryTest {
 		client.deleteTag(tagC.toXml().getName());
 		client.deleteTag(tagStar.toXml().getName());
 		int finalChannelCount = client.getAllChannels().size();
-		assertTrue("Failed clean up expected "+initialChannelCount+ " channels found " + finalChannelCount,finalChannelCount == initialChannelCount);
+		assertTrue("Failed clean up expected " + initialChannelCount
+				+ " channels found " + finalChannelCount,
+				finalChannelCount == initialChannelCount);
 	}
 }
