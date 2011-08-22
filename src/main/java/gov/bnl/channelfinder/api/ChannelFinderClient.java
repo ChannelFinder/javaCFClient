@@ -30,10 +30,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilder;
 
 import com.google.common.base.Joiner;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -273,7 +276,16 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException {
+		try {
 		return wrappedSubmit(new FindByChannelName(channelName));
+		} catch (ChannelFinderException e){
+			if(e.getStatus().equals(ClientResponse.Status.NOT_FOUND)){
+				return null;
+			}else{
+				throw e;
+			}
+		}
+		
 	}
 
 	private class FindByChannelName implements Callable<Channel> {
@@ -314,15 +326,7 @@ public class ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void set(Collection<Builder> channels) throws ChannelFinderException {
-		try {
-			XmlChannels xmlChannels = new XmlChannels();
-			for (Channel.Builder channel : channels) {
-				xmlChannels.addXmlChannel(channel.toXml());
-			}
-			wrappedSubmit(new SetChannels(xmlChannels));
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
-		}
+		wrappedSubmit(new SetChannels(ChannelUtil.toXmlChannels(channels)));
 	}
 
 	private class SetChannels implements Runnable {
@@ -767,7 +771,7 @@ public class ChannelFinderClient {
 	 *            Multivalue map for searching a key with multiple values
 	 * @return
 	 */
-	public Collection<Channel> find(MultivaluedMapImpl map)
+	public Collection<Channel> find(MultivaluedMap<String, String> map)
 			throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
@@ -787,7 +791,7 @@ public class ChannelFinderClient {
 			this.map = mMap;
 		}
 
-		FindByMap(MultivaluedMapImpl map) {
+		FindByMap(MultivaluedMap<String, String> map) {
 			this.map = new MultivaluedMapImpl();
 			this.map.putAll(map);
 		}
