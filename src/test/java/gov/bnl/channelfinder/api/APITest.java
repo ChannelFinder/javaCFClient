@@ -1,29 +1,22 @@
 package gov.bnl.channelfinder.api;
 
-import static gov.bnl.channelfinder.api.ChannelFinderClient.*;
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.ChannelUtil.getChannelNames;
+import static gov.bnl.channelfinder.api.ChannelUtil.getProperty;
 import static gov.bnl.channelfinder.api.ChannelUtil.getTagNames;
 import static gov.bnl.channelfinder.api.ChannelUtil.toChannels;
-import static gov.bnl.channelfinder.api.ChannelUtil.getProperty;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import gov.bnl.channelfinder.api.Channel.Builder;
+import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
 
-import java.security.acl.Owner;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import junit.framework.TestCase;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -52,9 +45,10 @@ public class APITest {
 
 	@Test
 	public void builderTest() {
-		exception.expect(is(ChannelFinderException.class));
+		// exception.expect(is(ChannelFinderException.class));
 		// exception.expect(new StatusMatcher(Status.NOT_FOUND));
-		client.getChannel("ChannelName");
+		assertTrue("Should return null when non-existing channel is searched.",
+				client.getChannel("ChannelName") == null);
 	}
 
 	/**
@@ -69,7 +63,7 @@ public class APITest {
 			client.getChannel(channelName);
 			// Remove a channel
 			client.deleteChannel(channelName);
-			Collection<Channel> result = client.findByName("*"); 
+			Collection<Channel> result = client.findByName("*");
 			assertTrue(result == null || !result.contains(channel(channelName)));
 			assertTrue("CleanUp failed",
 					client.getAllChannels().size() == channelCount);

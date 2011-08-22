@@ -139,7 +139,8 @@ public class QueryTest {
 		// tag names are special chars
 		map.clear();
 		map.add("~tag", "Tag*");
-		assertTrue(client.find(map).size() == 4);
+		Collection<Channel> result = client.find(map);
+		assertTrue("Expect 4 but found "+ result.size(), result.size() == 4);
 		map.clear();
 		map.add("~tag", "Tag\\*");
 		assertTrue(client.find(map).size() == 1);
