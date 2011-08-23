@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
+ */
+
 package gov.bnl.channelfinder.api;
 
 import java.io.File;
@@ -5,13 +10,30 @@ import java.io.FileInputStream;
 import java.util.Properties;
 import java.util.prefs.Preferences;
 
+/**
+ * The CFProperties objects holds the properties associated with the
+ * channelfinder client library initialized using the channelfinder.properties or default values.
+ * 
+ * The order in which these files will be read.
+ * 1. properties file specified using the system property <tt>channelfinder.properties</tt>.
+ * 2. channelfinder.properties file in the users home direcotory.
+ * 3. channelfinder.properties file in the C:/ on windows and /etc/ on linux.
+ * 4. channelfinder.properties default file packaged with the library.
+ * 
+ * @author shroffk
+ * 
+ */
 class CFProperties {
-	
+
 	private static Properties defaultProperties;
 	private static Properties userCFProperties;
 	private static Properties userHomeCFProperties;
 	private static Properties systemCFProperties;
-	
+
+	/**
+	 * creates a CFProperties object which is initialized by the channelfinder.properties file.
+	 * 
+	 */
 	public CFProperties() {
 
 		try {
@@ -67,7 +89,7 @@ class CFProperties {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * check java preferences for the requested key - then checks the various
 	 * default properties files.

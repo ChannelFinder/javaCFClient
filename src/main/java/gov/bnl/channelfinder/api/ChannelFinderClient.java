@@ -1,3 +1,8 @@
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
+ */
+
 package gov.bnl.channelfinder.api;
 
 import gov.bnl.channelfinder.api.Channel.Builder;
@@ -47,7 +52,8 @@ import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 /**
- * 
+ * A Client object to query the channelfinder service for channels based on
+ * channel names and/or properties and tags associated with channels.
  * 
  * @author shroffk
  * 
@@ -101,33 +107,77 @@ public class ChannelFinderClient {
 			this.protocol = this.uri.getScheme();
 		}
 
+		/**
+		 * Creates a {@link CFCBuilder} for a CF client to Default URL in the
+		 * channelfinder.properties.
+		 * 
+		 * @return
+		 */
 		public static CFCBuilder serviceURL() {
 			return new CFCBuilder();
 		}
 
+		/**
+		 * Creates a {@link CFCBuilder} for a CF client to URI <tt>uri</tt>.
+		 * 
+		 * @param uri
+		 * @return {@link CFCBuilder}
+		 */
 		public static CFCBuilder serviceURL(String uri) {
 			return new CFCBuilder(URI.create(uri));
 		}
 
+		/**
+		 * Creates a {@link CFCBuilder} for a CF client to {@link URI}
+		 * <tt>uri</tt>.
+		 * 
+		 * @param uri
+		 * @return {@link CFCBuilder}
+		 */
 		public static CFCBuilder serviceURL(URI uri) {
 			return new CFCBuilder(uri);
 		}
 
+		/**
+		 * Enable of Disable the HTTP authentication on the client connection.
+		 * 
+		 * @param withHTTPAuthentication
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder withHTTPAuthentication(boolean withHTTPAuthentication) {
 			this.withHTTPAuthentication = withHTTPAuthentication;
 			return this;
 		}
 
+		/**
+		 * Set the username to be used for HTTP Authentication.
+		 * 
+		 * @param username
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder username(String username) {
 			this.username = username;
 			return this;
 		}
 
+		/**
+		 * Set the password to be used for the HTTP Authentication.
+		 * 
+		 * @param password
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder password(String password) {
 			this.password = password;
 			return this;
 		}
 
+		/**
+		 * set the {@link ClientConfig} to be used while creating the
+		 * channelfinder client connection.
+		 * 
+		 * @param clientConfig
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder withClientConfig(ClientConfig clientConfig) {
 			this.clientConfig = clientConfig;
 			return this;
@@ -139,16 +189,35 @@ public class ChannelFinderClient {
 			return this;
 		}
 
+		/**
+		 * Set the trustManager that should be used for authentication.
+		 * 
+		 * @param trustManager
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder withTrustManager(TrustManager[] trustManager) {
 			this.trustManager = trustManager;
 			return this;
 		}
 
+		/**
+		 * Provide your own executor on which the queries are to be made. <br>
+		 * By default a single threaded executor is used.
+		 * 
+		 * @param executor
+		 * @return {@link CFCBuilder}
+		 */
 		public CFCBuilder withExecutor(ExecutorService executor) {
 			this.executor = executor;
 			return this;
 		}
 
+		/**
+		 * Will actually create a {@link ChannelFinderClient} object using the
+		 * configuration informoation in this builder.
+		 * 
+		 * @return {@link ChannelFinderClient}
+		 */
 		public ChannelFinderClient create() {
 			if (this.protocol.equalsIgnoreCase("http")) { //$NON-NLS-1$
 				this.clientConfig = new DefaultClientConfig();
@@ -212,9 +281,10 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Get a list of all the properties currently existing
+	 * Get a list of names of all the properties currently present on the
+	 * channelfinder service.
 	 * 
-	 * @return
+	 * @return list of names of all existing {@link Property}s.
 	 */
 	public Collection<String> getAllProperties() {
 
@@ -238,9 +308,10 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Get a list of names of all the tags currently existing
+	 * Get a list of names of all the tags currently present on the
+	 * channelfinder service.
 	 * 
-	 * @return a list of the existing TagNames
+	 * @return a list of names of all the existing {@link Tag}s.
 	 */
 	public Collection<String> getAllTags() {
 		return wrappedSubmit(new Callable<Collection<String>>() {
@@ -269,23 +340,24 @@ public class ChannelFinderClient {
 
 	/**
 	 * Returns a channel that exactly matches the channelName
-	 * <tt>channelName</tt>
+	 * <tt>channelName</tt>.
 	 * 
 	 * @param channelName
-	 * @return
+	 *            - name of the required channel.
+	 * @return {@link Channel} with name <tt>channelName</tt> or null
 	 * @throws ChannelFinderException
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException {
 		try {
-		return wrappedSubmit(new FindByChannelName(channelName));
-		} catch (ChannelFinderException e){
-			if(e.getStatus().equals(ClientResponse.Status.NOT_FOUND)){
+			return wrappedSubmit(new FindByChannelName(channelName));
+		} catch (ChannelFinderException e) {
+			if (e.getStatus().equals(ClientResponse.Status.NOT_FOUND)) {
 				return null;
-			}else{
+			} else {
 				throw e;
 			}
 		}
-		
+
 	}
 
 	private class FindByChannelName implements Callable<Channel> {
@@ -307,8 +379,8 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Set a single channel <tt>channel</tt>, if the channel already exists it
-	 * will be replaced with the given channel
+	 * Destructively set a single channel <tt>channel</tt>, if the channel
+	 * already exists it will be replaced with the given channel.
 	 * 
 	 * @param channel
 	 *            the channel to be added
@@ -319,7 +391,8 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Set a set of channels, if any channels already exists it is replaced.
+	 * Destructively set a set of channels, if any channels already exists it is
+	 * replaced.
 	 * 
 	 * @param channels
 	 *            set of channels to be added
@@ -347,20 +420,24 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add a Tag <tt>tag</tt> with no associated channels to the database.
+	 * Destructively set a Tag <tt>tag</tt> with no associated channels to the
+	 * database.
 	 * 
 	 * @param tag
+	 *            - the tag to be set.
 	 */
 	public void set(Tag.Builder tag) {
 		wrappedSubmit(new SetTag(tag.toXml()));
 	}
 
 	/**
-	 * Add tag <tt>tag</tt> to channel <tt>channelName</tt> and remove the tag
-	 * from all other channels
+	 * Destructively set tag <tt>tag</tt> to channel <tt>channelName</tt> and
+	 * remove the tag from all other channels.
 	 * 
 	 * @param tag
+	 *            - the tag to be set.
 	 * @param channelName
+	 *            - the channel to which the tag should be set on.
 	 * @throws ChannelFinderException
 	 */
 	public void set(Tag.Builder tag, String channelName)
@@ -373,12 +450,17 @@ public class ChannelFinderClient {
 
 	/**
 	 * Set tag <tt>tag</tt> on the set of channels {channels} and remove it from
-	 * all others
+	 * all others.
 	 * 
-	 * @param channels
 	 * @param tag
+	 *            - the tag to be set.
+	 * @param channelNames
+	 *            - the list of channels to which this tag will be added and
+	 *            removed from all others.
+	 * @throws ChannelFinderException
 	 */
-	public void set(Tag.Builder tag, Collection<String> channelNames) {
+	public void set(Tag.Builder tag, Collection<String> channelNames)
+			throws ChannelFinderException {
 		wrappedSubmit(new SetTag(tag.toXml(), channelNames));
 	}
 
@@ -421,19 +503,23 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add a new property <tt>property</tt>
+	 * Destructively set a new property <tt>property</tt>.
 	 * 
 	 * @param prop
+	 *            - the property to be set.
 	 */
-	public void set(Property.Builder prop) {
+	public void set(Property.Builder prop) throws ChannelFinderException {
 		wrappedSubmit(new SetProperty(prop.toXml()));
 	}
 
 	/**
-	 * set it on this channel and remove it from all others
+	 * Destructively set property <tt>prop</tt> and add it to the channel
+	 * <tt>channelName</tt> and remove it from all others.
 	 * 
 	 * @param prop
+	 *            - property to be set.
 	 * @param channelName
+	 *            - the channel to which this property must be added.
 	 */
 	public void set(Property.Builder prop, String channelName) {
 		Collection<String> ch = new ArrayList<String>();
@@ -442,19 +528,32 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * all with the same value
+	 * Destructively set property <tt>prop</tt> and add it to the channels
+	 * <tt>channelNames</tt> removing it from all other channels. By default all
+	 * channels will contain the property with the same value specified in the
+	 * <tt>prop</tt>.<br>
+	 * to individually set the value for each channel use channelPropertyMap.
 	 * 
 	 * @param prop
+	 *            - the property to be set.
 	 * @param channelNames
+	 *            - the channels to which this property should be added and
+	 *            removed from all others.
 	 */
 	public void set(Property.Builder prop, Collection<String> channelNames) {
 		wrappedSubmit(new SetProperty(prop.toXml(), channelNames));
 	}
 
 	/**
+	 * Destructively set the property <tt>prop</tt> and add it to the channels
+	 * specified in the <tt>channelPropertyMap</tt>, where the map key is the
+	 * channel name and the associated value is the property value to be used
+	 * for that channel.
 	 * 
 	 * @param prop
+	 *            - the property to be set.
 	 * @param channelPropertyMap
+	 *            - map with channel names and property values
 	 */
 	public void set(Property.Builder prop,
 			Map<String, String> channelPropertyMap) {
@@ -506,7 +605,7 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Update properties and tags of existing channel <tt>channel</tt>
+	 * Update existing channel with <tt>channel</tt>.
 	 * 
 	 * @param channel
 	 * @throws ChannelFinderException
@@ -532,25 +631,34 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add Tag <tt>tag </tt> to Channel with name <tt>channelName</tt>
+	 * Update Tag <tt>tag </tt> by adding it to Channel with name
+	 * <tt>channelName</tt>, without affecting the other instances of this tag.
 	 * 
-	 * @param string
-	 *            Name of the channel to which the tag is to be added
 	 * @param tag
 	 *            the tag to be added
+	 * @param channelName
+	 *            Name of the channel to which the tag is to be added
+	 * @throws ChannelFinderException
 	 */
-	public void update(Tag.Builder tag, String channelName) {
+	public void update(Tag.Builder tag, String channelName)
+			throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelName));
 	}
 
 	/**
-	 * Add the Tag <tt>tag</tt> to the set of the channels with names
-	 * <tt>channelNames</tt>
 	 * 
-	 * @param channelNames
+	 * Update the Tag <tt>tag</tt> by adding it to the set of the channels with
+	 * names <tt>channelNames</tt>, without affecting the other instances of
+	 * this tag.
+	 * 
 	 * @param tag
+	 *            - the tag that needs to be updated.
+	 * @param channelNames
+	 *            - list of channels to which this tag should be added.
+	 * @throws ChannelFinderException
 	 */
-	public void update(Tag.Builder tag, Collection<String> channelNames) {
+	public void update(Tag.Builder tag, Collection<String> channelNames)
+			throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelNames));
 	}
 
@@ -589,12 +697,18 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Add Property <tt>property</tt> to the channel <tt>channelName</tt>
+	 * Update Property <tt>property</tt> by adding it to the channel
+	 * <tt>channelName</tt>, without affecting the other channels.
 	 * 
-	 * @param string
-	 * @param owner
+	 * @param property
+	 *            - the property to be updated
+	 * @param channelName
+	 *            - the channel to which this property should be added or
+	 *            updated.
+	 * @throws ChannelFinderException
 	 */
-	public void update(Property.Builder property, String channelName) {
+	public void update(Property.Builder property, String channelName)
+			throws ChannelFinderException {
 		wrappedSubmit(new UpdateChannelProperty(property.toXml(), channelName));
 	}
 
@@ -623,16 +737,27 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * @param channelNames
+	 * 
+	 * 
 	 * @param property
+	 * @param channelNames
+	 * @throws ChannelFinderException
 	 */
 	public void update(Property.Builder property,
-			Collection<String> channelNames) {
+			Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelNames));
 	}
 
+	/**
+	 * 
+	 * 
+	 * @param property
+	 * @param channelPropValueMap
+	 * @throws ChannelFinderException
+	 */
 	public void update(Property.Builder property,
-			Map<String, String> channelPropValueMap) {
+			Map<String, String> channelPropValueMap)
+			throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelPropValueMap));
 	}
 
@@ -686,9 +811,14 @@ public class ChannelFinderClient {
 	}
 
 	/**
+	 * Search for channels who's name match the pattern <tt>pattern</tt>.<br>
+	 * The pattern can contain wildcard char * or ?.<br>
 	 * 
 	 * @param pattern
-	 * @return
+	 *            - the search pattern for the channel names
+	 * @return A Collection of channels who's name match the pattern
+	 *         <tt>pattern</tt>
+	 * @throws ChannelFinderException
 	 */
 	public Collection<Channel> findByName(String pattern)
 			throws ChannelFinderException {
@@ -696,9 +826,15 @@ public class ChannelFinderClient {
 	}
 
 	/**
+	 * Search for channels with tags who's name match the pattern
+	 * <tt>pattern</tt>.<br>
+	 * The pattern can contain wildcard char * or ?.<br>
 	 * 
 	 * @param pattern
-	 * @return
+	 *            - the search pattern for the tag names
+	 * @return A Collection of channels which contain tags who's name match the
+	 *         pattern <tt>pattern</tt>
+	 * @throws ChannelFinderException
 	 */
 	public Collection<Channel> findByTag(String pattern)
 			throws ChannelFinderException {
@@ -706,13 +842,17 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * This function is a subset of queryChannels - should it be removed??
-	 * <p>
-	 * TODO: add the usage of patterns and implement on top of the general query
-	 * using the map
+	 * Search for channels with properties who's Value match the pattern
+	 * <tt>pattern</tt>.<br>
+	 * The pattern can contain wildcard char * or ?.<br>
 	 * 
 	 * @param property
-	 * @return
+	 *            - the name of the property.
+	 * @param pattern
+	 *            - the seatch pattern for the property value.
+	 * @return A collection of channels containing the property with name
+	 *         <tt>propertyName</tt> who's value matches the pattern
+	 *         <tt> pattern</tt>.
 	 * @throws ChannelFinderException
 	 */
 	public Collection<Channel> findByProperty(String property,
@@ -753,10 +893,17 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Query for channels based on the criteria specified in the map
+	 * Query for channels based on the multiple criteria specified in the map.
+	 * Map.put("~name", "*")<br>
+	 * Map.put("~tag", "tag1")<br>
+	 * Map.put("Cell", "1,2,3")
+	 * 
+	 * this will return all channels with name=any name AND tag=tag1 AND
+	 * property Cell = 1 OR 2 OR 3.
 	 * 
 	 * @param map
-	 * @return
+	 * @return Collection of channels which satisfy the search map.
+	 * @throws ChannelFinderException
 	 */
 	public Collection<Channel> find(Map<String, String> map)
 			throws ChannelFinderException {
@@ -764,12 +911,20 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Multivalued map used to search for a key with multiple values. e.g.
-	 * property a=1 or property a=2
+	 * uery for channels based on the multiple criteria specified in the map.
+	 * Map.put("~name", "*")<br>
+	 * Map.put("~tag", "tag1")<br>
+	 * Map.put("Cell", "1")<br>
+	 * Map.put("Cell", "2")<br>
+	 * Map.put("Cell", "3")<br>
+	 * 
+	 * this will return all channels with name=any name AND tag=tag1 AND
+	 * property Cell = 1 OR 2 OR 3.
 	 * 
 	 * @param map
-	 *            Multivalue map for searching a key with multiple values
-	 * @return
+	 *            - multivalued map of all search criteria
+	 * @return Collection of channels which satisfy the search map.
+	 * @throws ChannelFinderException
 	 */
 	public Collection<Channel> find(MultivaluedMap<String, String> map)
 			throws ChannelFinderException {
@@ -812,18 +967,23 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Completely Delete {tag} with name = tagName from all channels
+	 * Completely Delete {tag} with name = tagName from all channels and the
+	 * channelfinder service.
 	 * 
 	 * @param tagName
+	 *            - name of tag to be deleted.
+	 * @throws ChannelFinderException
 	 */
 	public void deleteTag(String tagName) throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(resourceTags, tagName));
 	}
 
 	/**
-	 * Completely Delete property with name = propertyName from all channels
+	 * Completely Delete property with name = propertyName from all channels and
+	 * the channelfinder service.
 	 * 
 	 * @param propertyName
+	 *            - name of property to be deleted.
 	 * @throws ChannelFinderException
 	 */
 	public void deleteProperty(String propertyName)
@@ -832,7 +992,7 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove the channel identified by <tt>channel</tt>
+	 * Delete the channel identified by <tt>channel</tt>
 	 * 
 	 * @param channel
 	 *            channel to be removed
@@ -861,7 +1021,7 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove the set of channels identified by <tt>channels</tt>
+	 * Delete the set of channels identified by <tt>channels</tt>
 	 * 
 	 * @param channels
 	 * @throws ChannelFinderException
@@ -875,11 +1035,12 @@ public class ChannelFinderClient {
 	}
 
 	/**
-	 * Remove tag <tt>tag</tt> from the channel with the name
+	 * Delete tag <tt>tag</tt> from the channel with the name
 	 * <tt>channelName</tt>
 	 * 
-	 * @param tag
-	 * @param channelName
+	 * @param tag - the tag to be deleted.
+	 * @param channelName - the channel from which to delete the tag <tt>tag</tt> 
+	 * @throws ChannelFinderException
 	 */
 	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
@@ -890,8 +1051,8 @@ public class ChannelFinderClient {
 	/**
 	 * Remove the tag <tt>tag </tt> from all the channels <tt>channelNames</tt>
 	 * 
-	 * @param tag
-	 * @param channelNames
+	 * @param tag - the tag to be deleted.
+	 * @param channelNames - the channels from which to delete the tag <tt>tag</tt> 
 	 * @throws ChannelFinderException
 	 */
 	public void delete(Tag.Builder tag, Collection<String> channelNames)
@@ -906,8 +1067,8 @@ public class ChannelFinderClient {
 	 * Remove property <tt>property</tt> from the channel with name
 	 * <tt>channelName</tt>
 	 * 
-	 * @param property
-	 * @param name
+	 * @param property - the property to be deleted.
+	 * @param channelName - the channel from which to delete the property <tt>property</tt>
 	 * @throws ChannelFinderException
 	 */
 	public void delete(Property.Builder property, String channelName)
@@ -920,8 +1081,8 @@ public class ChannelFinderClient {
 	 * Remove the property <tt>property</tt> from the set of channels
 	 * <tt>channelNames</tt>
 	 * 
-	 * @param property
-	 * @param channelNames
+	 * @param property - the property to be deleted.
+	 * @param channelNames - the channels from which to delete the property <tt>property</tt>
 	 * @throws ChannelFinderException
 	 */
 	public void delete(Property.Builder property,
@@ -953,6 +1114,9 @@ public class ChannelFinderClient {
 
 	}
 
+	/**
+	 * close
+	 */
 	public void close() {
 		this.executor.shutdown(); // Disable new tasks from being submitted
 		try {

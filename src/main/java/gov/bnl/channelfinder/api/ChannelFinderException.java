@@ -1,6 +1,8 @@
-/**
- * 
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
  */
+
 package gov.bnl.channelfinder.api;
 
 
@@ -12,7 +14,8 @@ import java.io.StringReader;
 import javax.swing.text.html.parser.ParserDelegator;
 
 /**
- *
+ * A Exception Type for various channelfinder exception conditions.
+ * 
  * @author shroffk
  *
  */
@@ -64,6 +67,8 @@ public class ChannelFinderException extends RuntimeException {
 	}
 
 	/**
+	 * Set the associated HTTP status code which caused this exception.
+	 * 
 	 * @param status the status to set
 	 */
 	public void setStatus(Status status) {
@@ -71,6 +76,8 @@ public class ChannelFinderException extends RuntimeException {
 	}
 
 	/**
+	 * Returns the associated HTTP status code which caused this exception.
+	 * 
 	 * @return the status
 	 */
 	public Status getStatus() {

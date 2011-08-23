@@ -1,9 +1,14 @@
-/**
- * 
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
  */
+
 package gov.bnl.channelfinder.api;
 
 /**
+ * A Property object represents a channel finder property which consists of the
+ * unique name, an owner and a value.
+ * 
  * @author shroffk
  * 
  */
@@ -19,16 +24,25 @@ public class Property {
 		private String owner;
 		private String value;
 
-		public static Builder property(String name){
+		/**
+		 * Builder class to aid in a construction of a {@link Property}.
+		 * 
+		 * @author shroffk
+		 * 
+		 */
+		public static Builder property(String name) {
 			Builder propertyBuilder = new Builder();
 			propertyBuilder.name = name;
 			return propertyBuilder;
 		}
-		
+
 		/**
-		 * @param name
-		 * @param value
-		 * @return
+		 * Returns a {@link Property.Builder} to create a property with given.
+		 * <tt>name</tt> and <tt>value</tt>
+		 * 
+		 * @param name - property name
+		 * @param value - property value
+		 * @return {@link Property.Builder} for a property with name and value
 		 */
 		public static Builder property(String name, String value) {
 			Builder propertyBuilder = new Builder();
@@ -37,6 +51,13 @@ public class Property {
 			return propertyBuilder;
 		}
 
+		
+		/**
+		 * Returns a {@link Property.Builder} to for a property which is a copy of <tt>property</tt>.
+		 * 
+		 * @param property - the property to be copied
+		 * @return {@link Property.Builder} with attributes initialized to the same as <tt>property</tt>
+		 */
 		public static Builder property(Property property) {
 			Builder propertyBuilder = new Builder();
 			propertyBuilder.name = property.getName();
@@ -45,20 +66,41 @@ public class Property {
 			return propertyBuilder;
 		}
 
+		/**
+		 * Set the owner for the property to be built.
+		 * 
+		 * @param owner - owner id
+		 * @return property {@link Builder} with owner set to <tt>owner</tt>
+		 */
 		public Builder owner(String owner) {
 			this.owner = owner;
 			return this;
 		}
-		
+
+		/**
+		 * Set the value for the property to be built.
+		 * 
+		 * @param value - property value
+		 * @return property {@link Builder} with value set to <tt>value</tt>
+		 */
 		public Builder value(String value) {
 			this.value = value;
 			return this;
 		}
-		
+
+		/**
+		 * Build a {@link XmlProperty} object using this builder.
+		 * 
+		 * @return 
+		 */
 		XmlProperty toXml() {
 			return new XmlProperty(name, owner, value);
 		}
 
+		/**
+		 * Build a {@link Property} object using this builder.
+		 * @return
+		 */
 		Property build() {
 			return new Property(this);
 		}
@@ -79,14 +121,27 @@ public class Property {
 		this.owner = builder.owner;
 	}
 
+	/**
+	 * returns the property name.
+	 * 
+	 * @return - the property name
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * returns the property owner id.
+	 * @return - the property owner id
+	 */
 	public String getOwner() {
 		return owner;
 	}
 
+	/**
+	 * returns the property value.
+	 * @return - the property value
+	 */
 	public String getValue() {
 		return value;
 	}

@@ -1,12 +1,26 @@
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
+ */
+
 package gov.bnl.channelfinder.api;
 
+/**
+ * A Tag object represents a channel finder tag which consists of the
+ * unique name and an owner.
+ * 
+ * @author shroffk
+ *
+ */
 public class Tag {
 	private final String name;
 	private final String owner;
 
 	/**
+	 * Builder class to aid in a construction of a {@link Tag}.
+	 * 
 	 * @author shroffk
-	 *
+	 * 
 	 */
 	public static class Builder {
 		// Required
@@ -14,6 +28,15 @@ public class Tag {
 		// Optional
 		private String owner = null;
 
+		/**
+		 * Returns a {@link Builder} to build a {@link Tag} which is a copy of
+		 * the given <tt>tag</tt>.
+		 * 
+		 * @param tag
+		 *            - the tag to be copied
+		 * @return tag {@link Builder} with attributes initialized to the same
+		 *         as <tt>tag</tt>
+		 */
 		public static Builder tag(Tag tag) {
 			Builder builder = new Builder();
 			builder.name = tag.getName();
@@ -21,12 +44,31 @@ public class Tag {
 			return builder;
 		}
 
+		/**
+		 * Returns a tag {@link Builder} to build a {@link Tag} with the name
+		 * <tt>name</tt>
+		 * 
+		 * @param name
+		 *            - tag name
+		 * @return tag {@link Builder} with name <tt>name</tt>
+		 */
 		public static Builder tag(String name) {
 			Builder builder = new Builder();
 			builder.name = name;
 			return builder;
 		}
 
+		/**
+		 * Returns a tag {@link Builder} to build a {@link Tag} with the name
+		 * <tt>name</tt> and owner <tt>owner</tt>
+		 * 
+		 * @param name
+		 *            - the tag name
+		 * @param owner
+		 *            - the tag owner id
+		 * @return A {@link Builder} with name set to <tt>name</tt> and owner id
+		 *         set to <tt>owner</tt>
+		 */
 		public static Builder tag(String name, String owner) {
 			Builder builder = new Builder();
 			builder.name = name;
@@ -34,19 +76,33 @@ public class Tag {
 			return builder;
 		}
 
+		/**
+		 * Set the owner for the tag to be built.
+		 * 
+		 * @param owner - owner id
+		 * @return tag {@link Builder} with owner set to <tt>owner</tt>
+		 */
 		public Builder owner(String owner) {
 			this.owner = owner;
 			return this;
 		}
 
+		/**
+		 * Build a {@link XmlTag} object using this builder
+		 * @return {@link XmlTag}
+		 */
 		XmlTag toXml() {
 			XmlTag xml = new XmlTag();
 			xml.setName(name);
 			xml.setOwner(owner);
 			return xml;
 		}
-		
-		Tag build(){
+
+		/**
+		 * Build a {@link Tag} object using this builder
+		 * @return {@link Tag}
+		 */
+		Tag build() {
 			return new Tag(this);
 		}
 	}
@@ -61,15 +117,25 @@ public class Tag {
 		this.owner = builder.owner;
 	}
 
+	/**
+	 * returns the tag name.
+	 * @return - the tag name
+	 */
 	public String getName() {
 		return name;
 	}
 
+	/**
+	 * returns the tag owner.
+	 * @return - the tag owner
+	 */
 	public String getOwner() {
 		return owner;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -80,7 +146,9 @@ public class Tag {
 		return result;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -100,5 +168,4 @@ public class Tag {
 		return true;
 	}
 
-	
 }

@@ -34,6 +34,12 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+/*
+ * Copyright 2010 Brookhaven National Laboratory
+ * All rights reserved. Use is subject to license terms.
+ */
+
+
 package gov.bnl.channelfinder.api;
 
 import com.sun.jersey.api.client.AbstractClientRequestAdapter;
@@ -59,7 +65,7 @@ import javax.ws.rs.core.MultivaluedMap;
  * A Raw HTML request/response logging filter. 
  * added level check to the handle.
  * 
- * @author Paul.Sandoz@Sun.Com
+ * @author Paul.Sandoz@Sun.Com, shroffk
  */
 public class RawLoggingFilter extends ClientFilter {
 
