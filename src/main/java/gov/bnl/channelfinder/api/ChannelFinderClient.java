@@ -218,7 +218,7 @@ public class ChannelFinderClient {
 		 * 
 		 * @return {@link ChannelFinderClient}
 		 */
-		public ChannelFinderClient create() {
+		public ChannelFinderClient create() throws ChannelFinderException {
 			if (this.protocol.equalsIgnoreCase("http")) { //$NON-NLS-1$
 				this.clientConfig = new DefaultClientConfig();
 			} else if (this.protocol.equalsIgnoreCase("https")) { //$NON-NLS-1$
@@ -228,11 +228,9 @@ public class ChannelFinderClient {
 						sslContext = SSLContext.getInstance("SSL"); //$NON-NLS-1$
 						sslContext.init(null, this.trustManager, null);
 					} catch (NoSuchAlgorithmException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new ChannelFinderException(e.getMessage());
 					} catch (KeyManagementException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						throw new ChannelFinderException(e.getMessage());
 					}
 					this.clientConfig = new DefaultClientConfig();
 					this.clientConfig.getProperties().put(
@@ -822,7 +820,10 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findByName(String pattern)
 			throws ChannelFinderException {
-		return wrappedSubmit(new FindByParam("~name", pattern));
+		//return wrappedSubmit(new FindByParam("~name", pattern));
+		Map<String, String> searchMap = new HashMap<String, String>();
+		searchMap.put("~name", pattern);
+		return wrappedSubmit(new FindByMap(searchMap));
 	}
 
 	/**
@@ -838,7 +839,10 @@ public class ChannelFinderClient {
 	 */
 	public Collection<Channel> findByTag(String pattern)
 			throws ChannelFinderException {
-		return wrappedSubmit(new FindByParam("~tag", pattern));
+		//return wrappedSubmit(new FindByParam("~tag", pattern));
+		Map<String, String> searchMap = new HashMap<String, String>();
+		searchMap.put("~tag", pattern);
+		return wrappedSubmit(new FindByMap(searchMap));
 	}
 
 	/**
@@ -864,31 +868,6 @@ public class ChannelFinderClient {
 			propertyPatterns.put(property, "*"); //$NON-NLS-1$
 		}
 		return wrappedSubmit(new FindByMap(propertyPatterns));
-
-	}
-
-	private class FindByParam implements Callable<Collection<Channel>> {
-
-		private String parameter;
-		private String pattern;
-
-		FindByParam(String parameter, String pattern) {
-			this.parameter = parameter;
-			this.pattern = pattern;
-		}
-
-		@Override
-		public Collection<Channel> call() throws Exception {
-			Collection<Channel> channels = new HashSet<Channel>();
-			XmlChannels xmlChannels = service.path(resourceChannels)
-					.queryParam(this.parameter, this.pattern).accept( //$NON-NLS-2$ //$NON-NLS-1$
-							MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
-			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
-				channels.add(new Channel(xmlchannel));
-			}
-			return Collections.unmodifiableCollection(channels);
-		}
 
 	}
 
@@ -937,11 +916,11 @@ public class ChannelFinderClient {
 
 		FindByMap(Map<String, String> map) {
 			MultivaluedMapImpl mMap = new MultivaluedMapImpl();
-			Iterator<Map.Entry<String, String>> itr = map.entrySet().iterator();
-			while (itr.hasNext()) {
-				Map.Entry<String, String> entry = itr.next();
-				mMap.put(entry.getKey(),
-						Arrays.asList(entry.getValue().split(","))); //$NON-NLS-1$
+			for (Entry<String, String> entry : map.entrySet()) {
+				String key = entry.getKey();
+				for (String value : Arrays.asList(entry.getValue().split(","))) {
+					mMap.add(key, value.trim());
+				}
 			}
 			this.map = mMap;
 		}

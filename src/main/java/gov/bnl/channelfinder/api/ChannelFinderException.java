@@ -32,6 +32,10 @@ public class ChannelFinderException extends RuntimeException {
 		super();
 	}
 
+	public ChannelFinderException(String message){
+		super(message);
+	}
+	
 	public ChannelFinderException(UniformInterfaceException cause) {
 		super(parseErrorMsg(cause), cause);
 		this.setStatus(Status.fromStatusCode(cause.getResponse().getStatus()));

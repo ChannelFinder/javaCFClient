@@ -44,7 +44,8 @@ public class QueryTest {
 
 		ChannelFinderClient.resetPreferences();
 		try {
-			client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
+			client = CFCBuilder.serviceURL().withHTTPAuthentication(true)
+					.create();
 			initialChannelCount = client.getAllChannels().size();
 			// Add the tags and properties.
 			client.set(prop);
@@ -66,6 +67,57 @@ public class QueryTest {
 		} catch (ChannelFinderException e) {
 			fail(e.getMessage());
 		}
+	}
+
+	/**
+	 * search by name
+	 */
+	@Test
+	public void findbyName() {
+		Collection<Channel> channels = client.findByName("pvk:0?<*");
+		assertTrue("failed to find channels based on name expect 3 found "
+				+ channels.size(), channels.size() == 3);
+		
+		channels = client
+				.findByName("pvk:01<first>, pvk:02<second>");
+		assertTrue(
+				"failed to find channels on ',' seperated name pattern, expected 2 found "
+						+ channels.size(), channels.size() == 2);
+	}
+
+	/**
+	 * search by tag
+	 */
+	@Test
+	public void findbyTag() {
+		Collection<Channel> channels = client.findByTag("tagA");
+		assertTrue("failed to find channels based on name expect 2 found "
+				+ channels.size(), channels.size() == 2);
+		
+		channels = client
+				.findByTag("tagA, tagB");
+		assertTrue(
+				"failed to find channels on ',' seperated name pattern, expected 1 found "
+						+ channels.size(), channels.size() == 1);
+	}
+
+	
+	/**
+	 * search by property
+	 */
+	@Test
+	public void findbyProperty() {
+		Collection<Channel> channels = client.findByProperty("prop", "2");
+		assertTrue("failed to find channels based on name expect 1 found "
+				+ channels.size(), channels.size() == 1);
+		
+		channels = client.findByProperty("prop", "1", "2");
+		assertTrue("failed to find channels based on name expect 3 found "
+				+ channels.size(), channels.size() == 3);
+		
+		channels = client.findByProperty("prop", "1, 2");
+		assertTrue("failed to find channels based on name expect 3 found "
+				+ channels.size(), channels.size() == 3);
 	}
 
 	/**
@@ -140,7 +192,7 @@ public class QueryTest {
 		map.clear();
 		map.add("~tag", "Tag*");
 		Collection<Channel> result = client.find(map);
-		assertTrue("Expect 4 but found "+ result.size(), result.size() == 4);
+		assertTrue("Expect 4 but found " + result.size(), result.size() == 4);
 		map.clear();
 		map.add("~tag", "Tag\\*");
 		assertTrue(client.find(map).size() == 1);
