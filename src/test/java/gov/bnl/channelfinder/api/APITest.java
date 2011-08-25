@@ -20,16 +20,27 @@ import java.util.Map;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.Verifier;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import static org.mockito.Mockito.*;
 
 import com.sun.jersey.api.client.ClientResponse.Status;
 
 public class APITest {
 	private static ChannelFinderClient client;
 	private static int channelCount;
+
+	@Mock
+	private ChannelFinderClient reader;
+	@Mock
+	private ChannelFinderClient writer;
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
@@ -41,6 +52,37 @@ public class APITest {
 		// client = ChannelFinderClient.getInstance();
 		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 		channelCount = client.findByName("*").size();
+	}
+
+	@Before
+	public void initMocks() {
+		MockitoAnnotations.initMocks(this);
+	}
+
+	@Test
+	public void compositeClientTest() {
+		ChannelFinderClientComp composite = ChannelFinderClientComp
+				.getInstance();
+		composite.setReader(reader);
+		composite.setWriter(writer);
+
+		String ch = "channelName";
+		composite.getChannel(ch);
+		verify(reader, times(1)).getChannel(ch);
+		verify(writer, times(0)).getChannel(ch);
+
+		composite.set(channel(ch));
+		verify(reader, times(0)).set(any(Channel.Builder.class));
+		verify(writer, times(1)).set(any(Channel.Builder.class));
+		
+		composite.update(channel(ch));
+		verify(reader, times(0)).update(any(Channel.Builder.class));
+		verify(writer, times(1)).update(any(Channel.Builder.class));
+		
+		composite.deleteChannel(ch);
+		verify(reader, times(0)).deleteChannel(ch);
+		verify(writer, times(1)).deleteChannel(ch);
+
 	}
 
 	@Test
@@ -106,8 +148,7 @@ public class APITest {
 		channels.add(channel("second").owner("channel"));
 		try {
 			client.set(channels);
-			assertTrue(client.findByName("*")
-					.containsAll(toChannels(channels)));
+			assertTrue(client.findByName("*").containsAll(toChannels(channels)));
 		} catch (ChannelFinderException e) {
 			fail("Failed to add channels first and/or second \n Cause:"
 					+ e.getMessage());
