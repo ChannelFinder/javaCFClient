@@ -8,7 +8,6 @@ package gov.bnl.channelfinder.api;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
-import java.util.prefs.Preferences;
 
 /**
  * The CFProperties objects holds the properties associated with the
