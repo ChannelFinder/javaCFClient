@@ -11,7 +11,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import gov.bnl.channelfinder.api.Channel.Builder;
-import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
+import gov.bnl.channelfinder.api.ChannelFinderClientImpl.CFCBuilder;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,10 +37,10 @@ public class APITest {
 
 	@BeforeClass
 	public static void beforeTests() {
-		ChannelFinderClient.resetPreferences();
+		// ChannelFinderClient.resetPreferences();
 		// client = ChannelFinderClient.getInstance();
 		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
-		channelCount = client.getAllChannels().size();
+		channelCount = client.findByName("*").size();
 	}
 
 	@Test
@@ -66,7 +66,7 @@ public class APITest {
 			Collection<Channel> result = client.findByName("*");
 			assertTrue(result == null || !result.contains(channel(channelName)));
 			assertTrue("CleanUp failed",
-					client.getAllChannels().size() == channelCount);
+					client.findByName("*").size() == channelCount);
 		} catch (ChannelFinderException e) {
 			if (e.getStatus().equals(Status.NOT_FOUND))
 				fail("Channel not added. " + e.getMessage());
@@ -106,7 +106,7 @@ public class APITest {
 		channels.add(channel("second").owner("channel"));
 		try {
 			client.set(channels);
-			assertTrue(client.getAllChannels()
+			assertTrue(client.findByName("*")
 					.containsAll(toChannels(channels)));
 		} catch (ChannelFinderException e) {
 			fail("Failed to add channels first and/or second \n Cause:"
@@ -114,7 +114,7 @@ public class APITest {
 		} finally {
 			client.delete(channels);
 			assertTrue("CleanUp failed",
-					client.getAllChannels().size() == channelCount);
+					client.findByName("*").size() == channelCount);
 		}
 	}
 
@@ -149,7 +149,7 @@ public class APITest {
 			client.deleteTag("TestTag1");
 			client.deleteTag("TestTag2");
 			assertTrue("CleanUp failed",
-					client.getAllChannels().size() == channelCount);
+					client.findByName("*").size() == channelCount);
 		}
 
 	}
@@ -197,7 +197,7 @@ public class APITest {
 				tagName));
 		client.deleteChannel(channelName);
 		assertTrue("CleanUp failed",
-				!client.getAllChannels().contains(channel(channelName).build()));
+				!client.findByName("*").contains(channel(channelName).build()));
 		client.deleteTag(tagName);
 	}
 

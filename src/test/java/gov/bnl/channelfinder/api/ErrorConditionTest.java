@@ -4,7 +4,7 @@ import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.junit.Assert.assertTrue;
-import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
+import gov.bnl.channelfinder.api.ChannelFinderClientImpl.CFCBuilder;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +32,6 @@ public class ErrorConditionTest {
 
 	@BeforeClass
 	public static void setup() {
-		ChannelFinderClient.resetPreferences();
 		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 	}
 

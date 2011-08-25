@@ -99,11 +99,3 @@
 
 package gov.bnl.channelfinder.api;
 
-import java.util.Collection;
-import java.util.Hashtable;
-import java.util.Map;
-
-import com.sun.jersey.core.util.MultivaluedMapImpl;
-
-import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
-

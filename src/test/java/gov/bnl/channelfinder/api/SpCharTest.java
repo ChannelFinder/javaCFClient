@@ -5,7 +5,7 @@ import static gov.bnl.channelfinder.api.Property.Builder.*;
 import static gov.bnl.channelfinder.api.Tag.Builder.*;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import gov.bnl.channelfinder.api.ChannelFinderClient.CFCBuilder;
+import gov.bnl.channelfinder.api.ChannelFinderClientImpl.CFCBuilder;
 
 import java.util.ArrayList;
 import java.util.Collection;

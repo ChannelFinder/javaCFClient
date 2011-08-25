@@ -1,6 +1,6 @@
 package gov.bnl.channelfinder.api;
 
-import static gov.bnl.channelfinder.api.ChannelFinderClient.*;
+import static gov.bnl.channelfinder.api.ChannelFinderClientImpl.*;
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
@@ -42,11 +42,11 @@ public class QueryTest {
 	@BeforeClass
 	public static void populateChannels() {
 
-		ChannelFinderClient.resetPreferences();
+		ChannelFinderClientImpl.resetPreferences();
 		try {
 			client = CFCBuilder.serviceURL().withHTTPAuthentication(true)
 					.create();
-			initialChannelCount = client.getAllChannels().size();
+			initialChannelCount = client.findByName("*").size();
 			// Add the tags and properties.
 			client.set(prop);
 			client.set(prop2);
@@ -128,7 +128,7 @@ public class QueryTest {
 		Map<String, String> map = new Hashtable<String, String>();
 		map.put("~name", "*");
 		Collection<Channel> channels = client.find(map);
-		assertTrue(client.getAllChannels().size() == channels.size());
+		assertTrue(client.findByName("*").size() == channels.size());
 	}
 
 	/**
@@ -214,7 +214,7 @@ public class QueryTest {
 		client.deleteTag(tagB.toXml().getName());
 		client.deleteTag(tagC.toXml().getName());
 		client.deleteTag(tagStar.toXml().getName());
-		int finalChannelCount = client.getAllChannels().size();
+		int finalChannelCount = client.findByName("*").size();
 		assertTrue("Failed clean up expected " + initialChannelCount
 				+ " channels found " + finalChannelCount,
 				finalChannelCount == initialChannelCount);
