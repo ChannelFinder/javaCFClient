@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -160,6 +163,18 @@ public class ChannelUtil {
 			propertyNames.addAll(getPropertyNames(channel));
 		}
 		return propertyNames;
+	}
+
+	public static Collection<String> getPropValues(
+			Collection<Channel> channels, String propertyName) {
+		Set<String> propertyValues = Collections
+				.synchronizedSortedSet(new TreeSet<String>());
+		for (Channel channel : channels) {
+			if (channel.getProperty(propertyName) != null)
+				propertyValues
+						.add(channel.getProperty(propertyName).getValue());
+		}
+		return propertyValues;
 	}
 
 	/**

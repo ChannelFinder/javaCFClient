@@ -9,11 +9,15 @@ import static org.junit.Assert.assertTrue;
 import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Random;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.google.common.collect.Sets;
 
 public class ChannelUtilTest {
 
@@ -39,76 +43,130 @@ public class ChannelUtilTest {
 
 	}
 
-	@Test
-	public void testfilterChannelbyProperty(){
+	private Collection<Channel> getTestChannels() {
 		Collection<Channel> channels = new ArrayList<Channel>();
 		for (int i = 1; i <= 10; i++) {
-			Builder channel = channel("testChannel"+i);
-			channel.with(property("all",String.valueOf(i)));
+			Builder channel = channel("testChannel" + i);
+			channel.with(property("all", String.valueOf(i)));
 			channel.with(tag("all"));
-			if(i%2 == 0){
-				channel.with(property("even",String.valueOf(i)));
+			if (i % 2 == 0) {
+				channel.with(property("even", String.valueOf(i)));
 				channel.with(tag("even"));
 			}
-			if(i%5 == 0){
-				channel.with(property("five",String.valueOf(i)));
+			if (i % 5 == 0) {
+				channel.with(property("five", String.valueOf(i)));
 				channel.with(tag("five"));
 			}
 			channels.add(channel.build());
 		}
+		return channels;
+	}
+
+	// TODO more vigorous tests conditions.
+	@Test
+	public void testfilterChannelbyProperty() {
+		Collection<Channel> channels = getTestChannels();
 		Collection<Channel> results;
-		
+
 		// Filter by properties
 		Collection<String> requiredProps = new ArrayList<String>();
 		requiredProps.add("all");
 		results = ChannelUtil.filterbyProperties(channels, requiredProps);
-		assertTrue("Query all channels with prop 'all' failed, expected 10 found "+results.size(), results.size() == 10);
+		assertTrue(
+				"Query all channels with prop 'all' failed, expected 10 found "
+						+ results.size(), results.size() == 10);
 		requiredProps.add("even");
 		results = ChannelUtil.filterbyProperties(channels, requiredProps);
-		assertTrue("Query all channels with prop 'even' failed, expected 5 found "+results.size(), results.size() == 5);
+		assertTrue(
+				"Query all channels with prop 'even' failed, expected 5 found "
+						+ results.size(), results.size() == 5);
 		requiredProps.add("five");
 		results = ChannelUtil.filterbyProperties(channels, requiredProps);
-		assertTrue("Query all channels with prop 'five' failed, expected 1 found "+results.size(), results.size() == 1);
+		assertTrue(
+				"Query all channels with prop 'five' failed, expected 1 found "
+						+ results.size(), results.size() == 1);
 		requiredProps.add("noProp");
 		results = ChannelUtil.filterbyProperties(channels, requiredProps);
-		assertTrue("Query all channels with prop 'noProp' failed, expected 0 found "+results.size(), results.size() == 0);
-		
+		assertTrue(
+				"Query all channels with prop 'noProp' failed, expected 0 found "
+						+ results.size(), results.size() == 0);
+
 		// Filter by Tags
 		Collection<String> requiredTags = new ArrayList<String>();
 		requiredTags.add("all");
 		results = ChannelUtil.filterbyTags(channels, requiredTags);
-		assertTrue("Query all channels with tag 'all' failed, expected 10 found "+results.size(), results.size() == 10);
+		assertTrue(
+				"Query all channels with tag 'all' failed, expected 10 found "
+						+ results.size(), results.size() == 10);
 		requiredTags.add("even");
 		results = ChannelUtil.filterbyTags(channels, requiredTags);
-		assertTrue("Query all channels with tag 'even' failed, expected 5 found "+results.size(), results.size() == 5);
+		assertTrue(
+				"Query all channels with tag 'even' failed, expected 5 found "
+						+ results.size(), results.size() == 5);
 		requiredTags.add("five");
 		results = ChannelUtil.filterbyTags(channels, requiredTags);
-		assertTrue("Query all channels with tag 'five' failed, expected 1 found "+results.size(), results.size() == 1);
+		assertTrue(
+				"Query all channels with tag 'five' failed, expected 1 found "
+						+ results.size(), results.size() == 1);
 		requiredTags.add("notag");
 		results = ChannelUtil.filterbyTags(channels, requiredTags);
-		assertTrue("Query all channels with tag 'notag' failed, expected 0 found "+results.size(), results.size() == 0);
-		
+		assertTrue(
+				"Query all channels with tag 'notag' failed, expected 0 found "
+						+ results.size(), results.size() == 0);
+
 		// Filter by properties and tags
 		requiredProps = new ArrayList<String>();
 		requiredTags = new ArrayList<String>();
 		requiredProps.add("all");
 		requiredTags.add("all");
-		results = ChannelUtil.filterbyElements(channels, requiredProps, requiredTags);
-		assertTrue("Query all channels with tag 'all' && prop 'all' failed, expected 10 found "+results.size(), results.size() == 10);
+		results = ChannelUtil.filterbyElements(channels, requiredProps,
+				requiredTags);
+		assertTrue(
+				"Query all channels with tag 'all' && prop 'all' failed, expected 10 found "
+						+ results.size(), results.size() == 10);
 		requiredProps.add("even");
 		requiredTags.add("even");
-		results = ChannelUtil.filterbyElements(channels,  requiredProps, requiredTags);
-		assertTrue("Query all channels with tag 'even' && prop 'even' failed, expected 5 found "+results.size(), results.size() == 5);
+		results = ChannelUtil.filterbyElements(channels, requiredProps,
+				requiredTags);
+		assertTrue(
+				"Query all channels with tag 'even' && prop 'even' failed, expected 5 found "
+						+ results.size(), results.size() == 5);
 		requiredProps.add("five");
 		requiredTags.add("five");
-		results = ChannelUtil.filterbyElements(channels,  requiredProps, requiredTags);
-		assertTrue("Query all channels with tag 'five' && prop 'five' failed, expected 1 found "+results.size(), results.size() == 1);
+		results = ChannelUtil.filterbyElements(channels, requiredProps,
+				requiredTags);
+		assertTrue(
+				"Query all channels with tag 'five' && prop 'five' failed, expected 1 found "
+						+ results.size(), results.size() == 1);
 		requiredProps.add("noProp");
 		requiredTags.add("notag");
-		results = ChannelUtil.filterbyElements(channels,  requiredProps, requiredTags);
-		assertTrue("Query all channels with tag 'noTag' && prop 'noProp'failed, expected 0 found "+results.size(), results.size() == 0);
-	
-		
-		
+		results = ChannelUtil.filterbyElements(channels, requiredProps,
+				requiredTags);
+		assertTrue(
+				"Query all channels with tag 'noTag' && prop 'noProp'failed, expected 0 found "
+						+ results.size(), results.size() == 0);
+
+	}
+
+	@Test
+	public void testGetPropValues() {
+		Collection<Channel> channels = getTestChannels();
+		// property all has values 1-10
+		assertTrue(
+				"Failed to get all property values for property 'all' ",
+				ChannelUtil.getPropValues(channels, "all").containsAll(
+						new ArrayList<String>(Arrays.asList("1", "2", "3", "4",
+								"5", "6", "7", "8", "9", "10"))));
+		// property even has values 2,4,6,8,10
+		assertTrue(
+				"Failed to get all the property Values for property 'even' ",
+				ChannelUtil.getPropValues(channels, "even").containsAll(
+						new ArrayList<String>(Arrays.asList("2", "4", "6", "8",
+								"10"))));
+		// property five had values 5,10
+		assertTrue(
+				"Failed to get all the property Values for property 'five'",
+				ChannelUtil.getPropValues(channels, "five").containsAll(
+						new HashSet<String>(Sets.newHashSet("5", "10"))));
 	}
 }
