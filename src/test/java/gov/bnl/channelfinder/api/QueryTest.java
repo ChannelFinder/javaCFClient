@@ -77,9 +77,8 @@ public class QueryTest {
 		Collection<Channel> channels = client.findByName("pvk:0?<*");
 		assertTrue("failed to find channels based on name expect 3 found "
 				+ channels.size(), channels.size() == 3);
-		
-		channels = client
-				.findByName("pvk:01<first>, pvk:02<second>");
+
+		channels = client.findByName("pvk:01<first>, pvk:02<second>");
 		assertTrue(
 				"failed to find channels on ',' seperated name pattern, expected 2 found "
 						+ channels.size(), channels.size() == 2);
@@ -93,15 +92,13 @@ public class QueryTest {
 		Collection<Channel> channels = client.findByTag("tagA");
 		assertTrue("failed to find channels based on name expect 2 found "
 				+ channels.size(), channels.size() == 2);
-		
-		channels = client
-				.findByTag("tagA, tagB");
+
+		channels = client.findByTag("tagA, tagB");
 		assertTrue(
 				"failed to find channels on ',' seperated name pattern, expected 1 found "
 						+ channels.size(), channels.size() == 1);
 	}
 
-	
 	/**
 	 * search by property
 	 */
@@ -110,11 +107,11 @@ public class QueryTest {
 		Collection<Channel> channels = client.findByProperty("prop", "2");
 		assertTrue("failed to find channels based on name expect 1 found "
 				+ channels.size(), channels.size() == 1);
-		
+
 		channels = client.findByProperty("prop", "1", "2");
 		assertTrue("failed to find channels based on name expect 3 found "
 				+ channels.size(), channels.size() == 3);
-		
+
 		channels = client.findByProperty("prop", "1, 2");
 		assertTrue("failed to find channels based on name expect 3 found "
 				+ channels.size(), channels.size() == 3);
@@ -174,6 +171,33 @@ public class QueryTest {
 		map.add("prop", "2");
 		Collection<Channel> channels = client.find(map);
 		assertTrue(channels.size() == 3);
+	}
+
+	@Test
+	public void testQueryString() {
+		String query = "pvk:*";
+		assertTrue("Failed to query for pvk:* - expect 3 found " + client.find(query).size(), client.find(query).size() == 3);
+		query = "* prop=1,2";
+		assertTrue(
+				"Failed to query using name and property, expected: 3 found: "
+						+ client.find(query).size(),
+				client.find(query).size() == 3);
+		query = "pvk* prop=1,2 prop2=*";
+		assertTrue(
+				"Failed to query using name and multiple properties, expected: 1 found: "
+						+ client.find(query).size(),
+				client.find(query).size() == 1);
+		query = "pvk* prop=1,2 Tags=Taga,Tagb";
+		assertTrue(
+				"Failed to query using name and property and tag, expected: 1 found: "
+						+ client.find(query).size(),
+				client.find(query).size() == 1);
+		query = "pvk* prop=1, 2 Tags=Taga, Tagb";
+		assertTrue(
+				"Failed to query using name and property and tag with spaces, expected: 1 found: "
+						+ client.find(query).size(),
+				client.find(query).size() == 1);
+
 	}
 
 	/**
