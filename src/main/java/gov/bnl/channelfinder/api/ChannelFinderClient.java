@@ -269,6 +269,7 @@ public interface ChannelFinderClient {
 
 	/**
 	 * Query for channels based on the Query string <tt>query</tt> example:
+	 * <br>
 	 * find("SR* Cell=1,2 Tags=GolderOrbit,myTag)<br>
 	 * 
 	 * this will return all channels with names starting with SR AND have
