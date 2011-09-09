@@ -18,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ChannelTest {
 
-	private static Logger logger = Logger.getLogger(CFCManagerTest.class
+	private static Logger logger = Logger.getLogger(CFCManagerIT.class
 			.getName());
 
 	@BeforeClass

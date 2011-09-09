@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 
 import com.sun.jersey.api.client.ClientResponse.Status;
 
-public class APITest {
+public class APIIT {
 	private static ChannelFinderClient client;
 	private static int channelCount;
 

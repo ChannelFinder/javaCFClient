@@ -16,9 +16,9 @@ import org.junit.Test;
  * @author shroffk
  * 
  */
-public class CFCManagerTest {
+public class CFCManagerIT {
 	
-	private static Logger logger = Logger.getLogger(CFCManagerTest.class.getName()); 
+	private static Logger logger = Logger.getLogger(CFCManagerIT.class.getName()); 
 
 	@BeforeClass
 	public static void beforeTests() {

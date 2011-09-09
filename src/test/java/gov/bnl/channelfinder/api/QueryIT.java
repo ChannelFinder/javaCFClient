@@ -20,7 +20,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 //multivalue map
 
-public class QueryTest {
+public class QueryIT {
 
 	private static Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
 	private static int initialChannelCount;

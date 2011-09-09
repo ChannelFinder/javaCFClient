@@ -19,7 +19,7 @@ import org.junit.Test;
 import com.sun.jersey.api.client.ClientResponse.Status;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
-public class SpCharTest {
+public class SpCharIT {
 
 	private static ChannelFinderClient client;
 

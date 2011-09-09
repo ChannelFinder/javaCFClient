@@ -12,7 +12,7 @@ import java.util.HashSet;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class ErrorConditionTest {
+public class ErrorConditionIT {
 
 	// TODO
 	// test check if error with the correct messages are thrown.
