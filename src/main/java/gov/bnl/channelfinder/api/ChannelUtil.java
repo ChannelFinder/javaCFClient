@@ -167,8 +167,7 @@ public class ChannelUtil {
 
 	public static Collection<String> getPropValues(
 			Collection<Channel> channels, String propertyName) {
-		Set<String> propertyValues = Collections
-				.synchronizedSortedSet(new TreeSet<String>());
+		SortedSet<String> propertyValues = new TreeSet<String>();
 		for (Channel channel : channels) {
 			if (channel.getProperty(propertyName) != null)
 				propertyValues
