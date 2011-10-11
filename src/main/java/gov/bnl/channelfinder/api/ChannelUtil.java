@@ -71,7 +71,8 @@ public class ChannelUtil {
 	public static Collection<String> getPropertyNames(Channel channel) {
 		Collection<String> propertyNames = new HashSet<String>();
 		for (Property property : channel.getProperties()) {
-			propertyNames.add(property.getName());
+			if (property.getValue() != null)
+				propertyNames.add(property.getName());
 		}
 		return propertyNames;
 	}
@@ -169,7 +170,8 @@ public class ChannelUtil {
 			Collection<Channel> channels, String propertyName) {
 		SortedSet<String> propertyValues = new TreeSet<String>();
 		for (Channel channel : channels) {
-			if (channel.getProperty(propertyName) != null)
+			if (channel.getProperty(propertyName) != null
+					&& channel.getProperty(propertyName).getValue() != null)
 				propertyValues
 						.add(channel.getProperty(propertyName).getValue());
 		}
