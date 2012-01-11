@@ -163,7 +163,7 @@ public class Channel {
 		 * 
 		 * @return a {@link Channel}
 		 */
-		Channel build() {
+		public Channel build() {
 			return new Channel(this);
 		}
 	}

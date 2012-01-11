@@ -102,7 +102,7 @@ public class Tag {
 		 * Build a {@link Tag} object using this builder
 		 * @return {@link Tag}
 		 */
-		Tag build() {
+		public Tag build() {
 			return new Tag(this);
 		}
 	}
