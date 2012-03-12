@@ -424,15 +424,7 @@ public class APIIT {
 			Builder ch3 = channel("third").owner("channel");
 			channels.add(ch3);
 			client.set(ch3);
-			// No value retain the old one
-			client.update(property(propertyName),
-					getChannelNames(toChannels(channels)));
-			result = client.findByProperty(propertyName, "*");
-			for (Channel channel : result) {
-				assertTrue("Unexpected state of property: TestProperty",
-						getProperty(channel, propertyName).getValue()
-								.equalsIgnoreCase(initialPropertyValue));
-			}
+			
 			// update with a property object with a new value, this should add
 			// the
 			// property to the channel if it does not exist, in all cases the
