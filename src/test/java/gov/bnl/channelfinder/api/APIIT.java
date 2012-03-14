@@ -74,11 +74,11 @@ public class APIIT {
 		composite.set(channel(ch));
 		verify(reader, times(0)).set(any(Channel.Builder.class));
 		verify(writer, times(1)).set(any(Channel.Builder.class));
-		
+
 		composite.update(channel(ch));
 		verify(reader, times(0)).update(any(Channel.Builder.class));
 		verify(writer, times(1)).update(any(Channel.Builder.class));
-		
+
 		composite.deleteChannel(ch);
 		verify(reader, times(0)).deleteChannel(ch);
 		verify(writer, times(1)).deleteChannel(ch);
@@ -424,7 +424,7 @@ public class APIIT {
 			Builder ch3 = channel("third").owner("channel");
 			channels.add(ch3);
 			client.set(ch3);
-			
+
 			// update with a property object with a new value, this should add
 			// the
 			// property to the channel if it does not exist, in all cases the
@@ -456,6 +456,37 @@ public class APIIT {
 			}
 		} finally {
 			client.delete(channels);
+			client.deleteProperty(propertyName);
+		}
+
+	}
+
+	@Test
+	public void deletePropertyUsingEmptyValue() {
+		String propertyName = "TestProperty";
+		String initialPropertyValue = "TestValue";
+		Property.Builder property = property(propertyName, initialPropertyValue)
+				.owner("channel");
+		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
+		channels.add(channel("first").owner("channel").with(property));
+		channels.add(channel("second").owner("channel").with(property));
+		try {
+			client.set(property);
+			client.set(channels);
+			Collection<Channel> queryResult = client.findByProperty(
+					propertyName, initialPropertyValue);
+			assertTrue("Failed to create the initial testChannels",
+					queryResult.size() == 2);
+			for (Channel channel : queryResult) {
+				client.update(channel(channel.getName()).owner(channel.getOwner()).with(property.value("")));
+			}
+			assertTrue(
+					"Failed to delete the testProperty from the test channels using empty value string",
+					client.findByProperty(propertyName).size() == 0);
+
+		} finally {
+			client.delete(channels);
+			client.deleteProperty(propertyName);
 		}
 
 	}
