@@ -198,10 +198,16 @@ public class QueryIT {
 						+ client.find(query).size(),
 				client.find(query).size() == 1);
 		query = "pvk* prop=1, 2 Tags=Taga, Tagb";
-		assertTrue(
+		 assertTrue(
 				"Failed to query using name and property and tag with spaces, expected: 1 found: "
 						+ client.find(query).size(),
 				client.find(query).size() == 1);
+		 
+		 query = "*first* *second*";
+		 assertTrue(
+				"Failed to query using name, expected: 3 found: "
+						+ client.find(query).size(),
+				client.find(query).size() == 3);
 
 	}
 

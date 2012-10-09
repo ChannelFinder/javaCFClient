@@ -961,8 +961,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 
 	}
 
-	static Map<String, String> buildSearchMap(String searchPattern) {
-		Hashtable<String, String> map = new Hashtable<String, String>();
+	static MultivaluedMap<String, String> buildSearchMap(String searchPattern) {
+		MultivaluedMap<String, String> map = new MultivaluedMapImpl();
 		searchPattern = searchPattern.replaceAll(", ", ",");
 		String[] words = searchPattern.split("\\s");
 		if (words.length <= 0) {
@@ -972,7 +972,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 				if (!words[index].contains("=")) {
 					// this is a name value
 					if (words[index] != null)
-						map.put("~name", words[index]);
+						map.add("~name", words[index]);
 				} else {
 					// this is a property or tag
 					String[] keyValue = words[index].split("=");
@@ -982,17 +982,19 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 						key = keyValue[0];
 						valuePattern = keyValue[1];
 						if (key.equalsIgnoreCase("Tags")) {
-							map.put("~tag", valuePattern.replace("||", ","));
-							// for (int i = 0; i < values.length; i++)
-							// map.put("~tag", values[i]);
-						} else if(!key.isEmpty()) {
-							map.put(key, valuePattern.replace("||", ","));
+							key = "~tag";
+						}
+						for (String value : valuePattern.replace("||", ",")
+								.split(",")) {
+							map.add(key, value);
 						}
 					} catch (ArrayIndexOutOfBoundsException e) {
-						if(e.getMessage().equals(String.valueOf(0))){
-							throw new IllegalArgumentException("= must be preceeded by a propertyName or keyword Tags.");
+						if (e.getMessage().equals(String.valueOf(0))) {
+							throw new IllegalArgumentException(
+									"= must be preceeded by a propertyName or keyword Tags.");
 						} else if (e.getMessage().equals(String.valueOf(1)))
-							throw new IllegalArgumentException("key: '" + key + "' is specified with no pattern.");
+							throw new IllegalArgumentException("key: '" + key
+									+ "' is specified with no pattern.");
 					}
 
 				}
