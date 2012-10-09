@@ -270,6 +270,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		}
 		client.addFilter(new RawLoggingFilter(Logger
 				.getLogger(RawLoggingFilter.class.getName())));
+		client.setFollowRedirects(true);
 		service = client.resource(UriBuilder.fromUri(uri).build());
 		this.executor = executor;
 	}
