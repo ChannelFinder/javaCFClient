@@ -1,8 +1,8 @@
-/*
- * Copyright 2010 Brookhaven National Laboratory
+/**
+ * Copyright (C) 2010-2012 Brookhaven National Laboratory
+ * Copyright (C) 2010-2012 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
  * All rights reserved. Use is subject to license terms.
  */
-
 package gov.bnl.channelfinder.api;
 
 import gov.bnl.channelfinder.api.Channel.Builder;
@@ -268,6 +268,12 @@ public interface ChannelFinderClient {
 			String... pattern) throws ChannelFinderException;
 
 	/**
+	 * Space seperated search criterias, patterns may include * and ? wildcards 
+	 * channelNamePattern
+	 * propertyName=valuePattern1,valuePattern2
+	 * Tags=tagNamePattern
+	 * Each criteria is logically ANDed, || seperated values are logically ORed
+	 * 
 	 * Query for channels based on the Query string <tt>query</tt> example:
 	 * find("SR* Cell=1,2 Tags=GolderOrbit,myTag)<br>
 	 * 
@@ -276,6 +282,7 @@ public interface ChannelFinderClient {
 	 * 
 	 * IMP: each criteria is logically AND'ed while multiple values for
 	 * Properties are OR'ed.<br>
+	 * 
 	 * 
 	 * @param query
 	 * @return Collection of channels which satisfy the search criteria.

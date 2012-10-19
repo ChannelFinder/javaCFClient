@@ -1,3 +1,8 @@
+/**
+ * Copyright (C) 2010-2012 Brookhaven National Laboratory
+ * Copyright (C) 2010-2012 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
+ * All rights reserved. Use is subject to license terms.
+ */
 package gov.bnl.channelfinder.api;
 
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
@@ -123,6 +128,69 @@ public class ErrorConditionIT {
 
 	public void addProperty2NonExistentChannel() {
 
+	}
+
+	/**
+	 * Cannot create a channel with property value null
+	 */
+	@Test(expected = ChannelFinderException.class)
+	public void addPropertyWithNullValue() {
+		Property.Builder property = property("testProperty").owner("owner");
+		Channel.Builder channel = channel("testChannel").owner("owner").with(
+				property);
+		try {
+			client.set(property);
+			client.set(channel);
+		} finally {
+			client.deleteChannel(channel.build().getName());
+			client.deleteProperty(property.build().getName());
+		}
+	}
+
+	/**
+	 * Cannot create a channel with property value ""
+	 */
+	@Test(expected = ChannelFinderException.class)
+	public void addPropertyWithEmptyValue() {
+		Property.Builder property = property("testProperty").owner("owner")
+				.value("");
+		Channel.Builder channel = channel("testChannel").owner("owner").with(
+				property);
+		try {
+			client.set(property);
+			client.set(channel);
+		} finally {
+			client.deleteChannel(channel.build().getName());
+			client.deleteProperty(property.build().getName());
+		}
+	}
+
+	@Test(expected = ChannelFinderException.class)
+	public void updateChannelWithNullProperty() {
+		Property.Builder property = property("testProperty").owner("owner");
+		Channel.Builder channel = channel("testChannel").owner("owner");
+		try {
+			client.set(channel);
+			client.update(property, channel.build().getName());
+		} finally {
+			client.deleteChannel(channel.build().getName());
+			client.deleteProperty(property.build().getName());
+		}
+	}
+
+	@Test(expected = ChannelFinderException.class)
+	public void updateChannelWithEmptyProperty() {
+		Property.Builder property = property("testProperty").owner("owner")
+				.value("");
+		Channel.Builder channel = channel("testChannel").owner("owner").with(
+				property);
+		try {
+			client.set(channel);
+			client.update(property, channel.build().getName());
+		} finally {
+			client.deleteChannel(channel.build().getName());
+			client.deleteProperty(property.build().getName());
+		}
 	}
 
 }
