@@ -25,7 +25,7 @@ public class XmlProperties {
     }
 
     /** Creates a new instance of XmlProperties with one initial property.
-     * @param c initial element
+     * @param p initial element
      */
     public XmlProperties(XmlProperty p) {
         properties.add(p);

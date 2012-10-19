@@ -25,7 +25,7 @@ public class XmlTags {
     }
 
     /** Creates a new instance of XmlTags with one initial tag.
-     * @param c initial element
+     * @param t initial element
      */
     public XmlTags(XmlTag t) {
         tags.add(t);

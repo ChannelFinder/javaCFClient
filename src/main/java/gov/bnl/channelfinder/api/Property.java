@@ -2,15 +2,14 @@
  * Copyright (C) 2010-2012 Brookhaven National Laboratory
  * Copyright (C) 2010-2012 Helmholtz-Zentrum Berlin für Materialien und Energie GmbH
  * All rights reserved. Use is subject to license terms.
+ * 
+ * @author shroffk
  */
 package gov.bnl.channelfinder.api;
 
 /**
  * A Property object represents a channel finder property which consists of the
  * unique name, an owner and a value.
- * 
- * @author shroffk
- * 
  */
 public class Property {
 	private final String name;

@@ -351,7 +351,7 @@ public interface ChannelFinderClient {
 	/**
 	 * Delete the channel identified by <tt>channel</tt>
 	 * 
-	 * @param channel
+	 * @param channelName
 	 *            channel to be removed
 	 * @throws ChannelFinderException
 	 */
