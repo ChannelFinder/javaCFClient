@@ -107,7 +107,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		 * Creates a {@link CFCBuilder} for a CF client to Default URL in the
 		 * channelfinder.properties.
 		 * 
-		 * @return
+		 * @return {@link CFCBuilder} 
 		 */
 		public static CFCBuilder serviceURL() {
 			return new CFCBuilder();
@@ -1031,7 +1031,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * Delete the channel identified by <tt>channel</tt>
 	 * 
-	 * @param channel
+	 * @param channelName
 	 *            channel to be removed
 	 * @throws ChannelFinderException
 	 */

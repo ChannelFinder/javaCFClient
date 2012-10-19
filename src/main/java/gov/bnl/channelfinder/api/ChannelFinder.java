@@ -21,8 +21,8 @@ public class ChannelFinder {
 	}
 
 	/**
-	 * Returns the default {@link ChannelFinderClient}.
-	 * @return
+	 * 
+	 * @return returns the default {@link ChannelFinderClient}. 
 	 */
 	public static ChannelFinderClient getClient() {
 		if(client == null){

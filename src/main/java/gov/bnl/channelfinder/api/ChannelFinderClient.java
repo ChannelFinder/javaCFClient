@@ -203,7 +203,8 @@ public interface ChannelFinderClient {
 			throws ChannelFinderException;
 
 	/**
-	 * 
+	 * Update the channels identified with <tt>channelNames</tt> with the
+	 * property <tt>property</tt>
 	 * 
 	 * @param property
 	 * @param channelNames
@@ -213,7 +214,9 @@ public interface ChannelFinderClient {
 			Collection<String> channelNames) throws ChannelFinderException;
 
 	/**
-	 * 
+	 * Update the property <tt>property</tt> on all channels specified in the
+	 * channelPropValueMap, where the key in the map is the channel name and the
+	 * value is the value for that property
 	 * 
 	 * @param property
 	 * @param channelPropValueMap
@@ -268,11 +271,10 @@ public interface ChannelFinderClient {
 			String... pattern) throws ChannelFinderException;
 
 	/**
-	 * Space seperated search criterias, patterns may include * and ? wildcards 
-	 * channelNamePattern
-	 * propertyName=valuePattern1,valuePattern2
-	 * Tags=tagNamePattern
-	 * Each criteria is logically ANDed, || seperated values are logically ORed
+	 * Space seperated search criterias, patterns may include * and ? wildcards
+	 * channelNamePattern propertyName=valuePattern1,valuePattern2
+	 * Tags=tagNamePattern Each criteria is logically ANDed, || seperated values
+	 * are logically ORed
 	 * 
 	 * Query for channels based on the Query string <tt>query</tt> example:
 	 * find("SR* Cell=1,2 Tags=GolderOrbit,myTag)<br>
