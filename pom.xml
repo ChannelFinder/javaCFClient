@@ -13,6 +13,13 @@
             <url>LICENSE.TXT</url>
         </license>
     </licenses>
+    
+    <properties>
+        <netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
     <repositories>
         <repository>
             <id>java.net2</id>
@@ -27,7 +34,19 @@
             <name>Maven Repository Switchboard</name>
             <url>http://repo1.maven.org/maven2</url>
         </repository>
+        <repository>
+            <id>epics</id>
+            <name>EPICS Repository</name>
+            <url>http://epics.sourceforge.net/maven2/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
     </repositories>
+    
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
@@ -52,12 +71,24 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    
     <description>A Channel Finder Client library for java.</description>
     <url>http://channelfinder.sourceforge.net/ChannelFinderAPI</url>
+
     <scm>
         <connection>scm:hg:http://channelfinder.hg.sourceforge.net:8000/hgroot/channelfinder/ChannelFinderAPI</connection>
+        <developerConnection>scm:hg:ssh://user@channelfinder.hg.sourceforge.net/hgroot/channelfinder/ChannelFinderAPI</developerConnection>
         <url>http://channelfinder.hg.sourceforge.net/hgweb/channelfinder/ChannelFinderAPI</url>
     </scm>
+    <ciManagement>
+        <system>Jenkins</system>
+        <url>https://openepics.ci.cloudbees.com/view/ChannelFinder/</url>
+    </ciManagement>
+    <issueManagement>
+        <system>JIRA</system>
+        <url>http://java.net/jira/browse/CHANNELFINDER/component/14297</url>
+    </issueManagement>
+    
     <distributionManagement>
     	<!-- To be able to deploy, set login/passwd in your m2 settings.xml, <servers> section
     	(id values there should match ids below) -->
@@ -67,6 +98,7 @@
             <url>scp://shell.sourceforge.net/home/project-web/epics/htdocs/maven2</url>
         </repository>
     </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
@@ -166,6 +198,7 @@
             </plugins>
         </pluginManagement>
     </build>
+
     <reporting>
         <plugins>
             <plugin>
@@ -185,7 +218,4 @@
             </plugin>
         </plugins>
     </reporting>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 </project>
