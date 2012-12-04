@@ -77,7 +77,7 @@
 
     <scm>
         <connection>scm:hg:http://channelfinder.hg.sourceforge.net:8000/hgroot/channelfinder/ChannelFinderAPI</connection>
-        <developerConnection>scm:hg:ssh://channelfinder.hg.sourceforge.net/hgroot/channelfinder/ChannelFinderAPI</developerConnection>
+        <developerConnection>scm:hg:ssh://shroffk@channelfinder.hg.sourceforge.net/hgroot/channelfinder/ChannelFinderAPI</developerConnection>
         <url>http://channelfinder.hg.sourceforge.net/hgweb/channelfinder/ChannelFinderAPI</url>
     </scm>
     <ciManagement>
