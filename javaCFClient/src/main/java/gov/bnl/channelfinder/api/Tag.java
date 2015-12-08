@@ -91,11 +91,18 @@ public class Tag {
 		 * Build a {@link XmlTag} object using this builder
 		 * @return {@link XmlTag}
 		 */
-		XmlTag toXml() {
+		public XmlTag toXml() {
 			XmlTag xml = new XmlTag();
 			xml.setName(name);
 			xml.setOwner(owner);
 			return xml;
+		}
+		
+		public JSONTag toJSON() {
+			JSONTag json = new JSONTag();
+			json.setName(name);
+			json.setOwner(owner);
+			return json;
 		}
 
 		/**
@@ -115,6 +122,12 @@ public class Tag {
 	private Tag(Builder builder) {
 		this.name = builder.name;
 		this.owner = builder.owner;
+	}
+
+	public Tag(JSONTag jsontag) {
+		// TODO Auto-generated constructor stub
+		this.name = jsontag.getName();
+		this.owner = jsontag.getOwner();
 	}
 
 	/**
