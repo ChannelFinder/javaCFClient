@@ -28,8 +28,6 @@ public interface ChannelFinderClient {
 	 * @return list of names of all existing {@link Property}s.
 	 */
 	public Collection<String> getAllProperties();
-	
-	public Collection<Channel> getAllChannels();
 
 	/**
 	 * Get a list of names of all the tags currently present on the

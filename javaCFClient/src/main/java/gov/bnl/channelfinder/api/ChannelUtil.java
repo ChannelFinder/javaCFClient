@@ -275,7 +275,7 @@ public class ChannelUtil {
 	 *            - list of Channel.Builder to be built.
 	 * @return Collection of {@link Channel} built from the channelBuilders
 	 */
-	public static Collection<Channel> toChannels(
+	static Collection<Channel> toChannels(
 			Collection<Channel.Builder> channelBuilders) {
 		Collection<Channel> channels = new HashSet<Channel>();
 		for (Channel.Builder builder : channelBuilders) {
@@ -298,14 +298,6 @@ public class ChannelUtil {
 			xmlChannels.addXmlChannel(channel.toXml());
 		}
 		return xmlChannels;
-	}
-	
-	static JSONChannels toJSONChannels(Collection<Channel.Builder> channelBuilders) {
-		JSONChannels jsonChannels = new JSONChannels();
-		for (Builder channel : channelBuilders) {
-			jsonChannels.addJSONChannel(channel.toJSON());
-		}
-		return jsonChannels;
 	}
 
 }
