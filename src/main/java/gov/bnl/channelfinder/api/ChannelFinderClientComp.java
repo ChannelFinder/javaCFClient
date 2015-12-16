@@ -43,6 +43,11 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 	}
 
 	@Override
+	public Collection<Channel> getAllChannels() {
+		return this.reader.getAllChannels();
+	}
+	
+	@Override
 	public Collection<String> getAllProperties() {
 		return this.reader.getAllProperties();
 	}

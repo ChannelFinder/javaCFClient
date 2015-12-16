@@ -146,7 +146,7 @@ public class Channel {
 		 * 
 		 * @return a {@link XmlChannel}
 		 */
-		XmlChannel toXml() {
+		public XmlChannel toXml() {
 			XmlChannel xmlChannel = new XmlChannel(name, owner);
 			for (Tag.Builder tag : tags) {
 				xmlChannel.addXmlTag(tag.toXml());
@@ -155,6 +155,18 @@ public class Channel {
 				xmlChannel.addXmlProperty(property.toXml());
 			}
 			return xmlChannel;
+
+		}
+		
+		public JSONChannel toJSON() {
+			JSONChannel jsonChannel = new JSONChannel(name, owner);
+			for (Tag.Builder tag : tags) {
+				jsonChannel.addJSONTag(tag.toJSON());
+			}
+			for (Property.Builder property : properties) {
+				jsonChannel.addJSONProperty(property.toJSON());
+			}
+			return jsonChannel;
 
 		}
 
@@ -195,6 +207,22 @@ public class Channel {
 		Map<String, Property> newProperties = new HashMap<String, Property>();
 		for (Property.Builder property : builder.properties) {
 			newProperties.put(property.build().getName(), property.build());
+		}
+		this.properties = Collections.unmodifiableMap(newProperties);
+	}
+
+	public Channel(JSONChannel jsonchannel) {
+		// TODO Auto-generated constructor stub
+		this.name = jsonchannel.getName();
+		this.owner = jsonchannel.getOwner();
+		Map<String, Tag> newTags = new HashMap<String, Tag>();
+		for (JSONTag tag : jsonchannel.getJSONTags().getTags()) {
+			newTags.put(tag.getName(), new Tag(tag));
+		}
+		this.tags = Collections.unmodifiableMap(newTags);
+		Map<String, Property> newProperties = new HashMap<String, Property>();
+		for (JSONProperty property : jsonchannel.getJSONProperties().getProperties()) {
+			newProperties.put(property.getName(), new Property(property));
 		}
 		this.properties = Collections.unmodifiableMap(newProperties);
 	}

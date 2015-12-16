@@ -89,15 +89,19 @@ public class Property {
 		 * 
 		 * @return 
 		 */
-		XmlProperty toXml() {
+		public XmlProperty toXml() {
 			return new XmlProperty(name, owner, value);
+		}
+		
+		public JSONProperty toJSON() {
+			return new JSONProperty(name, owner, value);
 		}
 
 		/**
 		 * Build a {@link Property} object using this builder.
 		 * @return
 		 */
-		Property build() {
+		public Property build() {
 			return new Property(this);
 		}
 	}
@@ -115,6 +119,13 @@ public class Property {
 		this.name = builder.name;
 		this.value = builder.value;
 		this.owner = builder.owner;
+	}
+
+	public Property(JSONProperty jsonproperty) {
+		// TODO Auto-generated constructor stub
+		this.name = jsonproperty.getName();
+		this.owner = jsonproperty.getOwner();
+		this.value = jsonproperty.getValue();
 	}
 
 	/**
