@@ -1,0 +1,18 @@
+
+syntax: regexp
+^target$
+\.project$
+\.classpath$
+\.orig\..*$
+\.orig$
+\.chg\..*$
+\.rej$
+\.conflict\~$
+
+syntax: regexp
+^\.settings$
+syntax: regexp
+^bin$
+
+syntax: regexp
+^src/main/java/gov/bnl/channelfinder/api/logging\.properties$
