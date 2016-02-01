@@ -56,7 +56,7 @@ public class QueryITTest {
 
 		ChannelFinderClientImpl.resetPreferences();
 		try {
-			client = CFCBuilder.serviceURL("https://192.168.122.242:8181/ChannelFinder").withHTTPAuthentication(true).username("admin").password("1234").create();
+			client = CFCBuilder.serviceURL("https://192.168.1.23:8181/ChannelFinder").withHTTPAuthentication(true).username("admin").password("1234").create();
 			initialChannelCount = client.findByName("*").size();
 			// Add the tags and properties.
 			client.set(prop);
@@ -85,7 +85,7 @@ public class QueryITTest {
 	 */
 	@Test
 	public void findbyName() {
-		Collection<Channel> channels = client.findByName("pvk:0?<*");
+		Collection<Channel> channels = client.findByName("pvk:0*");
 		assertTrue("failed to find channels based on name expect 3 found "
 				+ channels.size(), channels.size() == 3);
 
@@ -215,7 +215,7 @@ public class QueryITTest {
 		 assertTrue(
 				"Failed to query using name, expected: 3 found: "
 						+ client.find(query).size(),
-				client.find(query).size() == 3);
+				client.find(query).size() >= 3);
 
 	}
 
@@ -252,11 +252,11 @@ public class QueryITTest {
 		client.delete(channels);
 		// clean up all the tags and properties
 		client.deleteProperty(prop.build().getName());
-		client.deleteProperty(prop2.toJSON().getName());
-		client.deleteTag(tagA.toJSON().getName());
-		client.deleteTag(tagB.toJSON().getName());
-		client.deleteTag(tagC.toJSON().getName());
-		client.deleteTag(tagStar.toJSON().getName());
+		client.deleteProperty(prop2.toXml().getName());
+		client.deleteTag(tagA.toXml().getName());
+		client.deleteTag(tagB.toXml().getName());
+		client.deleteTag(tagC.toXml().getName());
+		client.deleteTag(tagStar.toXml().getName());
 		int finalChannelCount = client.findByName("*").size();
 		assertTrue("Failed clean up expected " + initialChannelCount
 				+ " channels found " + finalChannelCount,
