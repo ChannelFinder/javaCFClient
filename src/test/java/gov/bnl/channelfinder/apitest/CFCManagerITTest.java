@@ -23,9 +23,9 @@ import org.junit.Test;
  * @author shroffk
  * 
  */
-public class CFCManagerIT {
+public class CFCManagerITTest {
 	
-	private static Logger logger = Logger.getLogger(CFCManagerIT.class.getName()); 
+	private static Logger logger = Logger.getLogger(CFCManagerITTest.class.getName()); 
 
 	@BeforeClass
 	public static void beforeTests() {
@@ -38,7 +38,7 @@ public class CFCManagerIT {
 	@Test
 	public void simpleReadConnection() {
 		ChannelFinderClient cfc;
-		cfc = CFCBuilder.serviceURL("http://localhost:8080/ChannelFinder")
+		cfc = CFCBuilder.serviceURL("http://192.168.1.23:8080/ChannelFinder")
 				.create();
 		cfc.getAllTags();
 		Logger.getLogger(RawLoggingFilter.class.getName()).setLevel(Level.ALL);

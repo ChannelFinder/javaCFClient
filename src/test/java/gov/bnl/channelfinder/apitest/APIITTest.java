@@ -24,12 +24,10 @@ import gov.bnl.channelfinder.api.ChannelFinderException;
 import gov.bnl.channelfinder.api.ChannelUtil;
 import gov.bnl.channelfinder.api.Property;
 import gov.bnl.channelfinder.api.Tag;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.Before;
@@ -50,6 +48,7 @@ public class APIITTest {
 	private static int channelCount;
 	private static Property.Builder propertyapi;
 	private static Tag.Builder tagapi;
+	private static Channel.Builder channelapi;
 
 	@Mock
 	private static ChannelFinderClient reader;
@@ -67,7 +66,7 @@ public class APIITTest {
 		//	client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 		propertyapi = Property.Builder.property("propertyapiname", "propertyapivalue");
 		tagapi = Tag.Builder.tag("tagapiname", "tagapiowner");
-		client = CFCBuilder.serviceURL("https://192.168.122.242:8181/ChannelFinder").withHTTPAuthentication(true).username("admin").password("1234").create();
+		client = CFCBuilder.serviceURL("https://192.168.1.23:8181/ChannelFinder").withHTTPAuthentication(true).username("admin").password("1234").create();
 		reader = client;
 		writer = client;
 		client.set(tagapi);
@@ -82,24 +81,27 @@ public class APIITTest {
 
 	@Test
 	public void compositeClientTest() {		
-		ChannelFinderClientComp composite = ChannelFinderClientComp
-				.getInstance();
+		ChannelFinderClientComp composite = ChannelFinderClientComp.getInstance();
 		composite.setReader(reader);
 		composite.setWriter(writer);
 
 		String ch = "channelName";
-		composite.getChannel(ch);
-		composite.set(channel(ch).with(tagapi).with(propertyapi));
-		composite.update(channel(ch).with(tagapi).with(propertyapi));
-		composite.deleteChannel(ch);
-	}
 
-	@Test
-	public void builderTest() {
-		// exception.expect(is(ChannelFinderException.class));
-		// exception.expect(new StatusMatcher(Status.NOT_FOUND));
-		assertTrue("Should return null when non-existing channel is searched.",
-				client.getChannel("ChannelName") == null);
+		composite.set(channel(ch).owner("APIIT").with(tagapi).with(propertyapi));
+//		verify(reader, times(0)).set(any(Channel.Builder.class));
+//		verify(writer, times(1)).set(any(Channel.Builder.class));
+
+		composite.getChannel(ch);
+//		verify(reader, times(1)).getChannel(ch);
+//		verify(writer, times(0)).getChannel(ch);
+		
+		composite.update(channel(ch).owner("APIIT").with(tagapi).with(propertyapi));
+//		verify(reader, times(0)).update(any(Channel.Builder.class));
+//		verify(writer, times(1)).update(any(Channel.Builder.class));
+
+		composite.deleteChannel(ch);
+//		verify(reader, times(0)).deleteChannel(ch);
+//		verify(writer, times(1)).deleteChannel(ch);
 	}
 
 	/**
@@ -116,8 +118,7 @@ public class APIITTest {
 			client.deleteChannel(channelName);
 			Collection<Channel> result = client.findByName("*");
 			assertTrue(result == null || !result.contains(channel(channelName)));
-			assertTrue("CleanUp failed",
-					client.findByName("*").size() == channelCount);
+			assertTrue("CleanUp failed", client.findByName("*").size() == channelCount);
 		} catch (ChannelFinderException e) {
 			if (e.getStatus().equals(Status.NOT_FOUND))
 				fail("Channel not added. " + e.getMessage());
@@ -231,7 +232,7 @@ public class APIITTest {
 	/**
 	 * update and delete a Tag from a single channel
 	 */
-/*	@Test
+	@Test
 	public void updateDeleteTag2Channel() {
 		String channelName = "TestChannel";
 		String tagName = "TestTag";
@@ -249,7 +250,7 @@ public class APIITTest {
 		assertTrue("CleanUp failed",
 				!client.findByName("*").contains(channel(channelName).build()));
 		client.deleteTag(tagName);
-	}*/
+	}
 
 	/**
 	 * Update multiple channels with a _tag_ Delete a tag from multiple channels
@@ -357,17 +358,15 @@ public class APIITTest {
 	@Test
 	public void updateDeleteProperty() {
 		Channel.Builder testChannel = channel("TestChannel").with(propertyapi).with(tagapi).owner("channel");
-		Property.Builder property = property("TestProperty", "TestValue")
-				.owner("channel");
-
+		Property.Builder property = property("TestProperty", "TestValue").owner("channel");
 		try {
 			client.set(testChannel);
 			client.set(property);
-			client.update(property, testChannel.toJSON().getName());
+			client.update(property, testChannel.toXml().getName());
 			Collection<Channel> result = client.findByProperty(property.build().getName());
 			assertTrue(result.contains(testChannel.build()));
-			client.delete(property, testChannel.toJSON().getName());
-			assertTrue(client.findByProperty(property.toJSON().getName()).size() == 0);
+			client.delete(property, testChannel.toXml().getName());
+			assertTrue(client.findByProperty(property.toXml().getName()).size() == 0);
 		} finally {
 			client.deleteChannel(testChannel.build().getName());
 			client.deleteProperty("TestProperty");
@@ -389,7 +388,7 @@ public class APIITTest {
 			client.set(channels);
 			client.set(property);
 			int initialCount = client.findByProperty(
-					property.toJSON().getName(), "*").size();
+					property.toXml().getName(), "*").size();
 			client.update(property, getChannelNames(toChannels(channels)));
 			assertTrue(client.findByProperty(property.toXml().getName(), "*")
 					.containsAll(toChannels(channels)));
@@ -469,37 +468,6 @@ public class APIITTest {
 		}
 
 	}
-
-	/*@Test
-	public void deletePropertyUsingNewValue() {
-		String propertyName = "TestProperty";
-		String initialPropertyValue = "TestValue";
-		Property.Builder property = property(propertyName, initialPropertyValue)
-				.owner("channel");
-		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel").with(tagapi).with(property));
-		channels.add(channel("second").owner("channel").with(tagapi).with(property));
-		try {
-			client.set(property);
-			client.set(channels);
-			Collection<Channel> queryResult = client.findByProperty(
-					propertyName, initialPropertyValue);
-			assertTrue("Failed to create the initial testChannels",
-					queryResult.size() == 2);
-			for (Channel channel : queryResult) {
-				Builder ChannelUpdate = channel(channel.getName()).with(tagapi).with(property.value("newValue"));
-				client.update(ChannelUpdate);
-			}
-			assertTrue(
-					"Failed to delete the testProperty from the test channels using a new value string",
-					client.findByProperty(propertyName).size() == 0);
-
-		} finally {
-			client.delete(channels);
-			client.deleteProperty(propertyName);
-		}
-
-	}*/
 
 	/**
 	 * Test set a common property on a set of channels all channels should have
@@ -632,10 +600,10 @@ public class APIITTest {
 			client.set(channels);
 			client.set(property);
 			client.update(property, getChannelNames(toChannels(channels)));
-			assertTrue(client.findByProperty(property.toJSON().getName(), "*")
+			assertTrue(client.findByProperty(property.toXml().getName(), "*")
 					.size() == 2);
-			client.deleteProperty(property.toJSON().getName());
-			assertTrue(client.findByProperty(property.toJSON().getName(), "*")
+			client.deleteProperty(property.toXml().getName());
+			assertTrue(client.findByProperty(property.toXml().getName(), "*")
 					.size() == 0);
 		} finally {
 			client.delete(channels);
@@ -669,9 +637,7 @@ public class APIITTest {
 					testChannel.build().getName());
 
 			client.set(property("newProperty").owner("channel"));
-			client.update(
-					property("newProperty", "newPropValue").owner("channel"),
-					testChannel.build().getName());
+			client.update(property("newProperty", "newPropValue").owner("channel"),	testChannel.build().getName());
 
 			result = (client.getChannel(testChannel.build().getName()));
 			assertTrue(result.getTags().contains(
