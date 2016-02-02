@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -283,29 +284,20 @@ public class ChannelUtil {
 		}
 		return Collections.unmodifiableCollection(channels);
 	}
-
+	
 	/**
-	 * Returns a {@link XmlChannels} object built from the list of
+	 * Returns a list of {@link Channel} built from the list of
 	 * {@link Channel.Builder}s
 	 * 
 	 * @param channelBuilders
 	 *            - list of Channel.Builder to be built.
-	 * @return A {@link XmlChannels} built from the channelBuilders
+	 * @return Collection of {@link Channel} built from the channelBuilders
 	 */
-	static XmlChannels toXmlChannels(Collection<Channel.Builder> channelBuilders) {
-		XmlChannels xmlChannels = new XmlChannels();
-		for (Builder channel : channelBuilders) {
-			xmlChannels.addXmlChannel(channel.toXml());
+	public static List<XmlChannel> toCollectionXmlChannels(Collection<Channel.Builder> channelBuilders) {
+		List<XmlChannel> xmlchannels = new ArrayList<XmlChannel>();
+		for (Channel.Builder builder : channelBuilders) {
+			xmlchannels.add(builder.toXml());
 		}
-		return xmlChannels;
+		return xmlchannels;
 	}
-	
-	static JSONChannels toJSONChannels(Collection<Channel.Builder> channelBuilders) {
-		JSONChannels jsonChannels = new JSONChannels();
-		for (Builder channel : channelBuilders) {
-			jsonChannels.addJSONChannel(channel.toJSON());
-		}
-		return jsonChannels;
-	}
-
 }

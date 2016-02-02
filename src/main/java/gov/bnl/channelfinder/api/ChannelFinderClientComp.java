@@ -103,6 +103,11 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 	}
 
 	@Override
+	public void set(Collection<Builder> channels) throws ChannelFinderException {
+		this.writer.set(channels);
+	}
+	
+	@Override
 	public void set(Tag.Builder tag) {
 		this.writer.set(tag);
 	}
@@ -110,11 +115,6 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 	@Override
 	public void set(Property.Builder property) throws ChannelFinderException {
 		this.writer.set(property);
-	}
-
-	@Override
-	public void set(Collection<Builder> channels) throws ChannelFinderException {
-		this.writer.set(channels);
 	}
 
 	@Override
@@ -232,6 +232,4 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 		this.reader.close();
 		this.writer.close();
 	}
-
-
 }
