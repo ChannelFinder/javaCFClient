@@ -5,11 +5,8 @@
  */
 package gov.bnl.channelfinder.api;
 
-import gov.bnl.channelfinder.api.Channel.Builder;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.security.KeyManagementException;
@@ -20,8 +17,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -33,25 +28,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
-import javax.swing.text.html.parser.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Joiner;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -63,6 +55,8 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+
+import gov.bnl.channelfinder.api.Channel.Builder;
 
 /**
  * A Client object to query the channelfinder service for channels based on
@@ -592,9 +586,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	        try {
 				service.path(resourceTags).path(this.pxmlTag.getName())
 						.type(MediaType.APPLICATION_JSON)
-						.accept(MediaType.APPLICATION_JSON).put(
-							mapper.writeValueAsString(this.pxmlTag)
-						);
+						.accept(MediaType.APPLICATION_JSON)
+						.put(mapper.writeValueAsString(this.pxmlTag));
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -984,8 +977,11 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 */
 	public Collection<Channel> findByTag(String pattern) throws ChannelFinderException {
 		// return wrappedSubmit(new FindByParam("~tag", pattern));
-		Map<String, String> searchMap = new HashMap<String, String>();
-		searchMap.put("~tag", pattern);
+		List<String> and = Arrays.asList(pattern.split("&"));
+		MultivaluedMap<String, String> searchMap = new MultivaluedMapImpl();
+		for (String string : and) {
+			searchMap.add("~tag", string);
+		}
 		return wrappedSubmit(new FindByMap(searchMap));
 	}
 
@@ -1122,42 +1118,39 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	public static MultivaluedMap<String, String> buildSearchMap(String searchPattern) {
 		MultivaluedMap<String, String> map = new MultivaluedMapImpl();
 		searchPattern = searchPattern.replaceAll(", ", ",");
-		String[] words = searchPattern.split("\\s");
-		if (words.length <= 0) {
-			throw new IllegalArgumentException();
-		} else {
-			for (int index = 0; index < words.length; index++) {
-				if (!words[index].contains("=")) {
-					// this is a name value
-					if (words[index] != null)
-						map.add("~name", words[index]);
-				} else {
-					// this is a property or tag
-					String[] keyValue = words[index].split("=");
-					String key = null;
-					String valuePattern;
-					try {
-						key = keyValue[0];
-						valuePattern = keyValue[1];
-						if (key.equalsIgnoreCase("Tags")) {
-							key = "~tag";
-						}
-						for (String value : valuePattern.replace("||", ",")
-								.split(",")) {
-							map.add(key, value);
-						}
-					} catch (ArrayIndexOutOfBoundsException e) {
-						if (e.getMessage().equals(String.valueOf(0))) {
-							throw new IllegalArgumentException(
-									"= must be preceeded by a propertyName or keyword Tags.");
-						} else if (e.getMessage().equals(String.valueOf(1)))
-							throw new IllegalArgumentException("key: '" + key
-									+ "' is specified with no pattern.");
+		List<String> searchWords = Arrays.asList(searchPattern.split("\\s"));
+		List<String> searchNames = new ArrayList<String>();
+		for (String searchWord : searchWords) {
+			if (!searchWord.contains("=")) {
+				// this is a name value
+				if (searchWord != null && !searchWord.isEmpty())					
+					searchNames.add(searchWord);
+			} else {
+				// this is a property or tag
+				String[] keyValue = searchWord.split("=");
+				String key = null;
+				String valuePattern;
+				try {
+					key = keyValue[0];
+					valuePattern = keyValue[1];
+					if (key.equalsIgnoreCase("Tags") || key.equalsIgnoreCase("Tag")) {
+						key = "~tag";
 					}
-
+					for (String value : valuePattern.split("&")) {
+						map.add(key, value.trim());
+					}
+				} catch (ArrayIndexOutOfBoundsException e) {
+					if (e.getMessage().equals(String.valueOf(0))) {
+						throw new IllegalArgumentException(
+								"= must be preceeded by a propertyName or keyword Tags.");
+					} else if (e.getMessage().equals(String.valueOf(1)))
+						throw new IllegalArgumentException("key: '" + key
+								+ "' is specified with no pattern.");
 				}
+
 			}
 		}
+		map.add("~name", searchNames.stream().collect(Collectors.joining("&")));
 		return map;
 	}
 
@@ -1194,8 +1187,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
-		wrappedSubmit(new DeleteElement(resourceChannels, //$NON-NLS-1$
-				channelName));
+		wrappedSubmit(new DeleteElement(resourceChannels, channelName)); //$NON-NLS-1$
 	}
 
 	private class DeleteElement implements Runnable {

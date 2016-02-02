@@ -49,8 +49,7 @@ public class QueryIT {
 
 		ChannelFinderClientImpl.resetPreferences();
 		try {
-			client = CFCBuilder.serviceURL().withHTTPAuthentication(true)
-					.create();
+			client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
 			initialChannelCount = client.findByName("*").size();
 			// Add the tags and properties.
 			client.set(prop);
@@ -83,9 +82,9 @@ public class QueryIT {
 		assertTrue("failed to find channels based on name expect 3 found "
 				+ channels.size(), channels.size() == 3);
 
-		channels = client.findByName("pvk:01<first>, pvk:02<second>");
+		channels = client.findByName("pvk:01<first>|pvk:02<second>");
 		assertTrue(
-				"failed to find channels on ',' seperated name pattern, expected 2 found "
+				"failed to find channels on '|' seperated name pattern, expected 2 found "
 						+ channels.size(), channels.size() == 2);
 	}
 
@@ -94,13 +93,13 @@ public class QueryIT {
 	 */
 	@Test
 	public void findbyTag() {
-		Collection<Channel> channels = client.findByTag("tagA");
+		Collection<Channel> channels = client.findByTag("Taga");
 		assertTrue("failed to find channels based on name expect 2 found "
 				+ channels.size(), channels.size() == 2);
 
-		channels = client.findByTag("tagA, tagB");
+		channels = client.findByTag("Taga&Tagb");
 		assertTrue(
-				"failed to find channels on ',' seperated name pattern, expected 1 found "
+				"failed to find channels on '&' seperated name pattern, expected 1 found "
 						+ channels.size(), channels.size() == 1);
 	}
 
