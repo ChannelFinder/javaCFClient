@@ -12,11 +12,11 @@ import static gov.bnl.channelfinder.api.ChannelUtil.getTagNames;
 import static gov.bnl.channelfinder.api.ChannelUtil.toChannels;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import gov.bnl.channelfinder.api.Channel.Builder;
-import gov.bnl.channelfinder.api.ChannelFinderClientImpl.CFCBuilder;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,22 +30,25 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.rules.Verifier;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.mockito.Mockito.*;
-
 import com.sun.jersey.api.client.ClientResponse.Status;
+
+import gov.bnl.channelfinder.api.Channel.Builder;
+import gov.bnl.channelfinder.api.ChannelFinderClientImpl.CFCBuilder;
 
 public class APIIT {
 	private static ChannelFinderClient client;
 	private static int channelCount;
+	private static Property.Builder propertyapi;
+	private static Tag.Builder tagapi;
+	private static Channel.Builder channelapi;
 
 	@Mock
-	private ChannelFinderClient reader;
+	private static ChannelFinderClient reader;
 	@Mock
-	private ChannelFinderClient writer;
+	private static ChannelFinderClient writer;
 
 	@Rule
 	public ExpectedException exception = ExpectedException.none();
@@ -55,7 +58,12 @@ public class APIIT {
 	public static void beforeTests() {
 		// ChannelFinderClient.resetPreferences();
 		// client = ChannelFinderClient.getInstance();
-		client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
+		//	client = CFCBuilder.serviceURL().withHTTPAuthentication(true).create();
+		propertyapi = property("propertyapiname", "propertyapivalue");
+		tagapi = tag("tagapiname", "tagapiowner");
+		client = CFCBuilder.serviceURL("https://localhost:9191/ChannelFinder").withHTTPAuthentication(true).username("admin").password("1234").create();
+		client.set(tagapi);
+		client.set(propertyapi);
 		channelCount = client.findByName("*").size();
 	}
 
@@ -65,37 +73,28 @@ public class APIIT {
 	}
 
 	@Test
-	public void compositeClientTest() {
-		ChannelFinderClientComp composite = ChannelFinderClientComp
-				.getInstance();
+	public void compositeClientTest() {		
+		ChannelFinderClientComp composite = ChannelFinderClientComp.getInstance();
 		composite.setReader(reader);
 		composite.setWriter(writer);
 
 		String ch = "channelName";
-		composite.getChannel(ch);
-		verify(reader, times(1)).getChannel(ch);
-		verify(writer, times(0)).getChannel(ch);
 
-		composite.set(channel(ch));
+		composite.set(channel(ch).owner("APIIT").with(tagapi).with(propertyapi));
 		verify(reader, times(0)).set(any(Channel.Builder.class));
 		verify(writer, times(1)).set(any(Channel.Builder.class));
 
-		composite.update(channel(ch));
+		composite.getChannel(ch);
+		verify(reader, times(1)).getChannel(ch);
+		verify(writer, times(0)).getChannel(ch);
+		
+		composite.update(channel(ch).owner("APIIT").with(tagapi).with(propertyapi));
 		verify(reader, times(0)).update(any(Channel.Builder.class));
 		verify(writer, times(1)).update(any(Channel.Builder.class));
 
 		composite.deleteChannel(ch);
 		verify(reader, times(0)).deleteChannel(ch);
 		verify(writer, times(1)).deleteChannel(ch);
-
-	}
-
-	@Test
-	public void builderTest() {
-		// exception.expect(is(ChannelFinderException.class));
-		// exception.expect(new StatusMatcher(Status.NOT_FOUND));
-		assertTrue("Should return null when non-existing channel is searched.",
-				client.getChannel("ChannelName") == null);
 	}
 
 	/**
@@ -106,14 +105,13 @@ public class APIIT {
 		String channelName = "TestChannelName";
 		try {
 			// Add a channel
-			client.set(channel(channelName).owner("channel"));
+			client.set(channel(channelName).with(propertyapi).with(tagapi).owner("channel"));
 			client.getChannel(channelName);
 			// Remove a channel
 			client.deleteChannel(channelName);
 			Collection<Channel> result = client.findByName("*");
 			assertTrue(result == null || !result.contains(channel(channelName)));
-			assertTrue("CleanUp failed",
-					client.findByName("*").size() == channelCount);
+			assertTrue("CleanUp failed", client.findByName("*").size() == channelCount);
 		} catch (ChannelFinderException e) {
 			if (e.getStatus().equals(Status.NOT_FOUND))
 				fail("Channel not added. " + e.getMessage());
@@ -149,8 +147,8 @@ public class APIIT {
 	@Test
 	public void addRemoveChannelsTest() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel"));
-		channels.add(channel("second").owner("channel"));
+		channels.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channels.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		try {
 			client.set(channels);
 			assertTrue(client.findByName("*").containsAll(toChannels(channels)));
@@ -171,7 +169,7 @@ public class APIIT {
 	 */
 	@Test
 	public void updateChannel() {
-		Channel.Builder testChannel = channel("TestChannel").owner("channel");
+		Channel.Builder testChannel = channel("TestChannel").with(propertyapi).with(tagapi).owner("channel");
 		Tag.Builder testTag1 = tag("TestTag1").owner("channel");
 		Tag.Builder testTag2 = tag("TestTag2").owner("channel");
 		try {
@@ -184,7 +182,7 @@ public class APIIT {
 			// check for no initial properties or tags
 			assertTrue(retChannel.getTags().contains(testTag1.build()));
 			// uses the POST method
-			testChannel = channel("TestChannel").owner("channel");
+			testChannel = channel("TestChannel").with(propertyapi).owner("channel");
 			client.update(testChannel.with(testTag2));
 			assertTrue(client.getChannel(testChannel.build().getName())
 					.getTags().contains(testTag1.build()));
@@ -205,9 +203,9 @@ public class APIIT {
 	 */
 	@Test
 	public void setChannel() {
-		Channel.Builder oldChannel = channel("old").owner("channel").with(
+		Channel.Builder oldChannel = channel("old").with(propertyapi).owner("channel").with(
 				tag("oldTag").owner("channel"));
-		Channel.Builder newChannel = channel("old").owner("channel").with(
+		Channel.Builder newChannel = channel("old").with(propertyapi).owner("channel").with(
 				tag("newTag").owner("channel"));
 		client.set(tag("oldTag").owner("channel"));
 		client.set(tag("newTag").owner("channel"));
@@ -218,9 +216,9 @@ public class APIIT {
 			assertTrue(!client.findByTag("oldTag").contains(oldChannel.build()));
 			assertTrue(client.findByTag("newTag").contains(newChannel.build()));
 		} finally {
+			client.deleteChannel(newChannel.build().getName());
 			client.deleteTag("oldTag");
 			client.deleteTag("newTag");
-			client.deleteChannel(newChannel.build().getName());
 		}
 	}
 
@@ -232,7 +230,7 @@ public class APIIT {
 		String channelName = "TestChannel";
 		String tagName = "TestTag";
 		client.set(tag(tagName).owner("channel"));
-		client.set(channel(channelName).owner("channel"));
+		client.set(channel(channelName).with(propertyapi).with(tagapi).owner("channel"));
 		assertTrue(!getTagNames(client.getChannel(channelName)).contains(
 				tagName));
 		client.update(tag(tagName, "channel"), channelName);
@@ -256,10 +254,10 @@ public class APIIT {
 		Tag.Builder tag = tag("tag").owner("channel");
 		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
 		Collection<Channel.Builder> channelSubSet = new HashSet<Channel.Builder>();
-		channelSubSet.add(channel("first").owner("channel"));
-		channelSubSet.add(channel("second").owner("channel"));
+		channelSubSet.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channelSubSet.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		channelSet.addAll(channelSubSet);
-		channelSet.add(channel("third").owner("channel"));
+		channelSet.add(channel("third").with(propertyapi).with(tagapi).owner("channel"));
 
 		try {
 			client.set(channelSet);
@@ -268,6 +266,7 @@ public class APIIT {
 			assertTrue(client.findByTag(tag.build().getName()).containsAll(
 					toChannels(channelSet)));
 			client.delete(tag, getChannelNames(toChannels(channelSubSet)));
+			client.delete(tag, "first");
 			Collection<Channel.Builder> diffSet = new HashSet<Channel.Builder>(
 					channelSet);
 			diffSet.removeAll(channelSubSet);
@@ -290,8 +289,8 @@ public class APIIT {
 	@Test
 	public void deleteTag() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel"));
-		channels.add(channel("second").owner("channel"));
+		channels.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channels.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		try {
 			client.set(channels);
 			Tag.Builder tag = tag("TestTag").owner("channel");
@@ -313,11 +312,11 @@ public class APIIT {
 	@Test
 	public void setTag() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
-		channelSet1.add(channel("first").owner("channel"));
-		channelSet1.add(channel("second").owner("channel"));
+		channelSet1.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet1.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		Collection<Channel.Builder> channelSet2 = new HashSet<Channel.Builder>();
-		channelSet2.add(channel("third").owner("channel"));
-		channelSet2.add(channel("forth").owner("channel"));
+		channelSet2.add(channel("third").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet2.add(channel("forth").with(propertyapi).with(tagapi).owner("channel"));
 		Tag.Builder tag = tag("TestTag").owner("channel");
 
 		try {
@@ -351,16 +350,13 @@ public class APIIT {
 	 */
 	@Test
 	public void updateDeleteProperty() {
-		Channel.Builder testChannel = channel("TestChannel").owner("channel");
-		Property.Builder property = property("TestProperty", "TestValue")
-				.owner("channel");
-
+		Channel.Builder testChannel = channel("TestChannel").with(propertyapi).with(tagapi).owner("channel");
+		Property.Builder property = property("TestProperty", "TestValue").owner("channel");
 		try {
 			client.set(testChannel);
 			client.set(property);
 			client.update(property, testChannel.toXml().getName());
-			Collection<Channel> result = client.findByProperty(property.build()
-					.getName());
+			Collection<Channel> result = client.findByProperty(property.build().getName());
 			assertTrue(result.contains(testChannel.build()));
 			client.delete(property, testChannel.toXml().getName());
 			assertTrue(client.findByProperty(property.toXml().getName()).size() == 0);
@@ -377,8 +373,8 @@ public class APIIT {
 	@Test
 	public void updateDeleteProperty2Channels() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel"));
-		channels.add(channel("second").owner("channel"));
+		channels.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channels.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		Property.Builder property = property("TestProperty", "TestValue")
 				.owner("channel");
 		try {
@@ -407,8 +403,8 @@ public class APIIT {
 		Property.Builder property = property(propertyName, initialPropertyValue)
 				.owner("channel");
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel"));
-		channels.add(channel("second").owner("channel"));
+		channels.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channels.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		try {
 			client.set(property);
 			client.set(channels);
@@ -426,7 +422,7 @@ public class APIIT {
 			// property to
 			// the channel if it does noe exist, if the property does exist it
 			// is unaffected.
-			Builder ch3 = channel("third").owner("channel");
+			Builder ch3 = channel("third").owner("channel").with(propertyapi).with(tagapi);
 			channels.add(ch3);
 			client.set(ch3);
 
@@ -466,36 +462,6 @@ public class APIIT {
 
 	}
 
-	@Test
-	public void deletePropertyUsingEmptyValue() {
-		String propertyName = "TestProperty";
-		String initialPropertyValue = "TestValue";
-		Property.Builder property = property(propertyName, initialPropertyValue)
-				.owner("channel");
-		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel").with(property));
-		channels.add(channel("second").owner("channel").with(property));
-		try {
-			client.set(property);
-			client.set(channels);
-			Collection<Channel> queryResult = client.findByProperty(
-					propertyName, initialPropertyValue);
-			assertTrue("Failed to create the initial testChannels",
-					queryResult.size() == 2);
-			for (Channel channel : queryResult) {
-				client.update(channel(channel.getName()).owner(channel.getOwner()).with(property.value("")));
-			}
-			assertTrue(
-					"Failed to delete the testProperty from the test channels using empty value string",
-					client.findByProperty(propertyName).size() == 0);
-
-		} finally {
-			client.delete(channels);
-			client.deleteProperty(propertyName);
-		}
-
-	}
-
 	/**
 	 * Test set a common property on a set of channels all channels should have
 	 * the same property with the same value
@@ -503,8 +469,8 @@ public class APIIT {
 	@Test
 	public void setCommonProperty() {
 		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
-		channelSet.add(channel("first").owner("channel"));
-		channelSet.add(channel("second").owner("channel"));
+		channelSet.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		Property.Builder property = property("CommonProperty", "CommonValue")
 				.owner("channel");
 		try {
@@ -529,11 +495,11 @@ public class APIIT {
 	@Test
 	public void setProperty() {
 		Collection<Channel.Builder> channelSet1 = new HashSet<Channel.Builder>();
-		channelSet1.add(channel("first").owner("channel"));
-		channelSet1.add(channel("second").owner("channel"));
+		channelSet1.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet1.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		Collection<Channel.Builder> channelSet2 = new HashSet<Channel.Builder>();
-		channelSet2.add(channel("third").owner("channel"));
-		channelSet2.add(channel("forth").owner("channel"));
+		channelSet2.add(channel("third").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet2.add(channel("forth").with(propertyapi).with(tagapi).owner("channel"));
 		String propertyName = "TestProperty";
 		Property.Builder property = property(propertyName, "TestValue").owner(
 				"channel");
@@ -541,6 +507,7 @@ public class APIIT {
 			client.set(property);
 			client.set(channelSet1);
 			client.set(channelSet2);
+			client.set(property, "first");
 			client.update(property, getChannelNames(toChannels(channelSet1)));
 			assertTrue(
 					"Failed to added property to channelSet1",
@@ -587,10 +554,10 @@ public class APIIT {
 	@Test
 	public void setChannelProperty() {
 		Collection<Channel.Builder> channelSet = new HashSet<Channel.Builder>();
-		channelSet.add(channel("first").owner("channel"));
-		channelSet.add(channel("second").owner("channel"));
-		channelSet.add(channel("third").owner("channel"));
-		channelSet.add(channel("forth").owner("channel"));
+		channelSet.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet.add(channel("third").with(propertyapi).with(tagapi).owner("channel"));
+		channelSet.add(channel("forth").with(propertyapi).with(tagapi).owner("channel"));
 		String propertyName = "TestProperty";
 		Property.Builder property = property(propertyName, "TestValue").owner(
 				"channel");
@@ -618,8 +585,8 @@ public class APIIT {
 	@Test
 	public void deleteProperty() {
 		Collection<Channel.Builder> channels = new HashSet<Channel.Builder>();
-		channels.add(channel("first").owner("channel"));
-		channels.add(channel("second").owner("channel"));
+		channels.add(channel("first").with(propertyapi).with(tagapi).owner("channel"));
+		channels.add(channel("second").with(propertyapi).with(tagapi).owner("channel"));
 		Property.Builder property = property("DeleteProp", "TestValue").owner(
 				"channel");
 		try {
@@ -659,13 +626,11 @@ public class APIIT {
 					property("existingProperty", "propValue").build()));
 
 			client.set(tag("newTag").owner("channel"));
-			client.update(tag("newTag").owner("channel"), testChannel.build()
-					.getName());
+			client.update(tag("newTag").owner("channel"), 
+					testChannel.build().getName());
 
 			client.set(property("newProperty").owner("channel"));
-			client.update(
-					property("newProperty", "newPropValue").owner("channel"),
-					testChannel.build().getName());
+			client.update(property("newProperty", "newPropValue").owner("channel"),	testChannel.build().getName());
 
 			result = (client.getChannel(testChannel.build().getName()));
 			assertTrue(result.getTags().contains(
