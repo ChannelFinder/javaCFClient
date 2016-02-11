@@ -9,7 +9,7 @@
     <groupId>org.epics.channelfinder</groupId>
     <artifactId>cf-client-api</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.0-SNAPSHOt</version>
+    <version>3.0.1</version>
     <name>ChannelFinder Client API</name>
     <licenses>
         <license>
