@@ -15,7 +15,7 @@ import com.fasterxml.jackson.core.*;
 /**
  * Tag object that can be represented as XML/JSON in payload data.
  *
- * @author Ralph Lange <Ralph.Lange@bessy.de>
+ * @author Kunal Shroff {@literal <shroffk@bnl.gov>}, Ralph Lange {@literal <ralph.lange@gmx.de>}
  */
 @JsonRootName("tag")
 public class XmlTag {
@@ -33,7 +33,7 @@ public class XmlTag {
     /**
      * Creates a new instance of XmlTag.
      *
-     * @param name
+     * @param name - tag name
      */
     public XmlTag(String name) {
         this.name = name;
@@ -42,8 +42,8 @@ public class XmlTag {
     /**
      * Creates a new instance of XmlTag.
      *
-     * @param name
-     * @param owner
+     * @param name - tag name
+     * @param owner - tag owner
      */
     public XmlTag(String name, String owner) {
         this.name = name;

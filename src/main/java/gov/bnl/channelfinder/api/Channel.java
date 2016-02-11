@@ -229,7 +229,7 @@ public class Channel {
 	 * Returns the tag with name = tagName is present on this channel else
 	 * returns null
 	 * 
-	 * @param tagName
+	 * @param tagName - tag name
 	 * @return {@link Tag} with name=tagName else null is tag with same name not
 	 *         present
 	 */
@@ -275,11 +275,6 @@ public class Channel {
 		return properties.keySet();
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -288,11 +283,6 @@ public class Channel {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -310,11 +300,6 @@ public class Channel {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "Channel [name=" + name + ", owner=" + owner + "]";

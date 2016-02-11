@@ -14,7 +14,7 @@ import com.fasterxml.jackson.core.*;
 /**
  * Property object that can be represented as XML/JSON in payload data.
  *
- * @author Ralph Lange <Ralph.Lange@bessy.de>
+ * @author Kunal Shroff {@literal <shroffk@bnl.gov>}, Ralph Lange {@literal <ralph.lange@gmx.de>}
  */
 @JsonRootName("property")
 public class XmlProperty {
@@ -33,8 +33,8 @@ public class XmlProperty {
     /**
      * Creates a new instance of XmlProperty.
      *
-     * @param name
-     * @param owner
+     * @param name - property name
+     * @param owner - property owner
      */
     public XmlProperty(String name, String owner) {
         this.owner = owner;
@@ -44,9 +44,9 @@ public class XmlProperty {
     /**
      * Creates a new instance of XmlProperty.
      *
-     * @param name
-     * @param owner
-     * @param value
+     * @param name - property name
+     * @param owner - property owner
+     * @param value - property value
      */
     public XmlProperty(String name, String owner, String value) {
         this.value = value;
@@ -126,7 +126,7 @@ public class XmlProperty {
     /**
      * set the channels associated with this property
      * 
-     * @param channels
+     * @param channels - channels to be set to the property
      */
     @JsonProperty("channels")
     public void setChannels(List<XmlChannel> channels) {

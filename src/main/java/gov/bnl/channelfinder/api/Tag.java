@@ -89,7 +89,7 @@ public class Tag {
 
 		/**
 		 * Build a {@link XmlTag} object using this builder
-		 * @return {@link XmlTag}
+		 * @return {@link XmlTag} xmlTag
 		 */
 		public XmlTag toXml() {
 			XmlTag xml = new XmlTag();
@@ -133,11 +133,6 @@ public class Tag {
 		return owner;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -146,11 +141,6 @@ public class Tag {
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.*;
 /**
  * Channel object that can be represented as XML/JSON in payload data.
  *
- * @author Ralph Lange <Ralph.Lange@bessy.de>
+ * @author Kunal Shroff {@literal <shroffk@bnl.gov>}, Ralph Lange {@literal <ralph.lange@gmx.de>}
  */
 
 @JsonRootName("channel") 
@@ -48,10 +48,10 @@ public class XmlChannel {
 
     /**
      * 
-     * @param name
-     * @param owner
-     * @param properties
-     * @param tags
+     * @param name - channel name
+     * @param owner - channel owner
+     * @param properties - list of channel properties
+     * @param tags - list of channel tags
      */
     public XmlChannel(String name, String owner, List<XmlProperty> properties, List<XmlTag> tags) {
         this.name = name;
@@ -63,7 +63,7 @@ public class XmlChannel {
     /**
      * Getter for channel name.
      *
-     * @return name
+     * @return name - channel name
      */
     @JsonProperty("name")
     public String getName() {
@@ -93,7 +93,7 @@ public class XmlChannel {
     /**
      * Setter for channel owner.
      *
-     * @param owner
+     * @param owner - channel owner
      */
     @JsonProperty("owner")
     public void setOwner(String owner) {
@@ -132,7 +132,7 @@ public class XmlChannel {
     /**
      * Adds an XmlTag to the collection.
      *
-     * @param tag
+     * @param tag - tag to be added to channel
      */
     public void addXmlTag(XmlTag tag) {
         this.tags.add(tag);

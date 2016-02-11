@@ -127,7 +127,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		/**
 		 * Creates a {@link CFCBuilder} for a CF client to URI <tt>uri</tt>.
 		 * 
-		 * @param uri
+		 * @param uri - service uri
 		 * @return {@link CFCBuilder}
 		 */
 		public static CFCBuilder serviceURL(String uri) {
@@ -138,7 +138,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		 * Creates a {@link CFCBuilder} for a CF client to {@link URI}
 		 * <tt>uri</tt>.
 		 * 
-		 * @param uri
+		 * @param uri - service uri
 		 * @return {@link CFCBuilder}
 		 */
 		public static CFCBuilder serviceURL(URI uri) {
@@ -148,7 +148,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		/**
 		 * Enable of Disable the HTTP authentication on the client connection.
 		 * 
-		 * @param withHTTPAuthentication
+		 * @param withHTTPAuthentication - 
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder withHTTPAuthentication(boolean withHTTPAuthentication) {
@@ -159,7 +159,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		/**
 		 * Set the username to be used for HTTP Authentication.
 		 * 
-		 * @param username
+		 * @param username - username
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder username(String username) {
@@ -170,7 +170,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		/**
 		 * Set the password to be used for the HTTP Authentication.
 		 * 
-		 * @param password
+		 * @param password - password
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder password(String password) {
@@ -182,7 +182,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		 * set the {@link ClientConfig} to be used while creating the
 		 * channelfinder client connection.
 		 * 
-		 * @param clientConfig
+		 * @param clientConfig - client config
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder withClientConfig(ClientConfig clientConfig) {
@@ -199,7 +199,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		/**
 		 * Set the trustManager that should be used for authentication.
 		 * 
-		 * @param trustManager
+		 * @param trustManager - trust manager
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder withTrustManager(TrustManager[] trustManager) {
@@ -211,7 +211,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		 * Provide your own executor on which the queries are to be made. <br>
 		 * By default a single threaded executor is used.
 		 * 
-		 * @param executor
+		 * @param executor - executor
 		 * @return {@link CFCBuilder}
 		 */
 		public CFCBuilder withExecutor(ExecutorService executor) {
@@ -382,7 +382,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelName
 	 *            - name of the required channel.
 	 * @return {@link Channel} with name <tt>channelName</tt> or null
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException {
 		try {
@@ -438,7 +438,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * 
 	 * @param channel
 	 *            the channel to be added
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void set(Channel.Builder channel) throws ChannelFinderException {
 		wrappedSubmit(new SetChannel(channel.toXml()));
@@ -471,7 +471,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * 
 	 * @param channels
 	 *            set of channels to be added
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void set(Collection<Builder> channels) throws ChannelFinderException {
 		wrappedSubmit(new SetChannels(ChannelUtil.toCollectionXmlChannels(channels)));
@@ -523,7 +523,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the tag to be set.
 	 * @param channelName
 	 *            - the channel to which the tag should be set on.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void set(Tag.Builder tag, String channelName) throws ChannelFinderException {
 		Collection<String> channelNames = new ArrayList<String>();
@@ -540,7 +540,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelNames
 	 *            - the list of channels to which this tag will be added and
 	 *            removed from all others.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void set(Tag.Builder tag, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new SetTag(tag.toXml(), channelNames));
@@ -701,8 +701,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * Update existing channel with <tt>channel</tt>.
 	 * 
-	 * @param channel
-	 * @throws ChannelFinderException
+	 * @param channel - channel builder
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Channel.Builder channel) throws ChannelFinderException {
 		wrappedSubmit(new UpdateChannel(channel.toXml()));
@@ -743,7 +743,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            the tag to be added
 	 * @param channelName
 	 *            Name of the channel to which the tag is to be added
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Tag.Builder tag, String channelName)	throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelName));
@@ -759,7 +759,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the tag that needs to be updated.
 	 * @param channelNames
 	 *            - list of channels to which this tag should be added.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Tag.Builder tag, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelNames));
@@ -821,7 +821,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelName
 	 *            - the channel to which this property should be added or
 	 *            updated.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Property.Builder property, String channelName)
 			throws ChannelFinderException {
@@ -868,9 +868,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * 
 	 * 
-	 * @param property
-	 * @param channelNames
-	 * @throws ChannelFinderException
+	 * @param property - property builder
+	 * @param channelNames - list of channel names
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Property.Builder property, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelNames));
@@ -879,9 +879,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * 
 	 * 
-	 * @param property
-	 * @param channelPropValueMap
-	 * @throws ChannelFinderException
+	 * @param property - property builder
+	 * @param channelPropValueMap - channel property value map
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public void update(Property.Builder property, Map<String, String> channelPropValueMap) throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelPropValueMap));
@@ -955,7 +955,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the search pattern for the channel names
 	 * @return A Collection of channels who's name match the pattern
 	 *         <tt>pattern</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Collection<Channel> findByName(String pattern) throws ChannelFinderException {
 		// return wrappedSubmit(new FindByParam("~name", pattern));
@@ -973,7 +973,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the search pattern for the tag names
 	 * @return A Collection of channels which contain tags who's name match the
 	 *         pattern <tt>pattern</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Collection<Channel> findByTag(String pattern) throws ChannelFinderException {
 		// return wrappedSubmit(new FindByParam("~tag", pattern));
@@ -997,7 +997,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @return A collection of channels containing the property with name
 	 *         <tt>propertyName</tt> who's value matches the pattern
 	 *         <tt> pattern</tt>.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Collection<Channel> findByProperty(String property, String... pattern) throws ChannelFinderException {
 		Map<String, String> propertyPatterns = new HashMap<String, String>();
@@ -1019,9 +1019,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * IMP: each criteria is logically AND'ed while multiple values for
 	 * Properties are OR'ed.<br>
 	 * 
-	 * @param query
+	 * @param query - channel finder query
 	 * @return Collection of channels which satisfy the search criteria.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Collection<Channel> find(String query) throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(buildSearchMap(query)));
@@ -1036,9 +1036,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * this will return all channels with name=any name AND tag=tag1 AND
 	 * property Cell = 1 OR 2 OR 3.
 	 * 
-	 * @param map
+	 * @param map - search map
 	 * @return Collection of channels which satisfy the search map.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Collection<Channel> find(Map<String, String> map) throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
@@ -1058,7 +1058,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param map
 	 *            - multivalued map of all search criteria
 	 * @return Collection of channels which satisfy the search map.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception 
 	 */
 	public Collection<Channel> find(MultivaluedMap<String, String> map)	throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
@@ -1160,7 +1160,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * 
 	 * @param tagName
 	 *            - name of tag to be deleted.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void deleteTag(String tagName) throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(resourceTags, tagName));
@@ -1172,7 +1172,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * 
 	 * @param propertyName
 	 *            - name of property to be deleted.
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void deleteProperty(String propertyName)
 			throws ChannelFinderException {
@@ -1182,9 +1182,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * Delete the channel identified by <tt>channel</tt>
 	 * 
-	 * @param channelName
+	 * @param channelName - 
 	 *            channel to be removed
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - channelfinder exception 
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
 		wrappedSubmit(new DeleteElement(resourceChannels, channelName)); //$NON-NLS-1$
@@ -1210,8 +1210,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	/**
 	 * Delete the set of channels identified by <tt>channels</tt>
 	 * 
-	 * @param channels
-	 * @throws ChannelFinderException
+	 * @param channels - channels to be deleted
+	 * @throws ChannelFinderException - throws exception
 	 */
 	@Deprecated
 	public void delete(Collection<Channel.Builder> channels)
@@ -1229,7 +1229,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the tag to be deleted.
 	 * @param channelName
 	 *            - the channel from which to delete the tag <tt>tag</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void delete(Tag.Builder tag, String channelName)
 			throws ChannelFinderException {
@@ -1244,7 +1244,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the tag to be deleted.
 	 * @param channelNames
 	 *            - the channels from which to delete the tag <tt>tag</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void delete(Tag.Builder tag, Collection<String> channelNames)
 			throws ChannelFinderException {
@@ -1263,7 +1263,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelName
 	 *            - the channel from which to delete the property
 	 *            <tt>property</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void delete(Property.Builder property, String channelName)
 			throws ChannelFinderException {
@@ -1280,7 +1280,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelNames
 	 *            - the channels from which to delete the property
 	 *            <tt>property</tt>
-	 * @throws ChannelFinderException
+	 * @throws ChannelFinderException - throws exception
 	 */
 	public void delete(Property.Builder property,
 			Collection<String> channelNames) throws ChannelFinderException {
