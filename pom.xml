@@ -111,8 +111,8 @@
     <url>http://channelfinder.sourceforge.net/ChannelFinderAPI</url>
 
     <scm>
-        <connection>scm:https://github.com/ChannelFinder/ChannelFinderService.git</connection>
-        <developerConnection>scm:git:https://github.com/ChannelFinder/ChannelFinderService.git</developerConnection>
+        <connection>scm:https://github.com/ChannelFinder/javaCFClient.git</connection>
+        <developerConnection>scm:git:https://github.com/ChannelFinder/javaCFClient.git</developerConnection>
         <url>http://channelfinder.hg.sourceforge.net/hgweb/channelfinder/ChannelFinderAPI</url>
     </scm>
     <ciManagement>
