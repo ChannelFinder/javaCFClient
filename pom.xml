@@ -9,7 +9,7 @@
     <groupId>org.epics.channelfinder</groupId>
     <artifactId>cf-client-api</artifactId>
     <packaging>jar</packaging>
-    <version>3.0.0</version>
+    <version>3.0.0-SNAPSHOt</version>
     <name>ChannelFinder Client API</name>
     <licenses>
         <license>
@@ -111,9 +111,9 @@
     <url>http://channelfinder.sourceforge.net/ChannelFinderAPI</url>
 
     <scm>
-        <connection>scm:https://github.com/ChannelFinder/javaCFClient.git</connection>
+        <connection>scm:git:https://github.com/ChannelFinder/javaCFClient.git</connection>
         <developerConnection>scm:git:https://github.com/ChannelFinder/javaCFClient.git</developerConnection>
-        <url>http://channelfinder.hg.sourceforge.net/hgweb/channelfinder/ChannelFinderAPI</url>
+        <url>https://github.com/ChannelFinder/javaCFClient</url>
     </scm>
     <ciManagement>
         <system>Jenkins</system>
