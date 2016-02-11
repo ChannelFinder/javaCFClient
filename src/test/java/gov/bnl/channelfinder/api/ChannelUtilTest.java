@@ -6,12 +6,9 @@
 package gov.bnl.channelfinder.api;
 
 import static gov.bnl.channelfinder.api.Channel.Builder.channel;
-import static gov.bnl.channelfinder.api.ChannelUtil.getProperty;
-import static gov.bnl.channelfinder.api.ChannelUtil.getTag;
 import static gov.bnl.channelfinder.api.Property.Builder.property;
 import static gov.bnl.channelfinder.api.Tag.Builder.tag;
 import static org.junit.Assert.assertTrue;
-import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +20,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.google.common.collect.Sets;
+
+import gov.bnl.channelfinder.api.Channel.Builder;
 
 public class ChannelUtilTest {
 

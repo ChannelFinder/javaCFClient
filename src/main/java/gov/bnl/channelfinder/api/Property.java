@@ -89,7 +89,7 @@ public class Property {
 		 * 
 		 * @return 
 		 */
-		XmlProperty toXml() {
+		public XmlProperty toXml() {
 			return new XmlProperty(name, owner, value);
 		}
 
@@ -97,7 +97,7 @@ public class Property {
 		 * Build a {@link Property} object using this builder.
 		 * @return
 		 */
-		Property build() {
+		public Property build() {
 			return new Property(this);
 		}
 	}

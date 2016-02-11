@@ -36,8 +36,7 @@ public class CFCManagerIT {
 	@Test
 	public void simpleReadConnection() {
 		ChannelFinderClient cfc;
-		cfc = CFCBuilder.serviceURL("http://localhost:8080/ChannelFinder")
-				.create();
+		cfc = CFCBuilder.serviceURL("http://localhost:9090/ChannelFinder").create();
 		cfc.getAllTags();
 		Logger.getLogger(RawLoggingFilter.class.getName()).setLevel(Level.ALL);
 		cfc.findByName("_*");

@@ -28,7 +28,8 @@ public interface ChannelFinderClient {
 	 * @return list of names of all existing {@link Property}s.
 	 */
 	public Collection<String> getAllProperties();
-
+	
+	public Collection<Channel> getAllChannels();
 	/**
 	 * Get a list of names of all the tags currently present on the
 	 * channelfinder service.
@@ -58,15 +59,6 @@ public interface ChannelFinderClient {
 	 */
 	public void set(Channel.Builder channel) throws ChannelFinderException;
 
-	/**
-	 * Destructively set a set of channels, if any channels already exists it is
-	 * replaced.
-	 * 
-	 * @param channels
-	 *            set of channels to be added
-	 * @throws ChannelFinderException
-	 */
-	public void set(Collection<Builder> channels) throws ChannelFinderException;
 
 	/**
 	 * Destructively set a Tag <tt>tag</tt> with no associated channels to the
@@ -425,4 +417,5 @@ public interface ChannelFinderClient {
 	 */
 	public void close();
 
+	public void set(Collection<Builder> channels);
 }

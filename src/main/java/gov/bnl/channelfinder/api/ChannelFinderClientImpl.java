@@ -5,8 +5,9 @@
  */
 package gov.bnl.channelfinder.api;
 
-import gov.bnl.channelfinder.api.Channel.Builder;
-
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -16,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Hashtable;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -36,8 +38,15 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriBuilder;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientHandlerException;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
@@ -46,6 +55,8 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+
+import gov.bnl.channelfinder.api.Channel.Builder;
 
 /**
  * A Client object to query the channelfinder service for channels based on
@@ -282,23 +293,35 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @return list of names of all existing {@link Property}s.
 	 */
 	public Collection<String> getAllProperties() {
-
 		return wrappedSubmit(new Callable<Collection<String>>() {
-
 			@Override
 			public Collection<String> call() throws Exception {
-
 				Collection<String> allProperties = new HashSet<String>();
-				XmlProperties allXmlProperties = service
-						.path(resourceProperties)
-						.accept(MediaType.APPLICATION_XML)
-						.get(XmlProperties.class);
-				for (XmlProperty xmlProperty : allXmlProperties.getProperties()) {
-					allProperties.add(xmlProperty.getName());
+				ObjectMapper mapper = new ObjectMapper();
+				List<XmlProperty> xmlproperties = new ArrayList<XmlProperty>();
+				try {xmlproperties = mapper.readValue(
+										service.path(resourceProperties)
+										.accept(MediaType.APPLICATION_JSON)
+										.get(String.class)	
+									,new TypeReference<List<XmlProperty>>(){});
+				} catch (JsonParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (JsonMappingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ClientHandlerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				for (XmlProperty xmlproperty : xmlproperties) {
+					allProperties.add(xmlproperty.getName());
 				}
 				return allProperties;
 			}
-
 		});
 	}
 
@@ -314,10 +337,28 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			@Override
 			public Collection<String> call() throws Exception {
 				Collection<String> allTags = new HashSet<String>();
-				XmlTags allXmlTags = service.path(resourceTags) //$NON-NLS-1$
-						.accept(MediaType.APPLICATION_XML).get(XmlTags.class);
-				for (XmlTag xmlTag : allXmlTags.getTags()) {
-					allTags.add(xmlTag.getName());
+				ObjectMapper mapper = new ObjectMapper();
+				List<XmlTag> xmltags = new ArrayList<XmlTag>();
+				try {xmltags = mapper.readValue(
+										service.path(resourceTags)
+										.accept(MediaType.APPLICATION_JSON)
+										.get(String.class)	
+									,new TypeReference<List<XmlTag>>(){});
+				} catch (JsonParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (JsonMappingException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ClientHandlerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				for (XmlTag xmltag : xmltags) {
+					allTags.add(xmltag.getName());
 				}
 				return allTags;
 			}
@@ -367,9 +408,26 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 
 		@Override
 		public Channel call() throws UniformInterfaceException {
-			return new Channel(service.path(resourceChannels).path(channelName)
-					.accept( //$NON-NLS-1$
-					MediaType.APPLICATION_XML).get(XmlChannel.class));
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
+        	try {
+        		return new Channel(mapper.readValue(service.path(resourceChannels).path(channelName)
+        								.get(ClientResponse.class)
+        		 						.getEntityInputStream(), XmlChannel.class));
+			} catch (JsonParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonMappingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        	return null;
 		}
 
 	}
@@ -383,7 +441,28 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void set(Channel.Builder channel) throws ChannelFinderException {
-		wrappedSubmit(new SetChannels(new XmlChannels(channel.toXml())));
+		wrappedSubmit(new SetChannel(channel.toXml()));
+	}
+
+	private class SetChannel implements Runnable {
+		private XmlChannel pxmlChannel = new XmlChannel();
+		public SetChannel(XmlChannel xmlChannel) {
+			super();
+			this.pxmlChannel = xmlChannel;
+		}
+
+		@Override
+		public void run() {
+			ObjectMapper mapper = new ObjectMapper(); 
+	        try {
+				service.path(resourceChannels).path(this.pxmlChannel.getName())
+						.type(MediaType.APPLICATION_JSON)
+						.put(mapper.writeValueAsString(this.pxmlChannel));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -395,26 +474,36 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void set(Collection<Builder> channels) throws ChannelFinderException {
-		wrappedSubmit(new SetChannels(ChannelUtil.toXmlChannels(channels)));
+		wrappedSubmit(new SetChannels(ChannelUtil.toCollectionXmlChannels(channels)));
 	}
 
 	private class SetChannels implements Runnable {
-
-		private final XmlChannels xmlChannels;
-
-		SetChannels(XmlChannels xmlChannels) {
+		private List<XmlChannel> pxmlchannels = null;
+		public SetChannels(List<XmlChannel> xmlchannels) {
 			super();
-			this.xmlChannels = xmlChannels;
+			this.pxmlchannels = xmlchannels;
 		}
-
 		@Override
 		public void run() {
-			service.path(resourceChannels).type(MediaType.APPLICATION_XML)
-					.post(this.xmlChannels);
+			ObjectMapper mapper = new ObjectMapper(); 
+			OutputStream out = new ByteArrayOutputStream();
+	        try {
+	        	mapper.writeValue(out, this.pxmlchannels);
+	        	final byte[] data = ((ByteArrayOutputStream) out).toByteArray();
+	        	String test = new String(data);
+				service.path(resourceChannels)
+						.type(MediaType.APPLICATION_JSON)
+						.put(test);
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
 	}
-
+	
 	/**
 	 * Destructively set a Tag <tt>tag</tt> with no associated channels to the
 	 * database.
@@ -436,12 +525,10 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - the channel to which the tag should be set on.
 	 * @throws ChannelFinderException
 	 */
-	public void set(Tag.Builder tag, String channelName)
-			throws ChannelFinderException {
+	public void set(Tag.Builder tag, String channelName) throws ChannelFinderException {
 		Collection<String> channelNames = new ArrayList<String>();
 		channelNames.add(channelName);
 		wrappedSubmit(new SetTag(tag.toXml(), channelNames));
-
 	}
 
 	/**
@@ -455,47 +542,57 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            removed from all others.
 	 * @throws ChannelFinderException
 	 */
-	public void set(Tag.Builder tag, Collection<String> channelNames)
-			throws ChannelFinderException {
+	public void set(Tag.Builder tag, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new SetTag(tag.toXml(), channelNames));
+	}
+	
+	public void set(Tag.Builder tag, Map<String, String> channelTagMap) {
+		wrappedSubmit(new SetTag(tag.toXml(), channelTagMap));
 	}
 
 	private class SetTag implements Runnable {
-		private final XmlTag xmlTag;
-
-		SetTag(XmlTag xmlTag) {
+		private XmlTag pxmlTag;
+		public SetTag(XmlTag xmlTag) {
 			super();
-			this.xmlTag = xmlTag;
+			this.pxmlTag = xmlTag;
 		}
-
+		SetTag(XmlTag xmlTag, Map<String, String> channelTagMap) {
+			super();
+			this.pxmlTag = xmlTag;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
+			for (Entry<String, String> e : channelTagMap.entrySet()) {
+				XmlChannel xmlChannel = new XmlChannel(e.getKey());
+				// need a copy to avoid a cycle
+				xmlChannel.addXmlProperty(new XmlProperty(this.pxmlTag.getName(), 
+											this.pxmlTag.getOwner(), e.getValue()));
+				channels.add(xmlChannel);
+			}
+			this.pxmlTag.setChannels(channels);
+		}
 		SetTag(XmlTag xmlTag, Collection<String> channelNames) {
 			super();
-			this.xmlTag = xmlTag;
-			try {
-				XmlChannels channels = new XmlChannels();
-				XmlChannel channel;
-				for (String channelName : channelNames) {
-					channel = new XmlChannel(channelName);
-					channels.addXmlChannel(channel);
-				}
-				xmlTag.setXmlChannels(channels);
-				service.path(resourceTags)
-						//$NON-NLS-1$
-						.path(this.xmlTag.getName())
-						.accept(MediaType.APPLICATION_XML).put(this.xmlTag);
-			} catch (UniformInterfaceException e) {
-				throw new ChannelFinderException(e);
+			this.pxmlTag = xmlTag;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
+			for (String channelName : channelNames) {
+				XmlChannel xmlChannel = new XmlChannel(channelName);
+				xmlChannel.addXmlTag(new XmlTag(this.pxmlTag.getName(), this.pxmlTag.getOwner()));
+				channels.add(xmlChannel);
 			}
+			this.pxmlTag.setChannels(channels);
 		}
-
 		@Override
 		public void run() {
-			service.path(resourceTags)
-					//$NON-NLS-1$
-					.path(xmlTag.getName()).accept(MediaType.APPLICATION_XML)
-					.put(xmlTag);
+			ObjectMapper mapper = new ObjectMapper();
+	        try {
+				service.path(resourceTags).path(this.pxmlTag.getName())
+						.type(MediaType.APPLICATION_JSON)
+						.accept(MediaType.APPLICATION_JSON)
+						.put(mapper.writeValueAsString(this.pxmlTag));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	/**
@@ -551,52 +648,53 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelPropertyMap
 	 *            - map with channel names and property values
 	 */
-	public void set(Property.Builder prop,
-			Map<String, String> channelPropertyMap) {
+	public void set(Property.Builder prop, Map<String, String> channelPropertyMap) {
 		wrappedSubmit(new SetProperty(prop.toXml(), channelPropertyMap));
 	}
 
 	private class SetProperty implements Runnable {
-		private final XmlProperty xmlProperty;
-
+		private XmlProperty pxmlProperty;
 		SetProperty(XmlProperty prop) {
-			this.xmlProperty = prop;
+			this.pxmlProperty = prop;
 		}
-
 		SetProperty(XmlProperty prop, Map<String, String> channelPropertyMap) {
 			super();
-			this.xmlProperty = prop;
-			XmlChannels channels = new XmlChannels();
+			this.pxmlProperty = prop;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
 			for (Entry<String, String> e : channelPropertyMap.entrySet()) {
 				XmlChannel xmlChannel = new XmlChannel(e.getKey());
 				// need a copy to avoid a cycle
-				xmlChannel.addXmlProperty(new XmlProperty(this.xmlProperty
-						.getName(), this.xmlProperty.getOwner(), e.getValue()));
-				channels.addXmlChannel(xmlChannel);
+				xmlChannel.addXmlProperty(new XmlProperty(this.pxmlProperty.getName(), 
+											this.pxmlProperty.getOwner(), e.getValue()));
+				channels.add(xmlChannel);
 			}
-			this.xmlProperty.setXmlChannels(channels);
+			this.pxmlProperty.setChannels(channels);
 		}
-
 		SetProperty(XmlProperty prop, Collection<String> channelNames) {
 			super();
-			this.xmlProperty = prop;
-			XmlChannels channels = new XmlChannels();
+			this.pxmlProperty = prop;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
 			for (String channelName : channelNames) {
 				XmlChannel xmlChannel = new XmlChannel(channelName);
 				// need a copy to avoid a linking cycle
-				xmlChannel.addXmlProperty(new XmlProperty(this.xmlProperty
-						.getName(), this.xmlProperty.getOwner(),
-						this.xmlProperty.getValue()));
-				channels.addXmlChannel(xmlChannel);
+				xmlChannel.addXmlProperty(new XmlProperty(this.pxmlProperty.getName(), 
+											this.pxmlProperty.getOwner(), this.pxmlProperty.getValue()));
+				channels.add(xmlChannel);
 			}
-			this.xmlProperty.setXmlChannels(channels);
+			this.pxmlProperty.setChannels(channels);
 		}
-
 		@Override
 		public void run() {
-			service.path(resourceProperties).path(xmlProperty.getName())
-					.accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(xmlProperty);
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceProperties).path(this.pxmlProperty.getName())
+					.type(MediaType.APPLICATION_JSON)
+					.accept(MediaType.APPLICATION_JSON)
+					.put(mapper.writeValueAsString(this.pxmlProperty));
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
@@ -611,17 +709,28 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	}
 
 	private class UpdateChannel implements Runnable {
-		private final XmlChannel channel;
-
+		private XmlChannel channel;
 		UpdateChannel(XmlChannel channel) {
 			super();
 			this.channel = channel;
 		}
-
 		@Override
 		public void run() {
-			service.path(resourceChannels).path(channel.getName())
-					.type(MediaType.APPLICATION_XML).post(channel);
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceChannels).path(this.channel.getName())
+						.type(MediaType.APPLICATION_JSON)
+						.post(mapper.writeValueAsString(this.channel));	                 
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}
@@ -636,8 +745,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            Name of the channel to which the tag is to be added
 	 * @throws ChannelFinderException
 	 */
-	public void update(Tag.Builder tag, String channelName)
-			throws ChannelFinderException {
+	public void update(Tag.Builder tag, String channelName)	throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelName));
 	}
 
@@ -653,43 +761,55 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *            - list of channels to which this tag should be added.
 	 * @throws ChannelFinderException
 	 */
-	public void update(Tag.Builder tag, Collection<String> channelNames)
-			throws ChannelFinderException {
+	public void update(Tag.Builder tag, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new UpdateTag(tag.toXml(), channelNames));
 	}
 
 	private class UpdateTag implements Runnable {
-		private final XmlTag xmlTag;
+		private XmlTag pxmlTag;
 
 		@SuppressWarnings("unused")
 		UpdateTag(XmlTag xmlTag) {
 			super();
-			this.xmlTag = xmlTag;
+			this.pxmlTag = xmlTag;
 		}
-
+		
 		UpdateTag(XmlTag xmlTag, String ChannelName) {
 			super();
-			this.xmlTag = xmlTag;
-			this.xmlTag.setXmlChannels(new XmlChannels(new XmlChannel(
-					ChannelName)));
+			this.pxmlTag = xmlTag;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
+			channels.add(new XmlChannel(ChannelName));
+			this.pxmlTag.setChannels(channels);
 		}
 
 		UpdateTag(XmlTag xmlTag, Collection<String> channelNames) {
 			super();
-			this.xmlTag = xmlTag;
-			XmlChannels channels = new XmlChannels();
+			this.pxmlTag = xmlTag;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
 			for (String channelName : channelNames) {
-				channels.addXmlChannel(new XmlChannel(channelName, "")); //$NON-NLS-1$
+				channels.add(new XmlChannel(channelName, ""));
 			}
-			xmlTag.setXmlChannels(channels);
+			xmlTag.setChannels(channels);
 		}
 
 		@Override
 		public void run() {
-			service.path(resourceTags).path(xmlTag.getName())
-					.type(MediaType.APPLICATION_XML).post(xmlTag);
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceTags).path(this.pxmlTag.getName())
+					.type(MediaType.APPLICATION_JSON)
+					.put(mapper.writeValueAsString(this.pxmlTag));
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	/**
@@ -710,26 +830,39 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 
 	private class UpdateChannelProperty implements Runnable {
 		private final String channelName;
-		private final XmlProperty xmlProperty;
+		private XmlProperty pxmlProperty;
 
 		UpdateChannelProperty(XmlProperty xmlProperty, String channelName) {
 			super();
-			this.xmlProperty = xmlProperty;
+			this.pxmlProperty = xmlProperty;
 			this.channelName = channelName;
 			XmlChannel xmlChannel = new XmlChannel(this.channelName);
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
+			channels.add(xmlChannel);
 			// need a defensive copy to avoid A cycle
 			xmlChannel.addXmlProperty(new XmlProperty(xmlProperty.getName(),
 					xmlProperty.getOwner(), xmlProperty.getValue()));
-			xmlProperty.setXmlChannels(new XmlChannels(xmlChannel));
+			xmlProperty.setChannels(channels);
 		}
 
 		@Override
 		public void run() {
-			service.path(resourceProperties).path(this.xmlProperty.getName())
-					.path(this.channelName).accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).put(this.xmlProperty);
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceProperties).path(this.pxmlProperty.getName())
+					.type(MediaType.APPLICATION_JSON)
+					.put(mapper.writeValueAsString(this.pxmlProperty));
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-
 	}
 
 	/**
@@ -739,8 +872,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelNames
 	 * @throws ChannelFinderException
 	 */
-	public void update(Property.Builder property,
-			Collection<String> channelNames) throws ChannelFinderException {
+	public void update(Property.Builder property, Collection<String> channelNames) throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelNames));
 	}
 
@@ -751,57 +883,66 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @param channelPropValueMap
 	 * @throws ChannelFinderException
 	 */
-	public void update(Property.Builder property,
-			Map<String, String> channelPropValueMap)
-			throws ChannelFinderException {
+	public void update(Property.Builder property, Map<String, String> channelPropValueMap) throws ChannelFinderException {
 		wrappedSubmit(new UpdateProperty(property.toXml(), channelPropValueMap));
 	}
 
 	private class UpdateProperty implements Runnable {
-		private final XmlProperty xmlProperty;
+		private XmlProperty pxmlProperty;
 
 		@SuppressWarnings("unused")
 		UpdateProperty(XmlProperty xmlProperty) {
 			super();
-			this.xmlProperty = xmlProperty;
+			this.pxmlProperty = xmlProperty;
 		}
 
 		UpdateProperty(XmlProperty xmlProperty, Collection<String> channelNames) {
 			super();
-			this.xmlProperty = xmlProperty;
-			XmlChannels channels = new XmlChannels();
+			this.pxmlProperty = xmlProperty;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
 			for (String channelName : channelNames) {
 				XmlChannel xmlChannel = new XmlChannel(channelName);
 				// need a defensive copy to avoid A cycle
 				xmlChannel.addXmlProperty(new XmlProperty(
 						xmlProperty.getName(), xmlProperty.getOwner(),
 						xmlProperty.getValue()));
-				channels.addXmlChannel(xmlChannel);
+				channels.add(xmlChannel);
 			}
-			xmlProperty.setXmlChannels(channels);
+			xmlProperty.setChannels(channels);
 		}
 
-		UpdateProperty(XmlProperty xmlProperty,
-				Map<String, String> channelPropValueMap) {
+		UpdateProperty(XmlProperty xmlProperty,	Map<String, String> channelPropValueMap) {
 			super();
-			this.xmlProperty = xmlProperty;
-			XmlChannels channels = new XmlChannels();
+			this.pxmlProperty = xmlProperty;
+			List<XmlChannel> channels = new ArrayList<XmlChannel>();
 			for (Entry<String, String> e : channelPropValueMap.entrySet()) {
 				XmlChannel xmlChannel = new XmlChannel(e.getKey());
 				// need a defensive copy to avoid A cycle
 				xmlChannel.addXmlProperty(new XmlProperty(
-						xmlProperty.getName(), xmlProperty.getOwner(), e
-								.getValue()));
-				channels.addXmlChannel(xmlChannel);
+						xmlProperty.getName(), xmlProperty.getOwner(), e.getValue()));
+				channels.add(xmlChannel);
 			}
-			xmlProperty.setXmlChannels(channels);
+			xmlProperty.setChannels(channels);
 		}
-
+		
 		@Override
 		public void run() {
-			service.path(resourceProperties).path(xmlProperty.getName())
-					.accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).post(xmlProperty);
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceProperties).path(this.pxmlProperty.getName())
+					.type(MediaType.APPLICATION_JSON)
+					.accept(MediaType.APPLICATION_JSON)
+					.post(mapper.writeValueAsString(this.pxmlProperty));
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}
@@ -816,8 +957,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *         <tt>pattern</tt>
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> findByName(String pattern)
-			throws ChannelFinderException {
+	public Collection<Channel> findByName(String pattern) throws ChannelFinderException {
 		// return wrappedSubmit(new FindByParam("~name", pattern));
 		Map<String, String> searchMap = new HashMap<String, String>();
 		searchMap.put("~name", pattern);
@@ -835,11 +975,13 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *         pattern <tt>pattern</tt>
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> findByTag(String pattern)
-			throws ChannelFinderException {
+	public Collection<Channel> findByTag(String pattern) throws ChannelFinderException {
 		// return wrappedSubmit(new FindByParam("~tag", pattern));
-		Map<String, String> searchMap = new HashMap<String, String>();
-		searchMap.put("~tag", pattern);
+		List<String> and = Arrays.asList(pattern.split("&"));
+		MultivaluedMap<String, String> searchMap = new MultivaluedMapImpl();
+		for (String string : and) {
+			searchMap.add("~tag", string);
+		}
 		return wrappedSubmit(new FindByMap(searchMap));
 	}
 
@@ -857,8 +999,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 *         <tt> pattern</tt>.
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> findByProperty(String property,
-			String... pattern) throws ChannelFinderException {
+	public Collection<Channel> findByProperty(String property, String... pattern) throws ChannelFinderException {
 		Map<String, String> propertyPatterns = new HashMap<String, String>();
 		if (pattern.length > 0) {
 			propertyPatterns.put(property, Joiner.on(",").join(pattern)); //$NON-NLS-1$
@@ -866,7 +1007,6 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			propertyPatterns.put(property, "*"); //$NON-NLS-1$
 		}
 		return wrappedSubmit(new FindByMap(propertyPatterns));
-
 	}
 
 	/**
@@ -900,8 +1040,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @return Collection of channels which satisfy the search map.
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> find(Map<String, String> map)
-			throws ChannelFinderException {
+	public Collection<Channel> find(Map<String, String> map) throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
@@ -921,8 +1060,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @return Collection of channels which satisfy the search map.
 	 * @throws ChannelFinderException
 	 */
-	public Collection<Channel> find(MultivaluedMap<String, String> map)
-			throws ChannelFinderException {
+	public Collection<Channel> find(MultivaluedMap<String, String> map)	throws ChannelFinderException {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
@@ -949,57 +1087,70 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		@Override
 		public Collection<Channel> call() throws Exception {
 			Collection<Channel> channels = new HashSet<Channel>();
-			XmlChannels xmlChannels = service.path(resourceChannels)
-					//$NON-NLS-1$
-					.queryParams(this.map).accept(MediaType.APPLICATION_XML)
-					.accept(MediaType.APPLICATION_JSON).get(XmlChannels.class);
-			for (XmlChannel xmlchannel : xmlChannels.getChannels()) {
+			List<XmlChannel> xmlchannels = new ArrayList<XmlChannel>();
+			ObjectMapper mapper = new ObjectMapper();
+			try {xmlchannels = mapper.readValue(
+					service.path(resourceChannels)
+					.queryParams(this.map)
+					.accept(MediaType.APPLICATION_JSON)
+					.get(String.class)
+				,new TypeReference<List<XmlChannel>>(){});
+			} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			} catch (ClientHandlerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			}
+			for (XmlChannel xmlchannel : xmlchannels) {
 				channels.add(new Channel(xmlchannel));
 			}
 			return Collections.unmodifiableCollection(channels);
 		}
-
 	}
 
-	static MultivaluedMap<String, String> buildSearchMap(String searchPattern) {
+	public static MultivaluedMap<String, String> buildSearchMap(String searchPattern) {
 		MultivaluedMap<String, String> map = new MultivaluedMapImpl();
 		searchPattern = searchPattern.replaceAll(", ", ",");
-		String[] words = searchPattern.split("\\s");
-		if (words.length <= 0) {
-			throw new IllegalArgumentException();
-		} else {
-			for (int index = 0; index < words.length; index++) {
-				if (!words[index].contains("=")) {
-					// this is a name value
-					if (words[index] != null)
-						map.add("~name", words[index]);
-				} else {
-					// this is a property or tag
-					String[] keyValue = words[index].split("=");
-					String key = null;
-					String valuePattern;
-					try {
-						key = keyValue[0];
-						valuePattern = keyValue[1];
-						if (key.equalsIgnoreCase("Tags")) {
-							key = "~tag";
-						}
-						for (String value : valuePattern.replace("||", ",")
-								.split(",")) {
-							map.add(key, value);
-						}
-					} catch (ArrayIndexOutOfBoundsException e) {
-						if (e.getMessage().equals(String.valueOf(0))) {
-							throw new IllegalArgumentException(
-									"= must be preceeded by a propertyName or keyword Tags.");
-						} else if (e.getMessage().equals(String.valueOf(1)))
-							throw new IllegalArgumentException("key: '" + key
-									+ "' is specified with no pattern.");
+		List<String> searchWords = Arrays.asList(searchPattern.split("\\s"));
+		List<String> searchNames = new ArrayList<String>();
+		for (String searchWord : searchWords) {
+			if (!searchWord.contains("=")) {
+				// this is a name value
+				if (searchWord != null && !searchWord.isEmpty())					
+					searchNames.add(searchWord);
+			} else {
+				// this is a property or tag
+				String[] keyValue = searchWord.split("=");
+				String key = null;
+				String valuePattern;
+				try {
+					key = keyValue[0];
+					valuePattern = keyValue[1];
+					if (key.equalsIgnoreCase("Tags") || key.equalsIgnoreCase("Tag")) {
+						key = "~tag";
 					}
-
+					for (String value : valuePattern.split("&")) {
+						map.add(key, value.trim());
+					}
+				} catch (ArrayIndexOutOfBoundsException e) {
+					if (e.getMessage().equals(String.valueOf(0))) {
+						throw new IllegalArgumentException(
+								"= must be preceeded by a propertyName or keyword Tags.");
+					} else if (e.getMessage().equals(String.valueOf(1)))
+						throw new IllegalArgumentException("key: '" + key
+								+ "' is specified with no pattern.");
 				}
+
 			}
 		}
+		map.add("~name", searchNames.stream().collect(Collectors.joining("&")));
 		return map;
 	}
 
@@ -1036,8 +1187,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	 * @throws ChannelFinderException
 	 */
 	public void deleteChannel(String channelName) throws ChannelFinderException {
-		wrappedSubmit(new DeleteElement(resourceChannels, //$NON-NLS-1$
-				channelName));
+		wrappedSubmit(new DeleteElement(resourceChannels, channelName)); //$NON-NLS-1$
 	}
 
 	private class DeleteElement implements Runnable {
@@ -1155,7 +1305,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		@Override
 		public void run() {
 			service.path(this.elementType).path(this.elementName)
-					.path(this.channelName).accept(MediaType.APPLICATION_XML)
+					.path(this.channelName)
 					.accept(MediaType.APPLICATION_JSON).delete();
 		}
 
@@ -1212,18 +1362,31 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		}
 	}
 
-	Collection<Channel> getAllChannels() {
-		try {
-			XmlChannels channels = service.path(resourceChannels) //$NON-NLS-1$
-					.accept(MediaType.APPLICATION_XML).get(XmlChannels.class);
-			Collection<Channel> set = new HashSet<Channel>();
-			for (XmlChannel channel : channels.getChannels()) {
-				set.add(new Channel(channel));
-			}
-			return set;
-		} catch (UniformInterfaceException e) {
-			throw new ChannelFinderException(e);
+	public Collection<Channel> getAllChannels() {
+		ObjectMapper mapper = new ObjectMapper();  	
+		List<XmlChannel> xmlchannels = new ArrayList<XmlChannel>();
+		try {xmlchannels = mapper.readValue(
+								service.path(resourceChannels)
+								.accept(MediaType.APPLICATION_JSON)
+								.get(String.class)
+							,new TypeReference<List<XmlChannel>>(){});
+		} catch (JsonParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (JsonMappingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClientHandlerException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
+		Collection<Channel> set = new HashSet<Channel>();
+		for (XmlChannel channel : xmlchannels) {
+			set.add(new Channel(channel));
+		}
+		return set;
 	}
-
 }

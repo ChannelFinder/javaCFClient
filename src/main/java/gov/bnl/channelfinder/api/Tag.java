@@ -91,7 +91,7 @@ public class Tag {
 		 * Build a {@link XmlTag} object using this builder
 		 * @return {@link XmlTag}
 		 */
-		XmlTag toXml() {
+		public XmlTag toXml() {
 			XmlTag xml = new XmlTag();
 			xml.setName(name);
 			xml.setOwner(owner);
