@@ -37,7 +37,7 @@ public class Property {
 
 		/**
 		 * Returns a {@link Property.Builder} to create a property with given.
-		 * <tt>name</tt> and <tt>value</tt>
+		 * <var>name</var> and <var>value</var>
 		 * 
 		 * @param name - property name
 		 * @param value - property value
@@ -52,10 +52,10 @@ public class Property {
 
 		
 		/**
-		 * Returns a {@link Property.Builder} to for a property which is a copy of <tt>property</tt>.
+		 * Returns a {@link Property.Builder} to for a property which is a copy of <var>property</var>.
 		 * 
 		 * @param property - the property to be copied
-		 * @return {@link Property.Builder} with attributes initialized to the same as <tt>property</tt>
+		 * @return {@link Property.Builder} with attributes initialized to the same as <var>property</var>
 		 */
 		public static Builder property(Property property) {
 			Builder propertyBuilder = new Builder();
@@ -69,7 +69,7 @@ public class Property {
 		 * Set the owner for the property to be built.
 		 * 
 		 * @param owner - owner id
-		 * @return property {@link Builder} with owner set to <tt>owner</tt>
+		 * @return property {@link Builder} with owner set to <var>owner</var>
 		 */
 		public Builder owner(String owner) {
 			this.owner = owner;
@@ -80,7 +80,7 @@ public class Property {
 		 * Set the value for the property to be built.
 		 * 
 		 * @param value - property value
-		 * @return property {@link Builder} with value set to <tt>value</tt>
+		 * @return property {@link Builder} with value set to <var>value</var>
 		 */
 		public Builder value(String value) {
 			this.value = value;

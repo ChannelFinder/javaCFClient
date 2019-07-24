@@ -76,8 +76,8 @@ public class ChannelUtil {
 	/**
 	 * Deprecated - use channel.getTag instead
 	 * 
-	 * Return the Tag object with name <tt>tagName</tt> if it exists on the
-	 * channel <tt>channel</tt> else return null
+	 * Return the Tag object with name <var>tagName</var> if it exists on the
+	 * channel <var>channel</var> else return null
 	 * 
 	 * @param channel - channel
 	 * @param tagName - tag name
@@ -112,8 +112,8 @@ public class ChannelUtil {
 	/**
 	 * deprecated - use the channel.getProperty instead
 	 * 
-	 * Return the property object with the name <tt>propertyName</tt> if it
-	 * exists on the channel <tt>channel</tt> else return null
+	 * Return the property object with the name <var>propertyName</var> if it
+	 * exists on the channel <var>channel</var> else return null
 	 * 
 	 * @param channel - channel
 	 * @param propertyName - property name
@@ -193,7 +193,7 @@ public class ChannelUtil {
 	/**
 	 * Given a Collection of channels returns a new collection of channels
 	 * containing only those channels which have all the properties in the
-	 * <tt>propNames</tt>
+	 * <var>propNames</var>
 	 * 
 	 * @param channels
 	 *            - the input list of channels
@@ -216,7 +216,7 @@ public class ChannelUtil {
 	/**
 	 * Given a Collection of channels returns a new collection of channels
 	 * containing only those channels which have all the tags in the
-	 * <tt>tagNames</tt>
+	 * <var>tagNames</var>
 	 * 
 	 * @param channels
 	 *            - the input list of channels
@@ -239,7 +239,7 @@ public class ChannelUtil {
 	/**
 	 * Given a Collection of channels returns a new collection of channels
 	 * containing only those channels which have all the tags in the
-	 * <tt>tagNames</tt>
+	 * <var>tagNames</var>
 	 * 
 	 * @param channels
 	 *            - the input list of channels
