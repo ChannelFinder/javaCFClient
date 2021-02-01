@@ -49,6 +49,8 @@ public interface ChannelFinderClient {
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException;
 
+	public Collection<Channel> getChannelsInNextScroll();
+
 	/**
 	 * Destructively set a single channel <var>channel</var>, if the channel
 	 * already exists it will be replaced with the given channel.

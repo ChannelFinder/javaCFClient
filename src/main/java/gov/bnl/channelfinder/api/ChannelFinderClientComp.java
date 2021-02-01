@@ -63,6 +63,11 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 	}
 
 	@Override
+	public Collection<Channel> getChannelsInNextScroll() {
+		return this.reader.getChannelsInNextScroll();
+	}
+
+	@Override
 	public Collection<Channel> findByName(String pattern)
 			throws ChannelFinderException {
 		return this.reader.findByName(pattern);

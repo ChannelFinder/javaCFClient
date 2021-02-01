@@ -10,8 +10,6 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.logging.Logger;
 
-import javax.xml.bind.PropertyException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
