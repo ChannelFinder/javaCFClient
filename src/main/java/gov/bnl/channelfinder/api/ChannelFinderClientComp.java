@@ -8,6 +8,7 @@ package gov.bnl.channelfinder.api;
 import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -153,6 +154,11 @@ public class ChannelFinderClientComp implements ChannelFinderClient {
 	@Override
 	public void update(Builder channel) throws ChannelFinderException {
 		this.writer.update(channel);
+	}
+
+	@Override
+	public void update(List<Builder> channels) throws ChannelFinderException {
+		this.writer.update(channels);
 	}
 
 	@Override

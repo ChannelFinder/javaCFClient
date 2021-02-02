@@ -757,6 +757,43 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	}
 
 	/**
+	 * Update existing channels with <var>channels</var>.
+	 *
+	 * @param channels - channel builders
+	 * @throws ChannelFinderException - channelfinder exception
+	 */
+	public void update(List<Channel.Builder> channels) throws ChannelFinderException {
+		wrappedSubmit(new UpdateChannels(channels.parallelStream().map(channel -> channel.toXml()).collect(Collectors.toList())));
+	}
+
+	private class UpdateChannels implements Runnable {
+		private List<XmlChannel> channels;
+		UpdateChannels(List<XmlChannel> channels) {
+			super();
+			this.channels = channels;
+		}
+		@Override
+		public void run() {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceChannels)
+						.type(MediaType.APPLICATION_JSON)
+						.post(mapper.writeValueAsString(this.channels));
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	/**
 	 * Update Tag <var>tag </var> by adding it to Channel with name
 	 * <var>channelName</var>, without affecting the other instances of this tag.
 	 * 
