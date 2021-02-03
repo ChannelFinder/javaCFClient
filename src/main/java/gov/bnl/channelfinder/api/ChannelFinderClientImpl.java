@@ -72,6 +72,10 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	private static final String resourceChannels = "resources/channels";
 	private static final String resourceProperties = "resources/properties";
 	private static final String resourceTags = "resources/tags";
+	private static final String resourceScroll = "resources/scroll";
+
+	private Boolean useScroll;
+	private String scrollId = null;
 
 	/**
 	 * A Builder class to help create the client to the Channelfinder Service
@@ -103,15 +107,19 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 
 		private static final String serviceURL = "http://localhost:8080/ChannelFinder"; //$NON-NLS-1$
 
+		private boolean useScroll;
+
 		private CFCBuilder() {
 			this.uri = URI.create(this.properties.getPreferenceValue(
 					"channelfinder.serviceURL", serviceURL)); //$NON-NLS-1$
 			this.protocol = this.uri.getScheme();
+			this.useScroll = Boolean.parseBoolean(this.properties.getPreferenceValue("useScroll", "false"));
 		}
 
 		private CFCBuilder(URI uri) {
 			this.uri = uri;
 			this.protocol = this.uri.getScheme();
+			this.useScroll = Boolean.parseBoolean(this.properties.getPreferenceValue("useScroll", "false"));
 		}
 
 		/**
@@ -220,6 +228,18 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		}
 
 		/**
+		 * Setting a flag to use scroll to retrieve channel list
+		 * to reduce runtime memory usage
+		 *
+		 * @param useScroll - flag for using scroll
+		 * @return {@link CFCBuilder}
+		 */
+		public CFCBuilder withScroll(Boolean useScroll) {
+			this.useScroll = useScroll;
+			return this;
+		}
+
+		/**
 		 * Will actually create a {@link ChannelFinderClientImpl} object using
 		 * the configuration informoation in this builder.
 		 * 
@@ -260,7 +280,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 								"channelfinder.password", "password"));
 			}
 			return new ChannelFinderClientImpl(this.uri, this.clientConfig,
-					this.httpBasicAuthFilter, this.executor);
+					this.httpBasicAuthFilter, this.executor, this.useScroll);
 		}
 
 		private String ifNullReturnPreferenceValue(String value, String key,
@@ -274,7 +294,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	}
 
 	ChannelFinderClientImpl(URI uri, ClientConfig config,
-			HTTPBasicAuthFilter httpBasicAuthFilter, ExecutorService executor) {
+							HTTPBasicAuthFilter httpBasicAuthFilter, ExecutorService executor, Boolean useScroll) {
 		Client client = Client.create(config);
 		if (httpBasicAuthFilter != null) {
 			client.addFilter(httpBasicAuthFilter);
@@ -284,6 +304,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		client.setFollowRedirects(true);
 		service = client.resource(UriBuilder.fromUri(uri).build());
 		this.executor = executor;
+		this.useScroll = useScroll;
 	}
 
 	/**
@@ -736,6 +757,43 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	}
 
 	/**
+	 * Update existing channels with <var>channels</var>.
+	 *
+	 * @param channels - channel builders
+	 * @throws ChannelFinderException - channelfinder exception
+	 */
+	public void update(List<Channel.Builder> channels) throws ChannelFinderException {
+		wrappedSubmit(new UpdateChannels(channels.parallelStream().map(channel -> channel.toXml()).collect(Collectors.toList())));
+	}
+
+	private class UpdateChannels implements Runnable {
+		private List<XmlChannel> channels;
+		UpdateChannels(List<XmlChannel> channels) {
+			super();
+			this.channels = channels;
+		}
+		@Override
+		public void run() {
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				service.path(resourceChannels)
+						.type(MediaType.APPLICATION_JSON)
+						.post(mapper.writeValueAsString(this.channels));
+			} catch (UniformInterfaceException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonProcessingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	/**
 	 * Update Tag <var>tag </var> by adding it to Channel with name
 	 * <var>channelName</var>, without affecting the other instances of this tag.
 	 * 
@@ -1064,6 +1122,19 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		return wrappedSubmit(new FindByMap(map));
 	}
 
+	/**
+     * Retrieving the next scroll when scrollId exists
+	 *
+	 * @return Collection of channels in the next scroll
+	 */
+	public Collection<Channel> getChannelsInNextScroll() {
+		if (scrollId == null || scrollId.isEmpty()) {
+			return Collections.unmodifiableCollection(Collections.emptySet());
+		}
+
+		return wrappedSubmit(new RetrieveNextScroll());
+	}
+
 	private class FindByMap implements Callable<Collection<Channel>> {
 
 		private MultivaluedMapImpl map;
@@ -1088,30 +1159,75 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		public Collection<Channel> call() throws Exception {
 			Collection<Channel> channels = new HashSet<Channel>();
 			List<XmlChannel> xmlchannels = new ArrayList<XmlChannel>();
+			XmlScroll xmlScroll = null;
 			ObjectMapper mapper = new ObjectMapper();
-			try {xmlchannels = mapper.readValue(
-					service.path(resourceChannels)
-					.queryParams(this.map)
-					.accept(MediaType.APPLICATION_JSON)
-					.get(String.class)
-				,new TypeReference<List<XmlChannel>>(){});
+			try {
+			    if (!useScroll) {
+					xmlchannels = mapper.readValue(
+							service.path(resourceChannels)
+									.queryParams(this.map)
+									.accept(MediaType.APPLICATION_JSON)
+									.get(String.class)
+							, new TypeReference<List<XmlChannel>>() {
+							});
+				} else {
+					xmlScroll = mapper.readValue(
+							service.path(resourceScroll)
+									.queryParams(this.map)
+									.accept(MediaType.APPLICATION_JSON)
+									.get(String.class)
+							, new TypeReference<XmlScroll>() {
+							});
+					scrollId = xmlScroll.getId();
+					xmlchannels = xmlScroll.getXmlChannels();
+				}
 			} catch (JsonParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (JsonMappingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (ClientHandlerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			for (XmlChannel xmlchannel : xmlchannels) {
 				channels.add(new Channel(xmlchannel));
 			}
 			return Collections.unmodifiableCollection(channels);
+		}
+	}
+
+	private class RetrieveNextScroll implements Callable<Collection<Channel>> {
+		@Override
+		public Collection<Channel> call() throws Exception {
+			XmlScroll xmlScroll = null;
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				xmlScroll = mapper.readValue(
+						service.path(resourceScroll).path(scrollId)
+								.accept(MediaType.APPLICATION_JSON)
+								.get(String.class)
+						, new TypeReference<XmlScroll>() {
+						});
+			} catch (JsonParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JsonMappingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClientHandlerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+			return new Scroll(xmlScroll).getChannels();
 		}
 	}
 
@@ -1140,10 +1256,11 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 						map.add(key, value.trim());
 					}
 				} catch (ArrayIndexOutOfBoundsException e) {
-					if (e.getMessage().equals(String.valueOf(0))) {
+				    String lastCharacter = e.getMessage().substring(e.getMessage().length() - 1);
+					if (lastCharacter.equals(String.valueOf(0))) {
 						throw new IllegalArgumentException(
 								"= must be preceeded by a propertyName or keyword Tags.");
-					} else if (e.getMessage().equals(String.valueOf(1)))
+					} else if (lastCharacter.equals(String.valueOf(1)))
 						throw new IllegalArgumentException("key: '" + key
 								+ "' is specified with no pattern.");
 				}

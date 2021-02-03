@@ -8,6 +8,7 @@ package gov.bnl.channelfinder.api;
 import gov.bnl.channelfinder.api.Channel.Builder;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -48,6 +49,8 @@ public interface ChannelFinderClient {
 	 * @throws ChannelFinderException - channelfinder exception
 	 */
 	public Channel getChannel(String channelName) throws ChannelFinderException;
+
+	public Collection<Channel> getChannelsInNextScroll();
 
 	/**
 	 * Destructively set a single channel <var>channel</var>, if the channel
@@ -151,6 +154,14 @@ public interface ChannelFinderClient {
 	 * @throws  ChannelFinderException - channelfinder exception
 	 */
 	public void update(Channel.Builder channel) throws ChannelFinderException;
+
+	/**
+	 * Update existing channel with <var>channel</var>.
+	 *
+	 * @param channels - channel builder
+	 * @throws  ChannelFinderException - channelfinder exception
+	 */
+	public void update(List<Builder> channels) throws ChannelFinderException;
 
 	/**
 	 * Update Tag <var>tag </var> by adding it to Channel with name
