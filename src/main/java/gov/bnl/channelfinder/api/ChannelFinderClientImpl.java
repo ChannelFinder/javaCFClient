@@ -77,6 +77,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	private Boolean useScroll;
 	private String scrollId = null;
 
+	private Boolean throwExceptions;
+
 	/**
 	 * A Builder class to help create the client to the Channelfinder Service
 	 * 
@@ -108,18 +110,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		private static final String serviceURL = "http://localhost:8080/ChannelFinder"; //$NON-NLS-1$
 
 		private boolean useScroll;
+		private boolean throwExceptions;
 
 		private CFCBuilder() {
 			this.uri = URI.create(this.properties.getPreferenceValue(
 					"channelfinder.serviceURL", serviceURL)); //$NON-NLS-1$
 			this.protocol = this.uri.getScheme();
 			this.useScroll = Boolean.parseBoolean(this.properties.getPreferenceValue("useScroll", "false"));
+			this.throwExceptions = Boolean.parseBoolean(this.properties.getPreferenceValue("throwExceptions", "false"));
 		}
 
 		private CFCBuilder(URI uri) {
 			this.uri = uri;
 			this.protocol = this.uri.getScheme();
 			this.useScroll = Boolean.parseBoolean(this.properties.getPreferenceValue("useScroll", "false"));
+			this.throwExceptions = Boolean.parseBoolean(this.properties.getPreferenceValue("throwExceptions", "false"));
 		}
 
 		/**
@@ -239,6 +244,11 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			return this;
 		}
 
+		public CFCBuilder withThrowExceptions(Boolean throwExceptions) {
+			this.throwExceptions = throwExceptions;
+			return this;
+		}
+
 		/**
 		 * Will actually create a {@link ChannelFinderClientImpl} object using
 		 * the configuration informoation in this builder.
@@ -280,7 +290,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 								"channelfinder.password", "password"));
 			}
 			return new ChannelFinderClientImpl(this.uri, this.clientConfig,
-					this.httpBasicAuthFilter, this.executor, this.useScroll);
+					this.httpBasicAuthFilter, this.executor, this.useScroll, this.throwExceptions);
 		}
 
 		private String ifNullReturnPreferenceValue(String value, String key,
@@ -294,7 +304,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 	}
 
 	ChannelFinderClientImpl(URI uri, ClientConfig config,
-							HTTPBasicAuthFilter httpBasicAuthFilter, ExecutorService executor, Boolean useScroll) {
+							HTTPBasicAuthFilter httpBasicAuthFilter, ExecutorService executor, Boolean useScroll, Boolean throwExceptions) {
 		Client client = Client.create(config);
 		if (httpBasicAuthFilter != null) {
 			client.addFilter(httpBasicAuthFilter);
@@ -305,6 +315,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		service = client.resource(UriBuilder.fromUri(uri).build());
 		this.executor = executor;
 		this.useScroll = useScroll;
+		this.throwExceptions = throwExceptions;
 	}
 
 	/**
@@ -323,20 +334,32 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 				try {xmlproperties = mapper.readValue(
 										service.path(resourceProperties)
 										.accept(MediaType.APPLICATION_JSON)
-										.get(String.class)	
+										.get(String.class)
 									,new TypeReference<List<XmlProperty>>(){});
 				} catch (JsonParseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (JsonMappingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (ClientHandlerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				}
 				for (XmlProperty xmlproperty : xmlproperties) {
 					allProperties.add(xmlproperty.getName());
@@ -363,20 +386,32 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 				try {xmltags = mapper.readValue(
 										service.path(resourceTags)
 										.accept(MediaType.APPLICATION_JSON)
-										.get(String.class)	
+										.get(String.class)
 									,new TypeReference<List<XmlTag>>(){});
 				} catch (JsonParseException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (JsonMappingException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (ClientHandlerException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
+					if (throwExceptions) {
+						throw new ChannelFinderException(e.getMessage());
+					}
 				}
 				for (XmlTag xmltag : xmltags) {
 					allTags.add(xmltag.getName());
@@ -438,15 +473,27 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonMappingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
         	return null;
 		}
@@ -474,7 +521,7 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 
 		@Override
 		public void run() {
-			ObjectMapper mapper = new ObjectMapper(); 
+			ObjectMapper mapper = new ObjectMapper();
 	        try {
 				service.path(resourceChannels).path(this.pxmlChannel.getName())
 						.type(MediaType.APPLICATION_JSON)
@@ -482,6 +529,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -518,9 +568,15 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -612,6 +668,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -715,6 +774,9 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -745,12 +807,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (UniformInterfaceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 
@@ -782,12 +853,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (UniformInterfaceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 
@@ -860,12 +940,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (UniformInterfaceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -913,12 +1002,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (UniformInterfaceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 	}
@@ -994,12 +1092,21 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (UniformInterfaceException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonProcessingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 		}
 
@@ -1184,15 +1291,27 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonMappingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 			for (XmlChannel xmlchannel : xmlchannels) {
 				channels.add(new Channel(xmlchannel));
@@ -1216,15 +1335,27 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			} catch (JsonParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (JsonMappingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (ClientHandlerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				if (throwExceptions) {
+					throw new ChannelFinderException(e.getMessage());
+				}
 			}
 
 			return new Scroll(xmlScroll).getChannels();
@@ -1461,6 +1592,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 						(UniformInterfaceException) e.getCause());
 			}
 			throw new RuntimeException(e);
+		} catch (Exception e) {
+			throw new ChannelFinderException();
 		}
 	}
 
@@ -1476,6 +1609,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 						(UniformInterfaceException) e.getCause());
 			}
 			throw new RuntimeException(e);
+		} catch (Exception e) {
+			throw new ChannelFinderException();
 		}
 	}
 
@@ -1490,15 +1625,27 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 		} catch (JsonParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			if (throwExceptions) {
+				throw new ChannelFinderException(e.getMessage());
+			}
 		} catch (JsonMappingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			if (throwExceptions) {
+				throw new ChannelFinderException(e.getMessage());
+			}
 		} catch (ClientHandlerException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			if (throwExceptions) {
+				throw new ChannelFinderException(e.getMessage());
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			if (throwExceptions) {
+				throw new ChannelFinderException(e.getMessage());
+			}
 		}
 		Collection<Channel> set = new HashSet<Channel>();
 		for (XmlChannel channel : xmlchannels) {
