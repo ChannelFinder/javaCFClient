@@ -468,8 +468,8 @@ public class ChannelFinderClientImpl implements ChannelFinderClient {
 			mapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
         	try {
         		return new Channel(mapper.readValue(service.path(resourceChannels).path(channelName)
-        								.get(ClientResponse.class)
-        		 						.getEntityInputStream(), XmlChannel.class));
+										.accept(MediaType.APPLICATION_JSON)
+										.get(String.class), XmlChannel.class));
 			} catch (JsonParseException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
